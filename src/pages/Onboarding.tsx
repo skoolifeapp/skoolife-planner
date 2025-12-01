@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,10 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { 
-  BookOpen, ArrowRight, ArrowLeft, User, GraduationCap, Calendar, 
+  ArrowRight, ArrowLeft, User, GraduationCap, Calendar, 
   Plus, X, Loader2, CheckCircle2 
 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const SUBJECT_COLORS = [
   '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#F97316', '#14B8A6',
@@ -223,12 +224,10 @@ const Onboarding = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="p-6">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-primary-foreground" />
-          </div>
+        <Link to="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl" />
           <span className="text-xl font-bold text-foreground">Skoolife</span>
-        </div>
+        </Link>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 pb-20">
