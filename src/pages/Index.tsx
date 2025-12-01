@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Target, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
-import HeroParticles from '@/components/HeroParticles';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -35,8 +34,12 @@ const Index = () => {
 
       {/* Hero */}
       <main className="relative">
-        {/* Background particles */}
-        <HeroParticles />
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
+          <div className="absolute top-40 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-soft delay-1000" />
+          <div className="absolute bottom-20 left-1/3 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+        </div>
 
         <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-32">
           {/* Badge */}
