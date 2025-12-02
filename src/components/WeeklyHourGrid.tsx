@@ -417,9 +417,6 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
             ];
 
             const positionedBlocks = calculateOverlapPositions(timeBlocks);
-            
-            // Track if this is the first event globally (for tutorial targeting)
-            const isFirstEventDay = dayIndex === weekDays.findIndex(d => getEventsForDay(d).length > 0 || getSessionsForDay(d).length > 0);
 
             return (
               <div 
@@ -472,14 +469,11 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                 )}
 
                 {/* Render all positioned blocks */}
-                {positionedBlocks.map((block, blockIndex) => {
+                {positionedBlocks.map((block) => {
                   const widthPercent = 100 / block.totalColumns;
                   const leftPercent = block.column * widthPercent;
                   const gap = 2; // px gap between columns
                   const durationMinutes = block.endMinutes - block.startMinutes;
-                  
-                  // First event of the first day with events gets the tutorial id
-                  const isFirstTutorialEvent = isFirstEventDay && blockIndex === 0;
 
                   if (block.type === 'event') {
                     const event = block.data as CalendarEvent;
@@ -490,7 +484,6 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                     return (
                       <div
                         key={event.id}
-                        id={isFirstTutorialEvent ? "first-calendar-event" : undefined}
                         draggable={isDraggable}
                         onDragStart={(e) => handleDragStart(e, 'event', event.id, durationMinutes)}
                         onDragEnd={handleDragEnd}
@@ -524,7 +517,6 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                     return (
                       <div
                         key={session.id}
-                        id={isFirstTutorialEvent ? "first-calendar-event" : undefined}
                         draggable={isDraggable}
                         onDragStart={(e) => handleDragStart(e, 'session', session.id, durationMinutes)}
                         onDragEnd={handleDragEnd}
