@@ -150,24 +150,13 @@ const ImportCalendarDialog = ({ open, onOpenChange, onImportComplete }: ImportCa
 
       console.log(`Timed events: ${timedEvents.length}, All-day events: ${allDayEvents.length}`);
 
-      // Helper to format date as local datetime string (without timezone conversion)
-      const formatLocalDateTime = (date: Date): string => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-      };
-
       // Insert timed events into database
       const eventsToInsert = timedEvents.map(event => ({
         user_id: user.id,
         source: 'ics',
         title: event.title,
-        start_datetime: formatLocalDateTime(event.start),
-        end_datetime: formatLocalDateTime(event.end),
+        start_datetime: event.start.toISOString(),
+        end_datetime: event.end.toISOString(),
         location: event.location || null,
         is_blocking: true
       }));

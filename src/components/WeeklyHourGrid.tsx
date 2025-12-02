@@ -1,4 +1,4 @@
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RevisionSession, CalendarEvent } from '@/types/planning';
 
@@ -16,20 +16,32 @@ const END_HOUR = 22;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 const HOUR_HEIGHT = 60; // pixels per hour
 
-// Helper to parse datetime without timezone conversion issues
-const parseLocalDateTime = (datetimeStr: string): { hours: number; minutes: number; date: Date } => {
-  // Expected format: "2024-01-15T09:00:00" or "2024-01-15T09:00:00+00:00"
-  // We want to extract the time as-is, ignoring timezone
-  const dateTimePart = datetimeStr.split('+')[0].split('Z')[0];
-  const [datePart, timePart] = dateTimePart.split('T');
-  const [year, month, day] = datePart.split('-').map(Number);
-  const [hours, minutes] = (timePart || '00:00:00').split(':').map(Number);
+// Smart datetime parser that handles both UTC ISO strings and local datetime strings
+const parseSmartDateTime = (datetimeStr: string): { hours: number; minutes: number; date: Date } => {
+  // Check if it's a UTC/ISO string (contains 'Z' or timezone offset like '+00:00' or '-05:00')
+  const isUTC = datetimeStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(datetimeStr);
   
-  return {
-    hours,
-    minutes,
-    date: new Date(year, month - 1, day)
-  };
+  if (isUTC) {
+    // Use parseISO which handles timezone conversion to local time
+    const date = parseISO(datetimeStr);
+    return {
+      hours: date.getHours(),
+      minutes: date.getMinutes(),
+      date: date
+    };
+  } else {
+    // Local datetime string like "2024-01-15T09:00:00" - parse without conversion
+    const dateTimePart = datetimeStr.split('+')[0].split('Z')[0];
+    const [datePart, timePart] = dateTimePart.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = (timePart || '00:00:00').split(':').map(Number);
+    
+    return {
+      hours,
+      minutes,
+      date: new Date(year, month - 1, day)
+    };
+  }
 };
 
 const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, onEventClick }: WeeklyHourGridProps) => {
@@ -41,7 +53,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
 
   const getEventsForDay = (date: Date) => {
     return calendarEvents.filter(e => {
-      const parsed = parseLocalDateTime(e.start_datetime);
+      const parsed = parseSmartDateTime(e.start_datetime);
       return isSameDay(parsed.date, date);
     });
   };
@@ -51,9 +63,9 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
     let startHour: number, startMinute: number, endHour: number, endMinute: number;
 
     if (isDatetime) {
-      // For datetime strings (calendar events) - parse without timezone conversion
-      const startParsed = parseLocalDateTime(startTime);
-      const endParsed = parseLocalDateTime(endTime);
+      // For datetime strings (calendar events) - use smart parser
+      const startParsed = parseSmartDateTime(startTime);
+      const endParsed = parseSmartDateTime(endTime);
       startHour = startParsed.hours;
       startMinute = startParsed.minutes;
       endHour = endParsed.hours;
@@ -83,8 +95,8 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
 
   const formatTimeRange = (startTime: string, endTime: string, isDatetime: boolean = false) => {
     if (isDatetime) {
-      const startParsed = parseLocalDateTime(startTime);
-      const endParsed = parseLocalDateTime(endTime);
+      const startParsed = parseSmartDateTime(startTime);
+      const endParsed = parseSmartDateTime(endTime);
       const formatTime = (h: number, m: number) => 
         `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
       return `${formatTime(startParsed.hours, startParsed.minutes)} - ${formatTime(endParsed.hours, endParsed.minutes)}`;
