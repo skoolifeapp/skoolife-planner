@@ -1,4 +1,4 @@
-import { format, parseISO, isSameDay } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RevisionSession, CalendarEvent } from '@/types/planning';
 
@@ -7,6 +7,7 @@ interface WeeklyHourGridProps {
   sessions: RevisionSession[];
   calendarEvents: CalendarEvent[];
   onSessionClick: (session: RevisionSession) => void;
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
 // Grid configuration
@@ -15,7 +16,23 @@ const END_HOUR = 22;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 const HOUR_HEIGHT = 60; // pixels per hour
 
-const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick }: WeeklyHourGridProps) => {
+// Helper to parse datetime without timezone conversion issues
+const parseLocalDateTime = (datetimeStr: string): { hours: number; minutes: number; date: Date } => {
+  // Expected format: "2024-01-15T09:00:00" or "2024-01-15T09:00:00+00:00"
+  // We want to extract the time as-is, ignoring timezone
+  const dateTimePart = datetimeStr.split('+')[0].split('Z')[0];
+  const [datePart, timePart] = dateTimePart.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = (timePart || '00:00:00').split(':').map(Number);
+  
+  return {
+    hours,
+    minutes,
+    date: new Date(year, month - 1, day)
+  };
+};
+
+const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, onEventClick }: WeeklyHourGridProps) => {
   
   const getSessionsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -24,8 +41,8 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick }: 
 
   const getEventsForDay = (date: Date) => {
     return calendarEvents.filter(e => {
-      const eventDate = parseISO(e.start_datetime);
-      return isSameDay(eventDate, date);
+      const parsed = parseLocalDateTime(e.start_datetime);
+      return isSameDay(parsed.date, date);
     });
   };
 
@@ -34,13 +51,13 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick }: 
     let startHour: number, startMinute: number, endHour: number, endMinute: number;
 
     if (isDatetime) {
-      // For datetime strings (calendar events)
-      const startDate = parseISO(startTime);
-      const endDate = parseISO(endTime);
-      startHour = startDate.getHours();
-      startMinute = startDate.getMinutes();
-      endHour = endDate.getHours();
-      endMinute = endDate.getMinutes();
+      // For datetime strings (calendar events) - parse without timezone conversion
+      const startParsed = parseLocalDateTime(startTime);
+      const endParsed = parseLocalDateTime(endTime);
+      startHour = startParsed.hours;
+      startMinute = startParsed.minutes;
+      endHour = endParsed.hours;
+      endMinute = endParsed.minutes;
     } else {
       // For time strings like "09:00"
       const [sh, sm] = startTime.split(':').map(Number);
@@ -66,9 +83,11 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick }: 
 
   const formatTimeRange = (startTime: string, endTime: string, isDatetime: boolean = false) => {
     if (isDatetime) {
-      const start = parseISO(startTime);
-      const end = parseISO(endTime);
-      return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
+      const startParsed = parseLocalDateTime(startTime);
+      const endParsed = parseLocalDateTime(endTime);
+      const formatTime = (h: number, m: number) => 
+        `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      return `${formatTime(startParsed.hours, startParsed.minutes)} - ${formatTime(endParsed.hours, endParsed.minutes)}`;
     }
     return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`;
   };
@@ -136,13 +155,20 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick }: 
                   />
                 ))}
 
-                {/* Calendar events (ICS imports) */}
+                {/* Calendar events (ICS imports and manual events) */}
                 {dayEvents.map((event) => {
                   const style = getItemStyle(event.start_datetime, event.end_datetime, true);
+                  const isClickable = !!onEventClick;
+                  
                   return (
-                    <div
+                    <button
                       key={event.id}
-                      className="absolute left-1 right-1 rounded-md px-2 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10"
+                      onClick={() => onEventClick?.(event)}
+                      disabled={!isClickable}
+                      className={cn(
+                        "absolute left-1 right-1 rounded-md px-2 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10 text-left",
+                        isClickable && "cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md"
+                      )}
                       style={style}
                       title={`${event.title}\n${formatTimeRange(event.start_datetime, event.end_datetime, true)}`}
                     >
@@ -152,7 +178,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick }: 
                       <p className="text-[10px] text-blue-600 dark:text-blue-300">
                         {formatTimeRange(event.start_datetime, event.end_datetime, true)}
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
 
@@ -195,5 +221,10 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick }: 
     </div>
   );
 };
+
+// Helper cn function if not imported
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 export default WeeklyHourGrid;
