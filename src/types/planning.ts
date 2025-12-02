@@ -25,6 +25,7 @@ export interface CalendarEvent {
   is_blocking: boolean;
   event_type?: string;
   source?: string;
+  recurrence_group_id?: string | null;
 }
 
 export interface Profile {

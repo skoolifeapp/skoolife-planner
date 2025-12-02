@@ -164,7 +164,11 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
         end_datetime: string;
         source: string;
         is_blocking: boolean;
+        recurrence_group_id: string | null;
       }[] = [];
+
+      // Generate a unique group ID for recurring events
+      const recurrenceGroupId = values.recurrence !== 'none' ? crypto.randomUUID() : null;
 
       const createEventForDate = (date: Date, source: string) => {
         const dateStr = formatLocalDate(date);
@@ -179,6 +183,7 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
           end_datetime: endDate.toISOString(),
           source,
           is_blocking: values.is_blocking,
+          recurrence_group_id: recurrenceGroupId,
         };
       };
 
