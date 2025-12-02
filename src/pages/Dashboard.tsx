@@ -138,6 +138,7 @@ const Dashboard = () => {
       const dailyStartTime = preferences?.daily_start_time || '08:00';
       const dailyEndTime = preferences?.daily_end_time || '22:00';
       const maxHoursPerDay = preferences?.max_hours_per_day || 4;
+      const sessionDuration = (preferences as any)?.session_duration_minutes || 90; // Duration in minutes
       const avoidEarlyMorning = preferences?.avoid_early_morning || false; // Before 9h
       const avoidLateEvening = preferences?.avoid_late_evening || false; // After 21h
 
@@ -157,7 +158,6 @@ const Dashboard = () => {
       }
 
       // Generate time slots based on preferences
-      const sessionDuration = 90; // 1h30 per session
       const breakBetweenSessions = 30; // 30 min break
       const timeSlots: { start: string; end: string }[] = [];
       

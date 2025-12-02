@@ -249,6 +249,7 @@ export type Database = {
           max_hours_per_day: number | null
           notes: string | null
           preferred_days_of_week: number[] | null
+          session_duration_minutes: number | null
           updated_at: string | null
           user_id: string
         }
@@ -262,6 +263,7 @@ export type Database = {
           max_hours_per_day?: number | null
           notes?: string | null
           preferred_days_of_week?: number[] | null
+          session_duration_minutes?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -275,6 +277,7 @@ export type Database = {
           max_hours_per_day?: number | null
           notes?: string | null
           preferred_days_of_week?: number[] | null
+          session_duration_minutes?: number | null
           updated_at?: string | null
           user_id?: string
         }

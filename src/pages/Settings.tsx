@@ -82,10 +82,18 @@ interface PreferencesData {
   daily_start_time: string;
   daily_end_time: string;
   max_hours_per_day: number;
+  session_duration_minutes: number;
   avoid_late_evening: boolean;
   avoid_early_morning: boolean;
   notes: string;
 }
+
+const SESSION_DURATIONS = [
+  { value: 45, label: '45 min' },
+  { value: 60, label: '1h' },
+  { value: 90, label: '1h30' },
+  { value: 120, label: '2h' },
+];
 
 const Settings = () => {
   const [loading, setLoading] = useState(true);
@@ -108,6 +116,7 @@ const Settings = () => {
     daily_start_time: '08:00',
     daily_end_time: '22:00',
     max_hours_per_day: 4,
+    session_duration_minutes: 90,
     avoid_late_evening: false,
     avoid_early_morning: false,
     notes: '',
@@ -160,6 +169,7 @@ const Settings = () => {
           daily_start_time: prefsData.daily_start_time || '08:00',
           daily_end_time: prefsData.daily_end_time || '22:00',
           max_hours_per_day: prefsData.max_hours_per_day || 4,
+          session_duration_minutes: (prefsData as any).session_duration_minutes || 90,
           avoid_late_evening: prefsData.avoid_late_evening || false,
           avoid_early_morning: prefsData.avoid_early_morning || false,
           notes: prefsData.notes || '',
@@ -220,10 +230,11 @@ const Settings = () => {
           daily_start_time: preferences.daily_start_time,
           daily_end_time: preferences.daily_end_time,
           max_hours_per_day: preferences.max_hours_per_day,
+          session_duration_minutes: preferences.session_duration_minutes,
           avoid_late_evening: preferences.avoid_late_evening,
           avoid_early_morning: preferences.avoid_early_morning,
           notes: preferences.notes,
-        }, {
+        } as any, {
           onConflict: 'user_id'
         });
 
@@ -479,6 +490,28 @@ const Settings = () => {
                 step={1}
                 className="py-4"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Durée des sessions de révision</Label>
+              <Select
+                value={String(preferences.session_duration_minutes)}
+                onValueChange={(value) => setPreferences({ ...preferences, session_duration_minutes: Number(value) })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisis la durée" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SESSION_DURATIONS.map((duration) => (
+                    <SelectItem key={duration.value} value={String(duration.value)}>
+                      {duration.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Durée de chaque session de révision générée
+              </p>
             </div>
 
             <div className="space-y-4">
