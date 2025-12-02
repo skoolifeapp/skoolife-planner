@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { 
-  Calendar, Clock, Upload, Plus, RefreshCw,
-  ChevronLeft, ChevronRight, Loader2, CheckCircle2, Target, Trash2
+  Calendar, Clock, Upload, Plus, RefreshCw, LogOut,
+  ChevronLeft, ChevronRight, Loader2, CheckCircle2, Target, Settings, Trash2
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import logo from '@/assets/logo.png';
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import ImportCalendarDialog from '@/components/ImportCalendarDialog';
@@ -46,10 +47,13 @@ const Dashboard = () => {
   const [gridClickData, setGridClickData] = useState<GridClickData | null>(null);
   const [deletingEvents, setDeletingEvents] = useState(false);
   
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const isSigningOut = useRef(false);
 
   useEffect(() => {
+    if (isSigningOut.current) return;
+    
     if (!user) {
       navigate('/auth');
       return;
@@ -296,8 +300,14 @@ const Dashboard = () => {
       console.error(err);
       toast.error('Erreur lors de la génération du planning');
     } finally {
-    setGenerating(false);
+      setGenerating(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    isSigningOut.current = true;
+    await signOut();
+    navigate('/');
   };
 
   const handleDeleteAllEvents = async () => {
@@ -406,7 +416,29 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="bg-background">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-card sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl" />
+            <span className="text-xl font-bold text-foreground">Skoolife</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/settings">
+                <Settings className="w-4 h-4 mr-2" />
+                Paramètres
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </header>
+
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-[300px_1fr] gap-8">
           {/* Sidebar */}
