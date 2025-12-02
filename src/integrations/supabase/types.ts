@@ -42,6 +42,7 @@ export type Database = {
         Row: {
           created_at: string | null
           end_datetime: string
+          event_type: string | null
           id: string
           is_blocking: boolean | null
           location: string | null
@@ -53,6 +54,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           end_datetime: string
+          event_type?: string | null
           id?: string
           is_blocking?: boolean | null
           location?: string | null
@@ -64,6 +66,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           end_datetime?: string
+          event_type?: string | null
           id?: string
           is_blocking?: boolean | null
           location?: string | null

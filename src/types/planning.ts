@@ -23,6 +23,8 @@ export interface CalendarEvent {
   start_datetime: string;
   end_datetime: string;
   is_blocking: boolean;
+  event_type?: string;
+  source?: string;
 }
 
 export interface Profile {
