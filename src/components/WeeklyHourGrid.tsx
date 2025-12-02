@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { format, isSameDay, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RevisionSession, CalendarEvent } from '@/types/planning';
@@ -45,6 +46,28 @@ const parseSmartDateTime = (datetimeStr: string): { hours: number; minutes: numb
 };
 
 const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, onEventClick }: WeeklyHourGridProps) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate current time indicator position
+  const getCurrentTimePosition = () => {
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    
+    // Only show if within grid hours
+    if (hours < START_HOUR || hours >= END_HOUR) return null;
+    
+    const topOffset = (hours - START_HOUR) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
+    return topOffset;
+  };
   
   const getSessionsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -150,6 +173,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
             const daySessions = getSessionsForDay(day);
             const dayEvents = getEventsForDay(day);
             const isToday = isSameDay(day, new Date());
+            const timePosition = getCurrentTimePosition();
 
             return (
               <div 
@@ -166,6 +190,19 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                     style={{ height: HOUR_HEIGHT }}
                   />
                 ))}
+
+                {/* Current time indicator - only on today */}
+                {isToday && timePosition !== null && (
+                  <div 
+                    className="absolute left-0 right-0 z-30 pointer-events-none"
+                    style={{ top: `${timePosition}px` }}
+                  >
+                    <div className="relative flex items-center">
+                      <div className="w-2 h-2 rounded-full bg-red-500 -ml-1" />
+                      <div className="flex-1 h-0.5 bg-red-500" />
+                    </div>
+                  </div>
+                )}
 
                 {/* Calendar events (ICS imports and manual events) */}
                 {dayEvents.map((event) => {
