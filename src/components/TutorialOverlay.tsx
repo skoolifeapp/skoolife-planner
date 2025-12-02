@@ -23,13 +23,19 @@ const tutorialSteps: TutorialStep[] = [
     position: "below",
   },
   {
-    title: "3. Configurer vos matières",
+    title: "3. Modifier vos évènements",
+    description: "Cliquez sur un évènement pour le modifier, ou glissez-déposez le directement dans la grille pour ajuster vos horaires selon vos besoins.",
+    targetId: "weekly-grid",
+    position: "above",
+  },
+  {
+    title: "4. Configurer vos matières",
     description: "Ajoutez vos matières avec leurs dates d'examen et leur importance pour prioriser vos révisions.",
     targetId: "manage-subjects-btn",
     position: "above",
   },
   {
-    title: "4. Générer votre planning",
+    title: "5. Générer votre planning",
     description: "Une fois tout configuré, générez automatiquement votre planning de révisions optimisé !",
     targetId: "generate-planning-btn",
     position: "above",

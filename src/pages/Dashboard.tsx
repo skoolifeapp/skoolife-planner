@@ -636,16 +636,18 @@ const Dashboard = () => {
             </div>
 
             {/* Week grid */}
-            <WeeklyHourGrid
-              weekDays={weekDays}
-              sessions={sessions}
-              calendarEvents={calendarEvents}
-              onSessionClick={setSelectedSession}
-              onEventClick={setSelectedEvent}
-              onGridClick={handleGridClick}
-              onSessionMove={handleSessionMove}
-              onEventMove={handleEventMove}
-            />
+            <div id="weekly-grid">
+              <WeeklyHourGrid
+                weekDays={weekDays}
+                sessions={sessions}
+                calendarEvents={calendarEvents}
+                onSessionClick={setSelectedSession}
+                onEventClick={setSelectedEvent}
+                onGridClick={handleGridClick}
+                onSessionMove={handleSessionMove}
+                onEventMove={handleEventMove}
+              />
+            </div>
 
             {/* Empty state */}
             {sessions.length === 0 && (
