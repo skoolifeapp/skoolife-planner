@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Loader2, Trash2 } from 'lucide-react';
+import { CalendarIcon, Loader2, Trash2, Repeat } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Form,
   FormControl,
@@ -76,6 +86,10 @@ interface EditEventDialogProps {
 const EditEventDialog = ({ event, onClose, onUpdate }: EditEventDialogProps) => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteSeriesDialog, setShowDeleteSeriesDialog] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+
+  const isRecurring = event?.recurrence_group_id != null;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -148,6 +162,19 @@ const EditEventDialog = ({ event, onClose, onUpdate }: EditEventDialogProps) => 
   const handleDelete = async () => {
     if (!event) return;
 
+    // If it's a recurring event, show the dialog to choose
+    if (isRecurring) {
+      setShowDeleteSeriesDialog(true);
+      return;
+    }
+
+    // Otherwise delete single event
+    await deleteSingleEvent();
+  };
+
+  const deleteSingleEvent = async () => {
+    if (!event) return;
+
     setDeleting(true);
 
     try {
@@ -167,6 +194,38 @@ const EditEventDialog = ({ event, onClose, onUpdate }: EditEventDialogProps) => 
     } finally {
       setDeleting(false);
     }
+  };
+
+  const deleteAllRecurrences = async () => {
+    if (!event || !event.recurrence_group_id) return;
+
+    setDeletingAll(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .delete()
+        .eq('recurrence_group_id', event.recurrence_group_id)
+        .select();
+
+      if (error) throw error;
+
+      const count = data?.length || 0;
+      toast.success(`${count} évènement${count > 1 ? 's' : ''} supprimé${count > 1 ? 's' : ''}`);
+      setShowDeleteSeriesDialog(false);
+      onClose();
+      onUpdate();
+    } catch (err) {
+      console.error('Error deleting recurrence series:', err);
+      toast.error('Erreur lors de la suppression de la série');
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
+  const handleDeleteThisOnly = async () => {
+    setShowDeleteSeriesDialog(false);
+    await deleteSingleEvent();
   };
 
   return (
@@ -314,6 +373,16 @@ const EditEventDialog = ({ event, onClose, onUpdate }: EditEventDialogProps) => 
               )}
             />
 
+            {/* Recurring event notice */}
+            {isRecurring && (
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-md text-sm">
+                <Repeat className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  Cet évènement fait partie d'une série récurrente
+                </span>
+              </div>
+            )}
+
             {/* Buttons */}
             <div className="flex gap-3 pt-2">
               <Button
@@ -342,6 +411,37 @@ const EditEventDialog = ({ event, onClose, onUpdate }: EditEventDialogProps) => 
           </form>
         </Form>
       </DialogContent>
+
+      {/* Delete series dialog */}
+      <AlertDialog open={showDeleteSeriesDialog} onOpenChange={setShowDeleteSeriesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la récurrence</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cet évènement fait partie d'une série récurrente. Que souhaitez-vous supprimer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={handleDeleteThisOnly}
+              disabled={deleting}
+            >
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Cette occurrence uniquement
+            </Button>
+            <AlertDialogAction
+              onClick={deleteAllRecurrences}
+              disabled={deletingAll}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingAll && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Toute la série
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

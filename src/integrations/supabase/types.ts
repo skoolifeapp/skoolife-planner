@@ -46,6 +46,7 @@ export type Database = {
           id: string
           is_blocking: boolean | null
           location: string | null
+          recurrence_group_id: string | null
           source: string | null
           start_datetime: string
           title: string
@@ -58,6 +59,7 @@ export type Database = {
           id?: string
           is_blocking?: boolean | null
           location?: string | null
+          recurrence_group_id?: string | null
           source?: string | null
           start_datetime: string
           title: string
@@ -70,6 +72,7 @@ export type Database = {
           id?: string
           is_blocking?: boolean | null
           location?: string | null
+          recurrence_group_id?: string | null
           source?: string | null
           start_datetime?: string
           title?: string
