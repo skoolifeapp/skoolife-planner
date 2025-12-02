@@ -90,7 +90,7 @@ export const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
     
     const cardWidth = 340;
     const cardHeight = 200;
-    const arrowGap = 20;
+    const arrowGap = 50; // Increased gap for better button visibility
     
     let top: number;
     let left: number;
