@@ -14,6 +14,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO }
 import { fr } from 'date-fns/locale';
 import ImportCalendarDialog from '@/components/ImportCalendarDialog';
 import EditSessionDialog from '@/components/EditSessionDialog';
+import EditEventDialog from '@/components/EditEventDialog';
 import ManageSubjectsDialog from '@/components/ManageSubjectsDialog';
 import AddEventDialog from '@/components/AddEventDialog';
 import WeeklyHourGrid from '@/components/WeeklyHourGrid';
@@ -31,6 +32,7 @@ const Dashboard = () => {
   const [subjectsDialogOpen, setSubjectsDialogOpen] = useState(false);
   const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<RevisionSession | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -429,6 +431,7 @@ const Dashboard = () => {
               sessions={sessions}
               calendarEvents={calendarEvents}
               onSessionClick={setSelectedSession}
+              onEventClick={setSelectedEvent}
             />
 
             {/* Empty state */}
@@ -472,6 +475,11 @@ const Dashboard = () => {
         session={selectedSession}
         subjects={subjects}
         onClose={() => setSelectedSession(null)}
+        onUpdate={fetchData}
+      />
+      <EditEventDialog
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
         onUpdate={fetchData}
       />
     </div>

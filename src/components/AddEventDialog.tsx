@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format, addWeeks, addDays, isBefore, isEqual } from 'date-fns';
+import { format, addWeeks, addDays, isBefore, isEqual, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,14 +50,25 @@ const EVENT_TYPES = [
   { value: 'autre', label: 'Autre' },
 ];
 
+const DAYS_OF_WEEK = [
+  { value: 1, label: 'Lun' },
+  { value: 2, label: 'Mar' },
+  { value: 3, label: 'Mer' },
+  { value: 4, label: 'Jeu' },
+  { value: 5, label: 'Ven' },
+  { value: 6, label: 'Sam' },
+  { value: 0, label: 'Dim' },
+];
+
 const formSchema = z.object({
   title: z.string().min(1, 'Le titre est obligatoire').max(100, 'Le titre est trop long'),
   event_type: z.string().min(1, 'Sélectionne un type'),
   date: z.date({ required_error: 'La date est obligatoire' }),
   start_time: z.string().min(1, 'L\'heure de début est obligatoire'),
   end_time: z.string().min(1, 'L\'heure de fin est obligatoire'),
-  recurrence: z.enum(['none', 'weekly']),
+  recurrence: z.enum(['none', 'daily', 'weekdays', 'weekly', 'custom']),
   recurrence_end_date: z.date().optional().nullable(),
+  custom_days: z.array(z.number()).optional(),
   is_blocking: z.boolean(),
 }).refine((data) => {
   if (data.start_time && data.end_time) {
@@ -68,13 +79,29 @@ const formSchema = z.object({
   message: "L'heure de fin doit être après l'heure de début",
   path: ['end_time'],
 }).refine((data) => {
-  if (data.recurrence === 'weekly' && data.recurrence_end_date) {
+  if (data.recurrence !== 'none' && data.recurrence_end_date) {
     return !isBefore(data.recurrence_end_date, data.date);
   }
   return true;
 }, {
   message: "La date de fin de récurrence doit être après la date de début",
   path: ['recurrence_end_date'],
+}).refine((data) => {
+  if (data.recurrence !== 'none' && !data.recurrence_end_date) {
+    return false;
+  }
+  return true;
+}, {
+  message: "La date de fin est obligatoire pour les récurrences",
+  path: ['recurrence_end_date'],
+}).refine((data) => {
+  if (data.recurrence === 'custom' && (!data.custom_days || data.custom_days.length === 0)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Sélectionne au moins un jour",
+  path: ['custom_days'],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -84,6 +111,14 @@ interface AddEventDialogProps {
   onOpenChange: (open: boolean) => void;
   onEventAdded: () => void;
 }
+
+// Helper to format date as YYYY-MM-DD without timezone issues
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProps) => {
   const { user } = useAuth();
@@ -98,11 +133,22 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
       end_time: '10:30',
       recurrence: 'none',
       recurrence_end_date: null,
+      custom_days: [],
       is_blocking: true,
     },
   });
 
   const recurrence = form.watch('recurrence');
+  const customDays = form.watch('custom_days') || [];
+
+  const toggleCustomDay = (dayValue: number) => {
+    const current = form.getValues('custom_days') || [];
+    if (current.includes(dayValue)) {
+      form.setValue('custom_days', current.filter(d => d !== dayValue));
+    } else {
+      form.setValue('custom_days', [...current, dayValue]);
+    }
+  };
 
   const onSubmit = async (values: FormValues) => {
     if (!user) return;
@@ -121,7 +167,7 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
       }[] = [];
 
       const createEventForDate = (date: Date, source: string) => {
-        const dateStr = format(date, 'yyyy-MM-dd');
+        const dateStr = formatLocalDate(date);
         return {
           user_id: user.id,
           title: values.title,
@@ -134,16 +180,44 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
       };
 
       if (values.recurrence === 'none') {
+        // Single event
         eventsToInsert.push(createEventForDate(values.date, 'manual'));
-      } else if (values.recurrence === 'weekly') {
-        // Generate weekly events
-        let currentDate = values.date;
-        const endDate = values.recurrence_end_date || addWeeks(values.date, 12); // Default 12 weeks if no end date
+      } else {
+        // Recurring events
+        const endDate = values.recurrence_end_date!;
+        let currentDate = new Date(values.date);
 
         while (isBefore(currentDate, endDate) || isEqual(currentDate, endDate)) {
-          eventsToInsert.push(createEventForDate(currentDate, 'manual_recurring'));
-          currentDate = addWeeks(currentDate, 1);
+          const dayOfWeek = getDay(currentDate); // 0 = Sunday, 1 = Monday, etc.
+          let shouldAdd = false;
+
+          switch (values.recurrence) {
+            case 'daily':
+              shouldAdd = true;
+              break;
+            case 'weekdays':
+              shouldAdd = dayOfWeek >= 1 && dayOfWeek <= 5;
+              break;
+            case 'weekly':
+              shouldAdd = dayOfWeek === getDay(values.date);
+              break;
+            case 'custom':
+              shouldAdd = (values.custom_days || []).includes(dayOfWeek);
+              break;
+          }
+
+          if (shouldAdd) {
+            eventsToInsert.push(createEventForDate(currentDate, 'manual_recurring'));
+          }
+
+          currentDate = addDays(currentDate, 1);
         }
+      }
+
+      if (eventsToInsert.length === 0) {
+        toast.error('Aucun évènement à créer avec ces paramètres');
+        setSaving(false);
+        return;
       }
 
       const { error } = await supabase
@@ -226,7 +300,7 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
               name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>Date de début</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -311,9 +385,27 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="daily" id="daily" />
+                        <Label htmlFor="daily" className="font-normal cursor-pointer">
+                          Tous les jours
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="weekdays" id="weekdays" />
+                        <Label htmlFor="weekdays" className="font-normal cursor-pointer">
+                          Tous les jours de semaine (lun–ven)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <RadioGroupItem value="weekly" id="weekly" />
                         <Label htmlFor="weekly" className="font-normal cursor-pointer">
-                          Toutes les semaines (même jour, même heure)
+                          Toutes les semaines (même jour)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="custom" id="custom" />
+                        <Label htmlFor="custom" className="font-normal cursor-pointer">
+                          Personnalisée
                         </Label>
                       </div>
                     </RadioGroup>
@@ -323,8 +415,35 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
               )}
             />
 
+            {/* Custom days selection */}
+            {recurrence === 'custom' && (
+              <FormField
+                control={form.control}
+                name="custom_days"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Jours de la semaine</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {DAYS_OF_WEEK.map((day) => (
+                        <Button
+                          key={day.value}
+                          type="button"
+                          variant={customDays.includes(day.value) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleCustomDay(day.value)}
+                        >
+                          {day.label}
+                        </Button>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             {/* Recurrence end date */}
-            {recurrence === 'weekly' && (
+            {recurrence !== 'none' && (
               <FormField
                 control={form.control}
                 name="recurrence_end_date"
@@ -344,7 +463,7 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
                             {field.value ? (
                               format(field.value, 'PPP', { locale: fr })
                             ) : (
-                              <span>Choisis une date de fin (optionnel)</span>
+                              <span>Choisis une date de fin</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -364,9 +483,6 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded }: AddEventDialogProp
                         />
                       </PopoverContent>
                     </Popover>
-                    <p className="text-xs text-muted-foreground">
-                      Si non renseigné, les évènements seront créés sur 12 semaines.
-                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
