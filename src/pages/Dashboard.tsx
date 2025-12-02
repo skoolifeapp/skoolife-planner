@@ -15,6 +15,7 @@ import { fr } from 'date-fns/locale';
 import ImportCalendarDialog from '@/components/ImportCalendarDialog';
 import EditSessionDialog from '@/components/EditSessionDialog';
 import ManageSubjectsDialog from '@/components/ManageSubjectsDialog';
+import AddEventDialog from '@/components/AddEventDialog';
 import WeeklyHourGrid from '@/components/WeeklyHourGrid';
 import type { Profile, Subject, RevisionSession, CalendarEvent } from '@/types/planning';
 
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [subjectsDialogOpen, setSubjectsDialogOpen] = useState(false);
+  const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<RevisionSession | null>(null);
   
   const { user, signOut } = useAuth();
@@ -391,6 +393,14 @@ const Dashboard = () => {
               <div className="flex items-center gap-2">
                 <Button 
                   variant="outline" 
+                  size="sm"
+                  onClick={() => setAddEventDialogOpen(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un évènement
+                </Button>
+                <Button 
+                  variant="outline" 
                   size="icon"
                   onClick={() => setWeekStart(subWeeks(weekStart, 1))}
                 >
@@ -452,6 +462,11 @@ const Dashboard = () => {
         onOpenChange={setSubjectsDialogOpen}
         subjects={subjects}
         onSubjectsChange={fetchData}
+      />
+      <AddEventDialog
+        open={addEventDialogOpen}
+        onOpenChange={setAddEventDialogOpen}
+        onEventAdded={fetchData}
       />
       <EditSessionDialog
         session={selectedSession}
