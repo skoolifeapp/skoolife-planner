@@ -132,6 +132,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [draggedItem, setDraggedItem] = useState<{ type: 'session' | 'event'; id: string; duration: number } | null>(null);
+  const [dropPreview, setDropPreview] = useState<{ dayIndex: number; top: number; height: number; time: string } | null>(null);
 
   // Update current time every minute
   useEffect(() => {
@@ -169,14 +170,52 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
 
   const handleDragEnd = (e: React.DragEvent) => {
     setDraggedItem(null);
+    setDropPreview(null);
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.style.opacity = '1';
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, dayIndex: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    if (!draggedItem) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dropY = e.clientY - rect.top;
+    
+    // Calculate the time from drop position (round to 15 min)
+    const dropMinutes = (dropY / HOUR_HEIGHT) * 60 + START_HOUR * 60;
+    const startHour = Math.floor(dropMinutes / 60);
+    const startMinute = Math.round((dropMinutes % 60) / 15) * 15;
+    
+    // Calculate preview position
+    const topPosition = (startHour - START_HOUR) * HOUR_HEIGHT + (startMinute / 60) * HOUR_HEIGHT;
+    const height = (draggedItem.duration / 60) * HOUR_HEIGHT;
+    
+    // Format time for display
+    const endMinutes = startHour * 60 + startMinute + draggedItem.duration;
+    const endHour = Math.floor(endMinutes / 60);
+    const endMinute = endMinutes % 60;
+    const formatTime = (h: number, m: number) => 
+      `${String(Math.min(23, h)).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const timeLabel = `${formatTime(startHour, startMinute)} - ${formatTime(Math.min(24, endHour), endMinute)}`;
+    
+    setDropPreview({
+      dayIndex,
+      top: Math.max(0, topPosition),
+      height: Math.max(20, height),
+      time: timeLabel
+    });
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear preview if we're leaving the grid entirely
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDropPreview(null);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, day: Date) => {
@@ -212,6 +251,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
     }
 
     setDraggedItem(null);
+    setDropPreview(null);
   };
 
   // Handle click on empty grid area
@@ -383,13 +423,14 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                 key={dayIndex}
                 className={`relative border-r border-border last:border-r-0 cursor-pointer ${
                   isToday ? 'bg-primary/5' : ''
-                } ${draggedItem ? 'bg-primary/10' : ''}`}
+                } ${draggedItem ? 'bg-primary/5' : ''}`}
                 onClick={(e) => {
                   // Only trigger if clicking on empty space (not on an event/session)
                   if ((e.target as HTMLElement).closest('[draggable]')) return;
                   handleGridClick(e, day);
                 }}
-                onDragOver={handleDragOver}
+                onDragOver={(e) => handleDragOver(e, dayIndex)}
+                onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, day)}
               >
                 {/* Hour grid lines */}
@@ -400,6 +441,21 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                     style={{ height: HOUR_HEIGHT }}
                   />
                 ))}
+
+                {/* Drop preview */}
+                {dropPreview && dropPreview.dayIndex === dayIndex && (
+                  <div 
+                    className="absolute left-1 right-1 rounded-md border-2 border-dashed border-primary bg-primary/20 z-25 pointer-events-none flex items-center justify-center"
+                    style={{ 
+                      top: `${dropPreview.top}px`, 
+                      height: `${dropPreview.height}px` 
+                    }}
+                  >
+                    <span className="text-xs font-medium text-primary bg-background/80 px-2 py-0.5 rounded">
+                      {dropPreview.time}
+                    </span>
+                  </div>
+                )}
 
                 {/* Current time indicator (only on today) */}
                 {isToday && (
