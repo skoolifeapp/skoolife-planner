@@ -1,5 +1,6 @@
 import { format, isSameDay, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useEffect, useRef } from 'react';
 import type { RevisionSession, CalendarEvent } from '@/types/planning';
 
 interface WeeklyHourGridProps {
@@ -10,11 +11,12 @@ interface WeeklyHourGridProps {
   onEventClick?: (event: CalendarEvent) => void;
 }
 
-// Grid configuration
-const START_HOUR = 7;
-const END_HOUR = 22;
+// Grid configuration - Full 24h display
+const START_HOUR = 0;
+const END_HOUR = 24;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 const HOUR_HEIGHT = 60; // pixels per hour
+const DEFAULT_SCROLL_HOUR = 7; // Auto-scroll to this hour on load
 
 // Smart datetime parser that handles both UTC ISO strings and local datetime strings
 const parseSmartDateTime = (datetimeStr: string): { hours: number; minutes: number; date: Date } => {
@@ -45,6 +47,15 @@ const parseSmartDateTime = (datetimeStr: string): { hours: number; minutes: numb
 };
 
 const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, onEventClick }: WeeklyHourGridProps) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to DEFAULT_SCROLL_HOUR on mount
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const scrollPosition = (DEFAULT_SCROLL_HOUR - START_HOUR) * HOUR_HEIGHT;
+      scrollContainerRef.current.scrollTop = scrollPosition;
+    }
+  }, []);
   
   const getSessionsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -130,7 +141,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
       </div>
 
       {/* Scrollable time grid */}
-      <div className="overflow-y-auto max-h-[600px]">
+      <div ref={scrollContainerRef} className="overflow-y-auto max-h-[600px]">
         <div className="grid grid-cols-[60px_repeat(7,1fr)]">
           {/* Hour labels column */}
           <div className="border-r border-border">
