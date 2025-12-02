@@ -178,7 +178,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                       onClick={() => onEventClick?.(event)}
                       disabled={!isClickable}
                       className={cn(
-                        "absolute left-1 right-1 rounded-md px-2 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10 text-left",
+                        "absolute left-1 right-1 rounded-md px-2 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10 flex flex-col items-start justify-start text-left",
                         isClickable && "cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md"
                       )}
                       style={style}
@@ -203,7 +203,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                     <button
                       key={session.id}
                       onClick={() => onSessionClick(session)}
-                      className={`absolute left-1 right-1 rounded-md px-2 py-1 overflow-hidden text-left transition-all hover:scale-[1.02] hover:shadow-md z-20 ${
+                      className={`absolute left-1 right-1 rounded-md px-2 py-1 overflow-hidden flex flex-col items-start justify-start text-left transition-all hover:scale-[1.02] hover:shadow-md z-20 ${
                         isDone ? 'opacity-60' : ''
                       }`}
                       style={{
