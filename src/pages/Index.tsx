@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Target, ArrowRight, Sparkles } from 'lucide-react';
 import logo from '@/assets/logo.png';
-import Hero3DModule from '@/components/Hero3DModule';
+import HeroPlanner3D from '@/components/HeroPlanner3D';
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ const Index = () => {
 
             {/* Right: 3D Module */}
             <div className="order-1 lg:order-2">
-              <Hero3DModule />
+              <HeroPlanner3D />
             </div>
           </div>
 
