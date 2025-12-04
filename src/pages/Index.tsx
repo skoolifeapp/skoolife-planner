@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Target, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, Target, ArrowRight, Sparkles } from 'lucide-react';
 import logo from '@/assets/logo.png';
-
+import Hero3DModule from '@/components/Hero3DModule';
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -52,32 +52,40 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Main heading */}
-          <div className="text-center space-y-6 animate-slide-up">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground leading-tight">
-              Tes révisions,
-              <br />
-              <span className="gradient-text-animated">
-                enfin organisées
-              </span>
-            </h1>
-            <p className="max-w-2xl mx-auto text-lg sm:text-xl text-muted-foreground">
-              Skoolife génère automatiquement ton planning de révisions personnalisé 
-              en fonction de tes examens, ton emploi du temps et ton rythme.
-            </p>
-          </div>
+          {/* Hero content with 3D module */}
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left: Text content */}
+            <div className="text-center lg:text-left space-y-6 animate-slide-up order-2 lg:order-1">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-foreground leading-tight">
+                Tes révisions,
+                <br />
+                <span className="gradient-text-animated">
+                  enfin organisées
+                </span>
+              </h1>
+              <p className="max-w-xl text-lg sm:text-xl text-muted-foreground">
+                Skoolife génère automatiquement ton planning de révisions personnalisé 
+                en fonction de tes examens, ton emploi du temps et ton rythme.
+              </p>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12 animate-slide-up">
-            <Link to="/auth">
-              <Button variant="hero" size="xl">
-                Commencer gratuitement
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
-            <p className="text-sm text-muted-foreground">
-              Aucune carte bancaire requise
-            </p>
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 pt-4">
+                <Link to="/auth">
+                  <Button variant="hero" size="xl">
+                    Commencer gratuitement
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <p className="text-sm text-muted-foreground self-center">
+                  Aucune carte bancaire requise
+                </p>
+              </div>
+            </div>
+
+            {/* Right: 3D Module */}
+            <div className="order-1 lg:order-2">
+              <Hero3DModule />
+            </div>
           </div>
 
           {/* Features */}
