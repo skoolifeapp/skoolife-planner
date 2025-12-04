@@ -214,6 +214,11 @@
   .stagger-3 { animation-delay: 0.3s; }
   .stagger-4 { animation-delay: 0.4s; }
   .stagger-5 { animation-delay: 0.5s; }
+
+  /* 3D perspective utilities */
+  .perspective-\[1200px\] {
+    perspective: 1200px;
+  }
 }
 
 @keyframes gradient-shift {
