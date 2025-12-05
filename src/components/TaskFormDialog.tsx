@@ -94,18 +94,18 @@ export const TaskFormDialog = ({
       form.reset({
         title: task.title,
         description: task.description || '',
-        subject_id: task.subject_id || '',
+        subject_id: task.subject_id || 'none',
         due_date: task.due_date ? parseISO(task.due_date) : null,
-        estimated_duration_minutes: task.estimated_duration_minutes?.toString() || '',
+        estimated_duration_minutes: task.estimated_duration_minutes?.toString() || 'none',
         priority: task.priority,
       });
     } else {
       form.reset({
         title: '',
         description: '',
-        subject_id: '',
+        subject_id: 'none',
         due_date: null,
-        estimated_duration_minutes: '',
+        estimated_duration_minutes: 'none',
         priority: 'medium',
       });
     }
@@ -115,9 +115,9 @@ export const TaskFormDialog = ({
     onSave({
       title: data.title,
       description: data.description || null,
-      subject_id: data.subject_id || null,
+      subject_id: data.subject_id && data.subject_id !== 'none' ? data.subject_id : null,
       due_date: data.due_date ? format(data.due_date, 'yyyy-MM-dd') : null,
-      estimated_duration_minutes: data.estimated_duration_minutes 
+      estimated_duration_minutes: data.estimated_duration_minutes && data.estimated_duration_minutes !== 'none'
         ? parseInt(data.estimated_duration_minutes) 
         : null,
       priority: data.priority,
@@ -127,7 +127,7 @@ export const TaskFormDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] z-[100]">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? 'Modifier la tâche' : 'Nouvelle tâche'}
@@ -156,14 +156,14 @@ export const TaskFormDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Matière</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Choisir une matière" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">Aucune</SelectItem>
+                    <SelectContent className="z-[200]">
+                      <SelectItem value="none">Aucune</SelectItem>
                       {subjects.map((subject) => (
                         <SelectItem key={subject.id} value={subject.id}>
                           <span className="flex items-center gap-2">
@@ -229,14 +229,14 @@ export const TaskFormDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Durée estimée</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || "none"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Durée" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">Non définie</SelectItem>
+                      <SelectContent className="z-[200]">
+                        <SelectItem value="none">Non définie</SelectItem>
                         {durationOptions.map((opt) => (
                           <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
