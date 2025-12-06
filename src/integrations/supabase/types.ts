@@ -212,7 +212,6 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
-          difficulty_level: string | null
           exam_date: string | null
           exam_weight: number | null
           id: string
@@ -223,7 +222,6 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string | null
-          difficulty_level?: string | null
           exam_date?: string | null
           exam_weight?: number | null
           id?: string
@@ -234,7 +232,6 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string | null
-          difficulty_level?: string | null
           exam_date?: string | null
           exam_weight?: number | null
           id?: string
@@ -243,66 +240,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      tasks: {
-        Row: {
-          created_at: string
-          description: string | null
-          due_date: string | null
-          estimated_duration_minutes: number | null
-          id: string
-          linked_event_id: string | null
-          priority: string
-          status: string
-          subject_id: string | null
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          due_date?: string | null
-          estimated_duration_minutes?: number | null
-          id?: string
-          linked_event_id?: string | null
-          priority?: string
-          status?: string
-          subject_id?: string | null
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          due_date?: string | null
-          estimated_duration_minutes?: number | null
-          id?: string
-          linked_event_id?: string | null
-          priority?: string
-          status?: string
-          subject_id?: string | null
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_linked_event_id_fkey"
-            columns: ["linked_event_id"]
-            isOneToOne: false
-            referencedRelation: "calendar_events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_subject_id_fkey"
-            columns: ["subject_id"]
-            isOneToOne: false
-            referencedRelation: "subjects"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_preferences: {
         Row: {
