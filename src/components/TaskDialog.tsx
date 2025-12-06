@@ -156,12 +156,12 @@ export const TaskDialog = ({ open, onOpenChange, task, subjects, onSaved }: Task
 
           <div className="space-y-2">
             <Label htmlFor="subject">Matière</Label>
-            <Select value={subjectId} onValueChange={setSubjectId}>
+            <Select value={subjectId || "none"} onValueChange={(val) => setSubjectId(val === "none" ? "" : val)}>
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une matière" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune</SelectItem>
+                <SelectItem value="none">Aucune</SelectItem>
                 {subjects.map(subject => (
                   <SelectItem key={subject.id} value={subject.id}>
                     <div className="flex items-center gap-2">
