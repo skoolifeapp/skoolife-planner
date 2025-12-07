@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { 
   Calendar, Clock, Upload, Plus, RefreshCw, LogOut,
-  ChevronLeft, ChevronRight, Loader2, CheckCircle2, Target, Settings, Trash2, TrendingUp, Sparkles
+  ChevronLeft, ChevronRight, Loader2, CheckCircle2, Target, Settings, Trash2, TrendingUp, Sparkles, Wallet
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -698,6 +698,12 @@ const Dashboard = () => {
             <span className="text-xl font-bold text-foreground">Skoolife</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/budget">
+                <Wallet className="w-4 h-4 mr-2" />
+                Budget
+              </Link>
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/progression">
                 <TrendingUp className="w-4 h-4 mr-2" />
