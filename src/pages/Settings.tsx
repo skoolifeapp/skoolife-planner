@@ -290,70 +290,68 @@ const Settings = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src={logo} alt="Skoolife" className="w-8 h-8 md:w-10 md:h-10 rounded-xl" />
-            <span className="text-lg md:text-xl font-bold text-foreground hidden sm:inline">Skoolife</span>
+            <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl" />
+            <span className="text-xl font-bold text-foreground">Skoolife</span>
           </Link>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/app" className="flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-0 sm:mr-2" />
-              <span className="hidden sm:inline">Retour au planning</span>
+            <Link to="/app">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour au planning
             </Link>
           </Button>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-4 md:py-8 space-y-6 md:space-y-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">Profil & paramètres</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
+          <h1 className="text-3xl font-bold mb-2">Profil & paramètres</h1>
+          <p className="text-muted-foreground">
             Gère ton profil et tes préférences de révisions
           </p>
         </div>
 
         {/* Section 1: Profile */}
         <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2 md:pb-4">
-            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <User className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
               Informations personnelles
             </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
+            <CardDescription>
               Tes informations de base
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 md:space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="first_name" className="text-sm">Prénom</Label>
+                <Label htmlFor="first_name">Prénom</Label>
                 <Input
                   id="first_name"
                   value={profile.first_name}
                   onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
                   placeholder="Ton prénom"
-                  className="h-11 md:h-10"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last_name" className="text-sm">Nom</Label>
+                <Label htmlFor="last_name">Nom</Label>
                 <Input
                   id="last_name"
                   value={profile.last_name}
                   onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
                   placeholder="Ton nom"
-                  className="h-11 md:h-10"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm">Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 value={profile.email}
                 disabled
-                className="bg-muted h-11 md:h-10"
+                className="bg-muted"
               />
               <p className="text-xs text-muted-foreground">
                 L'email ne peut pas être modifié
@@ -361,24 +359,23 @@ const Settings = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="school" className="text-sm">Établissement / école</Label>
+              <Label htmlFor="school">Établissement / école</Label>
               <Input
                 id="school"
                 value={profile.school}
                 onChange={(e) => setProfile({ ...profile, school: e.target.value })}
                 placeholder="Ex: Université Paris-Saclay"
-                className="h-11 md:h-10"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm">Niveau d'études</Label>
+                <Label>Niveau d'études</Label>
                 <Select
                   value={profile.level}
                   onValueChange={(value) => setProfile({ ...profile, level: value })}
                 >
-                  <SelectTrigger className="h-11 md:h-10">
+                  <SelectTrigger>
                     <SelectValue placeholder="Sélectionne ton niveau" />
                   </SelectTrigger>
                   <SelectContent>
@@ -391,12 +388,12 @@ const Settings = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm">Période principale d'examens</Label>
+                <Label>Période principale d'examens</Label>
                 <Select
                   value={profile.main_exam_period}
                   onValueChange={(value) => setProfile({ ...profile, main_exam_period: value })}
                 >
-                  <SelectTrigger className="h-11 md:h-10">
+                  <SelectTrigger>
                     <SelectValue placeholder="Mois des examens" />
                   </SelectTrigger>
                   <SelectContent>
@@ -411,7 +408,7 @@ const Settings = () => {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm">Objectif d'heures de révision / semaine : {profile.weekly_revision_hours}h</Label>
+              <Label>Objectif d'heures de révision / semaine : {profile.weekly_revision_hours}h</Label>
               <Slider
                 value={[profile.weekly_revision_hours]}
                 onValueChange={(value) => setProfile({ ...profile, weekly_revision_hours: value[0] })}
@@ -425,7 +422,7 @@ const Settings = () => {
               </p>
             </div>
 
-            <Button onClick={handleSaveProfile} disabled={savingProfile} className="w-full md:w-auto">
+            <Button onClick={handleSaveProfile} disabled={savingProfile}>
               {savingProfile && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Enregistrer mon profil
             </Button>
@@ -434,18 +431,18 @@ const Settings = () => {
 
         {/* Section 2: Revision Preferences */}
         <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2 md:pb-4">
-            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <Clock className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
               Préférences de révisions
             </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
+            <CardDescription>
               Configure quand et comment tu veux réviser. Ces préférences seront prises en compte lors de la prochaine génération de planning.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 md:space-y-6">
+          <CardContent className="space-y-6">
             <div className="space-y-3">
-              <Label className="text-sm">Jours de révision préférés</Label>
+              <Label>Jours de révision préférés</Label>
               <div className="flex flex-wrap gap-2">
                 {DAYS_OF_WEEK.map((day) => (
                   <Button
@@ -454,7 +451,7 @@ const Settings = () => {
                     variant={preferences.preferred_days_of_week.includes(day.value) ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => toggleDay(day.value)}
-                    className="min-w-[44px] h-10 md:h-9"
+                    className="min-w-[48px]"
                   >
                     {day.label}
                   </Button>
@@ -462,31 +459,29 @@ const Settings = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="start_time" className="text-sm">Heure de début</Label>
+                <Label htmlFor="start_time">Heure de début</Label>
                 <Input
                   id="start_time"
                   type="time"
                   value={preferences.daily_start_time}
                   onChange={(e) => setPreferences({ ...preferences, daily_start_time: e.target.value })}
-                  className="h-11 md:h-10"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="end_time" className="text-sm">Heure de fin</Label>
+                <Label htmlFor="end_time">Heure de fin</Label>
                 <Input
                   id="end_time"
                   type="time"
                   value={preferences.daily_end_time}
                   onChange={(e) => setPreferences({ ...preferences, daily_end_time: e.target.value })}
-                  className="h-11 md:h-10"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm">Heures max par jour : {preferences.max_hours_per_day}h</Label>
+              <Label>Heures max par jour : {preferences.max_hours_per_day}h</Label>
               <Slider
                 value={[preferences.max_hours_per_day]}
                 onValueChange={(value) => setPreferences({ ...preferences, max_hours_per_day: value[0] })}

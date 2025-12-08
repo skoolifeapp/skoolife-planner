@@ -16,19 +16,12 @@ const HeroMiniDashboard3D = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Trigger entrance animation after mount
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 100);
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -53,9 +46,7 @@ const HeroMiniDashboard3D = () => {
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full max-w-[600px] mx-auto mt-16 md:mt-0 transition-all duration-1000 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}
+      className="relative w-full max-w-[600px] mx-auto mt-16 md:mt-0"
       style={{ perspective: '1200px' }}
       aria-label="Aperçu du dashboard Skoolife montrant un planning de révisions hebdomadaire"
     >
@@ -71,12 +62,9 @@ const HeroMiniDashboard3D = () => {
       >
         {/* Dashboard Base */}
         <div 
-          className={`relative rounded-2xl bg-card/90 border border-border shadow-2xl overflow-hidden transition-all duration-700 ease-out ${
-            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-          }`}
+          className="relative rounded-2xl bg-card/90 border border-border shadow-2xl overflow-hidden"
           style={{
-            animation: isLoaded ? 'breathing 8s ease-in-out infinite' : 'none',
-            transitionDelay: '200ms',
+            animation: 'breathing 8s ease-in-out infinite',
           }}
         >
           <div className="flex p-3 gap-3" style={{ minHeight: '280px' }}>
@@ -188,13 +176,10 @@ const HeroMiniDashboard3D = () => {
 
         {/* Floating Hologram Cards */}
         <div 
-          className={`absolute -top-4 -right-4 md:-right-8 p-2 rounded-lg bg-card/95 border border-primary/30 shadow-lg backdrop-blur-sm transition-all duration-700 ease-out ${
-            isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-          }`}
+          className="absolute -top-4 -right-4 md:-right-8 p-2 rounded-lg bg-card/95 border border-primary/30 shadow-lg backdrop-blur-sm"
           style={{
             transform: `translateZ(${isMobile ? '30px' : 40 + rotation.y * 1.5}px) rotateX(${isMobile ? 0 : -rotation.x * 0.3}deg)`,
-            animation: isLoaded ? 'floatCard 8s ease-in-out infinite' : 'none',
-            transitionDelay: '500ms',
+            animation: 'floatCard 8s ease-in-out infinite',
           }}
         >
           <div className="flex items-center gap-1.5">
@@ -209,13 +194,10 @@ const HeroMiniDashboard3D = () => {
         </div>
 
         <div 
-          className={`absolute -bottom-2 -left-4 md:-left-6 p-2 rounded-lg bg-card/95 border border-destructive/30 shadow-lg backdrop-blur-sm transition-all duration-700 ease-out ${
-            isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
-          }`}
+          className="absolute -bottom-2 -left-4 md:-left-6 p-2 rounded-lg bg-card/95 border border-destructive/30 shadow-lg backdrop-blur-sm"
           style={{
             transform: `translateZ(${isMobile ? '25px' : 35 + rotation.y * 1.2}px) rotateX(${isMobile ? 0 : -rotation.x * 0.2}deg)`,
-            animation: isLoaded ? 'floatCard 10s ease-in-out infinite 2s' : 'none',
-            transitionDelay: '700ms',
+            animation: 'floatCard 10s ease-in-out infinite 2s',
           }}
         >
           <div className="flex items-center gap-1.5">
@@ -231,13 +213,10 @@ const HeroMiniDashboard3D = () => {
 
         {/* AI Badge */}
         <div 
-          className={`absolute top-1/2 -right-2 md:-right-4 transition-all duration-700 ease-out ${
-            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
-          }`}
+          className="absolute top-1/2 -right-2 md:-right-4"
           style={{
             transform: `translateY(-50%) translateZ(${isMobile ? '40px' : 50 + rotation.y * 2}px)`,
-            animation: isLoaded ? 'orbitBadge 12s ease-in-out infinite' : 'none',
-            transitionDelay: '900ms',
+            animation: 'orbitBadge 12s ease-in-out infinite',
           }}
         >
           <div 
