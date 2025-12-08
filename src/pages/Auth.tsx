@@ -22,15 +22,21 @@ const Auth = () => {
     const checkProfileAndRedirect = async () => {
       if (!user) return;
       
-      const { data: profile } = await supabase
+      console.log('Auth: Checking profile for user:', user.id);
+      
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('is_onboarding_complete')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (profile?.is_onboarding_complete) {
+      console.log('Auth: Profile data:', profile, 'Error:', error);
+      
+      if (profile?.is_onboarding_complete === true) {
+        console.log('Auth: Redirecting to /app');
         navigate('/app');
       } else {
+        console.log('Auth: Redirecting to /onboarding');
         navigate('/onboarding');
       }
     };
