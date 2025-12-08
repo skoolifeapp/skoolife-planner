@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +19,23 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      navigate('/onboarding');
-    }
+    const checkProfileAndRedirect = async () => {
+      if (!user) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_onboarding_complete')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile?.is_onboarding_complete) {
+        navigate('/app');
+      } else {
+        navigate('/onboarding');
+      }
+    };
+    
+    checkProfileAndRedirect();
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
