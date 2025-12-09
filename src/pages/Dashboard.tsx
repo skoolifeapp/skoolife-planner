@@ -631,13 +631,15 @@ const Dashboard = () => {
     }
   };
 
-  const handleSessionResize = async (sessionId: string, data: { endTime: string }) => {
+  const handleSessionResize = async (sessionId: string, data: { startTime?: string; endTime?: string }) => {
     try {
+      const updateData: { start_time?: string; end_time?: string } = {};
+      if (data.startTime) updateData.start_time = data.startTime;
+      if (data.endTime) updateData.end_time = data.endTime;
+
       const { error } = await supabase
         .from('revision_sessions')
-        .update({
-          end_time: data.endTime,
-        })
+        .update(updateData)
         .eq('id', sessionId);
 
       if (error) throw error;
@@ -648,9 +650,9 @@ const Dashboard = () => {
     }
   };
 
-  const handleEventResize = async (eventId: string, data: { endTime: string }) => {
+  const handleEventResize = async (eventId: string, data: { startTime?: string; endTime?: string }) => {
     try {
-      // Get the current event to preserve start_datetime
+      // Get the current event to preserve datetimes
       const event = calendarEvents.find(e => e.id === eventId);
       if (!event) return;
 
@@ -658,14 +660,21 @@ const Dashboard = () => {
       const startDate = parseISO(event.start_datetime);
       const dateStr = format(startDate, 'yyyy-MM-dd');
       
-      // Create new end datetime
-      const endDatetime = new Date(`${dateStr}T${data.endTime}:00`);
+      const updateData: { start_datetime?: string; end_datetime?: string } = {};
+      
+      if (data.startTime) {
+        const startDatetime = new Date(`${dateStr}T${data.startTime}:00`);
+        updateData.start_datetime = startDatetime.toISOString();
+      }
+      
+      if (data.endTime) {
+        const endDatetime = new Date(`${dateStr}T${data.endTime}:00`);
+        updateData.end_datetime = endDatetime.toISOString();
+      }
 
       const { error } = await supabase
         .from('calendar_events')
-        .update({
-          end_datetime: endDatetime.toISOString(),
-        })
+        .update(updateData)
         .eq('id', eventId);
 
       if (error) throw error;
