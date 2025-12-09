@@ -395,7 +395,6 @@ const Subjects = () => {
               )}
             </div>
           </div>
-        </div>
 
       {/* Subject Drawer */}
       <SubjectDrawer 
