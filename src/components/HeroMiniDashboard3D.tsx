@@ -70,8 +70,11 @@ const HeroMiniDashboard3D = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [isMobile]);
 
-  const getEventClasses = () => {
-    return 'bg-blue-100 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-700/50 dark:text-blue-300';
+  const getEventClasses = (type: string) => {
+    if (type === 'revision') {
+      return 'bg-blue-100 border border-blue-200 border-l-[3px] border-l-blue-600 text-blue-700 dark:bg-blue-900/40 dark:border-blue-700/50 dark:border-l-blue-400 dark:text-blue-300';
+    }
+    return 'bg-blue-100 border border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-700/50 dark:text-blue-300';
   };
 
   return (
@@ -242,7 +245,7 @@ const HeroMiniDashboard3D = () => {
                   {MOCK_EVENTS.map((event, i) => (
                     <div
                       key={i}
-                      className={`absolute rounded-md text-[6px] font-medium px-1 py-0.5 overflow-hidden border ${getEventClasses()}`}
+                      className={`absolute rounded-md text-[6px] font-medium px-1 py-0.5 overflow-hidden ${getEventClasses(event.type)}`}
                       style={{
                         left: `calc(40px + ${event.day} * ((100% - 40px) / 7) + 2px)`,
                         width: `calc((100% - 40px) / 7 - 4px)`,
