@@ -77,7 +77,8 @@ const HeroMiniDashboard3D = () => {
     if (type === 'cours') {
       return 'bg-primary/20 border-primary/30 text-primary dark:bg-primary/30 dark:border-primary/40 dark:text-primary';
     }
-    return 'bg-blue-100 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-700/50 dark:text-blue-300';
+    // revision - green
+    return 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-600/50 dark:text-green-300';
   };
 
   return (
