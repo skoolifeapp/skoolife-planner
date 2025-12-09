@@ -204,7 +204,7 @@ const HeroMiniDashboard3D = () => {
               </div>
 
               {/* Weekly Grid */}
-              <div className="flex-1 rounded-xl bg-card shadow-sm overflow-hidden border border-border">
+              <div className="flex-1 rounded-xl bg-card shadow-sm overflow-hidden border border-border flex flex-col">
                 {/* Days Header */}
                 <div className="flex border-b border-border">
                   <div className="w-10 flex-shrink-0" />
@@ -222,10 +222,10 @@ const HeroMiniDashboard3D = () => {
                 </div>
 
                 {/* Grid with hours and events */}
-                <div className="relative">
+                <div className="relative flex-1 flex flex-col">
                   {/* Hours rows */}
                   {HOURS.map((hour) => (
-                    <div key={hour} className="flex h-5 border-b border-border/50">
+                    <div key={hour} className="flex flex-1 border-b border-border/50">
                       <div className="w-10 flex-shrink-0 text-[7px] text-muted-foreground pr-2 text-right pt-1">
                         {hour}
                       </div>
@@ -246,8 +246,8 @@ const HeroMiniDashboard3D = () => {
                       style={{
                         left: `calc(40px + ${event.day} * ((100% - 40px) / 7) + 2px)`,
                         width: `calc((100% - 40px) / 7 - 4px)`,
-                        top: `${event.startHour * 20 + 2}px`,
-                        height: `${event.duration * 20 - 4}px`,
+                        top: `calc(${event.startHour} * (100% / 11) + 2px)`,
+                        height: `calc(${event.duration} * (100% / 11) - 4px)`,
                       }}
                     >
                       <p className="font-semibold truncate leading-tight">{event.title}</p>
