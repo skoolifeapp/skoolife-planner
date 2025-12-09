@@ -128,11 +128,20 @@ const parseSmartDateTime = (datetimeStr: string): { hours: number; minutes: numb
   }
 };
 
-const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, onEventClick, onGridClick, onSessionMove, onEventMove }: WeeklyHourGridProps) => {
+export interface ResizeData {
+  endTime: string;
+}
+
+const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, onEventClick, onGridClick, onSessionMove, onEventMove, onSessionResize, onEventResize }: WeeklyHourGridProps & {
+  onSessionResize?: (sessionId: string, data: ResizeData) => void;
+  onEventResize?: (eventId: string, data: ResizeData) => void;
+}) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [draggedItem, setDraggedItem] = useState<{ type: 'session' | 'event'; id: string; duration: number } | null>(null);
   const [dropPreview, setDropPreview] = useState<{ dayIndex: number; top: number; height: number; time: string } | null>(null);
+  const [resizingItem, setResizingItem] = useState<{ type: 'session' | 'event'; id: string; startY: number; originalEndMinutes: number; startMinutes: number } | null>(null);
+  const [resizePreview, setResizePreview] = useState<{ id: string; newEndTime: string; height: number } | null>(null);
 
   // Update current time every minute
   useEffect(() => {
@@ -252,6 +261,63 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
 
     setDraggedItem(null);
     setDropPreview(null);
+  };
+
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent, type: 'session' | 'event', id: string, startMinutes: number, endMinutes: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const startY = e.clientY;
+    let currentPreview: { id: string; newEndTime: string; height: number } | null = null;
+    
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      const deltaMinutes = Math.round((deltaY / HOUR_HEIGHT) * 60 / 15) * 15; // Round to 15 min
+      
+      let newEndMinutes = endMinutes + deltaMinutes;
+      // Minimum duration of 15 minutes
+      if (newEndMinutes < startMinutes + 15) {
+        newEndMinutes = startMinutes + 15;
+      }
+      // Maximum 24:00
+      if (newEndMinutes > 24 * 60) {
+        newEndMinutes = 24 * 60;
+      }
+      
+      const newEndHour = Math.floor(newEndMinutes / 60);
+      const newEndMinute = newEndMinutes % 60;
+      const formatTime = (h: number, m: number) => 
+        `${String(Math.min(23, h)).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      
+      const newHeight = ((newEndMinutes - startMinutes) / 60) * HOUR_HEIGHT;
+      
+      currentPreview = {
+        id,
+        newEndTime: formatTime(newEndHour, newEndMinute),
+        height: newHeight
+      };
+      
+      setResizePreview(currentPreview);
+    };
+    
+    const handleMouseUp = () => {
+      if (currentPreview) {
+        if (type === 'session' && onSessionResize) {
+          onSessionResize(id, { endTime: currentPreview.newEndTime });
+        } else if (type === 'event' && onEventResize) {
+          onEventResize(id, { endTime: currentPreview.newEndTime });
+        }
+      }
+      setResizingItem(null);
+      setResizePreview(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    setResizingItem({ type, id, startY: e.clientY, originalEndMinutes: endMinutes, startMinutes });
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   // Handle click on empty grid area
@@ -485,19 +551,20 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                       <div
                         key={event.id}
                         data-event-id={event.id}
-                        draggable={isDraggable}
+                        draggable={isDraggable && !resizingItem}
                         onDragStart={(e) => handleDragStart(e, 'event', event.id, durationMinutes)}
                         onDragEnd={handleDragEnd}
                         onClick={() => onEventClick?.(event)}
                         className={cn(
-                          "absolute rounded-md px-1 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10 flex flex-col items-start justify-start text-left",
+                          "absolute rounded-md px-1 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10 flex flex-col items-start justify-start text-left group",
                           isClickable && "cursor-pointer transition-all hover:shadow-md",
-                          isDraggable && "cursor-grab active:cursor-grabbing"
+                          isDraggable && !resizingItem && "cursor-grab active:cursor-grabbing"
                         )}
                         style={{
                           ...style,
                           left: `calc(${leftPercent}% + ${gap}px)`,
                           width: `calc(${widthPercent}% - ${gap * 2}px)`,
+                          height: resizePreview?.id === event.id ? `${resizePreview.height}px` : style.height,
                         }}
                         title={`${event.title}\n${formatTimeRange(event.start_datetime, event.end_datetime, true)}`}
                       >
@@ -505,8 +572,17 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                           {event.title}
                         </p>
                         <p className="text-[10px] text-blue-600 dark:text-blue-300">
-                          {formatTimeRange(event.start_datetime, event.end_datetime, true)}
+                          {resizePreview?.id === event.id 
+                            ? `${formatTimeRange(event.start_datetime, event.end_datetime, true).split(' - ')[0]} - ${resizePreview.newEndTime}`
+                            : formatTimeRange(event.start_datetime, event.end_datetime, true)}
                         </p>
+                        {/* Resize handle */}
+                        {onEventResize && (
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity bg-blue-400/50 rounded-b-md"
+                            onMouseDown={(e) => handleResizeStart(e, 'event', event.id, block.startMinutes, block.endMinutes)}
+                          />
+                        )}
                       </div>
                     );
                   } else {
@@ -524,14 +600,14 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                     return (
                       <div
                         key={session.id}
-                        draggable={isDraggable}
+                        draggable={isDraggable && !resizingItem}
                         onDragStart={(e) => handleDragStart(e, 'session', session.id, durationMinutes)}
                         onDragEnd={handleDragEnd}
                         onClick={() => onSessionClick(session)}
                         className={cn(
-                          "absolute rounded-md px-1 py-1 overflow-hidden flex flex-col items-start justify-start text-left transition-all hover:shadow-md z-20",
+                          "absolute rounded-md px-1 py-1 overflow-hidden flex flex-col items-start justify-start text-left transition-all hover:shadow-md z-20 group",
                           isSkipped && "opacity-50",
-                          isDraggable && "cursor-grab active:cursor-grabbing"
+                          isDraggable && !resizingItem && "cursor-grab active:cursor-grabbing"
                         )}
                         style={{
                           ...style,
@@ -539,6 +615,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                           width: `calc(${widthPercent}% - ${gap * 2}px)`,
                           backgroundColor: isDone ? 'rgba(34, 197, 94, 0.15)' : isSkipped ? 'rgba(239, 68, 68, 0.1)' : `${session.subject?.color}25`,
                           borderLeft: `3px solid ${borderColor}`,
+                          height: resizePreview?.id === session.id ? `${resizePreview.height}px` : style.height,
                         }}
                         title={`${session.subject?.name}\n${formatTimeRange(session.start_time, session.end_time)}${isDone ? ' ✓' : isSkipped ? ' ✗' : ''}`}
                       >
@@ -553,8 +630,18 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, onSessionClick, on
                           {isSkipped && <span className="text-red-500 text-xs">✗</span>}
                         </div>
                         <p className="text-[10px] text-muted-foreground">
-                          {formatTimeRange(session.start_time, session.end_time)}
+                          {resizePreview?.id === session.id 
+                            ? `${session.start_time.slice(0, 5)} - ${resizePreview.newEndTime}`
+                            : formatTimeRange(session.start_time, session.end_time)}
                         </p>
+                        {/* Resize handle */}
+                        {onSessionResize && (
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity rounded-b-md"
+                            style={{ backgroundColor: `${borderColor}50` }}
+                            onMouseDown={(e) => handleResizeStart(e, 'session', session.id, block.startMinutes, block.endMinutes)}
+                          />
+                        )}
                       </div>
                     );
                   }

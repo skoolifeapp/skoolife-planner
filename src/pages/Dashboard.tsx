@@ -631,6 +631,51 @@ const Dashboard = () => {
     }
   };
 
+  const handleSessionResize = async (sessionId: string, data: { endTime: string }) => {
+    try {
+      const { error } = await supabase
+        .from('revision_sessions')
+        .update({
+          end_time: data.endTime,
+        })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erreur lors du redimensionnement de la session');
+    }
+  };
+
+  const handleEventResize = async (eventId: string, data: { endTime: string }) => {
+    try {
+      // Get the current event to preserve start_datetime
+      const event = calendarEvents.find(e => e.id === eventId);
+      if (!event) return;
+
+      // Parse the start datetime to get the date
+      const startDate = parseISO(event.start_datetime);
+      const dateStr = format(startDate, 'yyyy-MM-dd');
+      
+      // Create new end datetime
+      const endDatetime = new Date(`${dateStr}T${data.endTime}:00`);
+
+      const { error } = await supabase
+        .from('calendar_events')
+        .update({
+          end_datetime: endDatetime.toISOString(),
+        })
+        .eq('id', eventId);
+
+      if (error) throw error;
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erreur lors du redimensionnement de l\'évènement');
+    }
+  };
+
   const handleSessionStatusUpdate = async (sessionId: string, status: 'done' | 'skipped') => {
     try {
       const { error } = await supabase
@@ -933,6 +978,8 @@ const Dashboard = () => {
               onGridClick={handleGridClick}
               onSessionMove={handleSessionMove}
               onEventMove={handleEventMove}
+              onSessionResize={handleSessionResize}
+              onEventResize={handleEventResize}
             />
 
             {/* Empty state */}
