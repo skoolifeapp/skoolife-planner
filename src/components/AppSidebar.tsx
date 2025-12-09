@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -20,6 +20,7 @@ interface AppSidebarProps {
 
 export const AppSidebar = ({ children }: AppSidebarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
@@ -28,33 +29,37 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
     navigate('/auth');
   };
 
+  const isActive = (path: string) => {
+    if (path === '/app') {
+      return location.pathname === '/app' || location.pathname === '/';
+    }
+    return location.pathname === path;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-full w-64 flex-col bg-card border-r border-border p-6 z-50">
-        <NavLink to="/" className="flex items-center gap-3 mb-10">
+        <Link to="/" className="flex items-center gap-3 mb-10">
           <img src={logo} alt="Skoolife" className="h-9 w-auto" />
           <span className="font-bold text-xl text-foreground">Skoolife</span>
-        </NavLink>
+        </Link>
 
         <nav className="flex-1 space-y-1">
           {NAV_ITEMS.map((item) => (
-            <NavLink
+            <Link
               key={item.path}
               to={item.path}
-              end={item.path === '/app'}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                  isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-secondary/50"
-                )
-              }
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-xl transition-colors",
+                isActive(item.path)
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-secondary/50"
+              )}
             >
               <item.icon className="w-5 h-5" />
               <span>{item.label}</span>
-            </NavLink>
+            </Link>
           ))}
         </nav>
 
@@ -73,10 +78,10 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
 
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-        <NavLink to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="Skoolife" className="h-8 w-auto" />
           <span className="font-bold text-lg text-foreground">Skoolife</span>
-        </NavLink>
+        </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button
@@ -91,26 +96,23 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16 animate-fade-in">
+        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16">
           <nav className="p-4 space-y-2">
             {NAV_ITEMS.map((item) => (
-              <NavLink
+              <Link
                 key={item.path}
                 to={item.path}
-                end={item.path === '/app'}
                 onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-200",
-                    isActive
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-secondary/50"
-                  )
-                }
+                className={cn(
+                  "flex items-center gap-3 px-4 py-4 rounded-xl transition-colors",
+                  isActive(item.path)
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-secondary/50"
+                )}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="text-lg">{item.label}</span>
-              </NavLink>
+              </Link>
             ))}
             <Button
               variant="ghost"
@@ -127,8 +129,8 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
         </div>
       )}
 
-      {/* Main content with transition */}
-      <main className="lg:ml-64 min-h-screen transition-opacity duration-200">
+      {/* Main content */}
+      <main className="lg:ml-64 min-h-screen">
         {children}
       </main>
     </div>

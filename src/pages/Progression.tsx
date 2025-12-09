@@ -47,8 +47,7 @@ interface SubjectStats {
 }
 
 const Progression = () => {
-  const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [currentWeekStats, setCurrentWeekStats] = useState<WeekStats | null>(null);
   const [subjectStats, setSubjectStats] = useState<SubjectStats[]>([]);
   const [weekHistory, setWeekHistory] = useState<WeekStats[]>([]);
@@ -186,7 +185,6 @@ const Progression = () => {
       console.error(err);
     } finally {
       setLoading(false);
-      setInitialLoad(false);
     }
   };
 
@@ -203,7 +201,7 @@ const Progression = () => {
     return "C'est le moment de démarrer !";
   };
 
-  if (initialLoad && loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
