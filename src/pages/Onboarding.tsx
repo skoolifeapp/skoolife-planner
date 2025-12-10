@@ -60,7 +60,7 @@ const Onboarding = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(true);
-  const { user } = useAuth();
+  const { user, checkIsAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Step 1 data
@@ -84,8 +84,16 @@ const Onboarding = () => {
       return;
     }
 
-    // Check if onboarding is already complete
+    // Check if onboarding is already complete or if user is admin
     const checkProfile = async () => {
+      // Check if admin first - admins skip onboarding
+      const isAdminUser = await checkIsAdmin();
+      if (isAdminUser) {
+        navigate('/admin');
+        setCheckingProfile(false);
+        return;
+      }
+
       const { data } = await supabase
         .from('profiles')
         .select('is_onboarding_complete, first_name, last_name')
@@ -102,7 +110,7 @@ const Onboarding = () => {
     };
 
     checkProfile();
-  }, [user, navigate]);
+  }, [user, navigate, checkIsAdmin]);
 
   const addSubject = () => {
     if (!newSubjectName.trim()) return;
