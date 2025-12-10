@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import Progression from "./pages/Progression";
 import Subjects from "./pages/Subjects";
 import Admin from "./pages/Admin";
+import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/progression" element={<Progression />} />
               <Route path="/subjects" element={<Subjects />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
