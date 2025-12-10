@@ -26,13 +26,23 @@ const AdminUsers = () => {
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ['admin-profiles'],
     queryFn: async () => {
+      // Get admin user IDs to exclude them from the list
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      const adminIds = adminRoles?.map(r => r.user_id) || [];
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Profile[];
+      
+      // Filter out admin profiles
+      return (data as Profile[]).filter(p => !adminIds.includes(p.id));
     },
   });
 
