@@ -1,26 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Plus, MousePointer } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface SubjectsTutorialOverlayProps {
   onComplete: () => void;
 }
 
 export const SubjectsTutorialOverlay = ({ onComplete }: SubjectsTutorialOverlayProps) => {
-  const [step, setStep] = useState(1);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     const updateTargetRect = () => {
-      let selector = '';
-      if (step === 1) {
-        selector = '[data-add-subject-button]';
-      } else if (step === 2) {
-        selector = '[data-subject-row="first"]';
-      }
-
-      const element = document.querySelector(selector);
+      const element = document.querySelector('[data-add-subject-button]');
       if (element) {
         setTargetRect(element.getBoundingClientRect());
       } else {
@@ -36,42 +28,13 @@ export const SubjectsTutorialOverlay = ({ onComplete }: SubjectsTutorialOverlayP
       window.removeEventListener('resize', updateTargetRect);
       window.removeEventListener('scroll', updateTargetRect, true);
     };
-  }, [step]);
-
-  const handleNext = () => {
-    if (step === 1) {
-      // Check if there's a subject row for step 2
-      const subjectRow = document.querySelector('[data-subject-row="first"]');
-      if (subjectRow) {
-        setStep(2);
-      } else {
-        onComplete();
-      }
-    } else {
-      onComplete();
-    }
-  };
+  }, []);
 
   const padding = 8;
   const holeX = targetRect ? targetRect.left - padding : 0;
   const holeY = targetRect ? targetRect.top - padding : 0;
   const holeWidth = targetRect ? targetRect.width + padding * 2 : 0;
   const holeHeight = targetRect ? targetRect.height + padding * 2 : 0;
-
-  const stepContent = {
-    1: {
-      icon: <Plus className="w-6 h-6 text-primary" />,
-      title: 'Ajoute ta première matière',
-      description: 'Renseigne tes matières et leurs examens pour que Skoolife puisse générer ton planning de révisions.',
-    },
-    2: {
-      icon: <MousePointer className="w-6 h-6 text-primary" />,
-      title: 'Modifie à tout moment',
-      description: "Clique sur une matière pour ajuster la date d'examen, l'objectif d'heures ou la priorité.",
-    },
-  };
-
-  const current = stepContent[step as keyof typeof stepContent];
 
   // Calculate card position
   let cardStyle: React.CSSProperties = {
@@ -157,35 +120,21 @@ export const SubjectsTutorialOverlay = ({ onComplete }: SubjectsTutorialOverlayP
         <CardContent className="p-5">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              {current.icon}
+              <Plus className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground mb-1">{current.title}</h3>
-              <p className="text-sm text-muted-foreground">{current.description}</p>
+              <h3 className="font-semibold text-foreground mb-1">Ajoute ta première matière</h3>
+              <p className="text-sm text-muted-foreground">Renseigne tes matières et leurs examens pour que Skoolife puisse générer ton planning de révisions.</p>
             </div>
           </div>
           
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-            <span className="text-xs text-muted-foreground">
-              Étape {step}/2
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onComplete}
-              >
-                Passer
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleNext}
-                className="gap-1"
-              >
-                {step === 2 ? 'Compris' : 'Suivant'}
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="flex items-center justify-end mt-4 pt-4 border-t border-border">
+            <Button
+              size="sm"
+              onClick={onComplete}
+            >
+              Compris
+            </Button>
           </div>
         </CardContent>
       </Card>
