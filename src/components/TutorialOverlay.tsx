@@ -90,14 +90,22 @@ export const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
 
   if (targetRect) {
     const cardWidth = 340;
-    const cardHeight = 200;
-    const gap = 20;
+    const cardHeight = 220;
+    const gap = 16;
+    const bottomMargin = 80; // Ensure space from bottom of viewport
 
-    // Position card below or above the target
-    if (targetRect.bottom + cardHeight + gap < window.innerHeight) {
+    // Calculate available space below and above
+    const spaceBelow = window.innerHeight - targetRect.bottom - bottomMargin;
+    const spaceAbove = targetRect.top - gap;
+
+    // Position card below if enough space, otherwise above, otherwise center
+    if (spaceBelow >= cardHeight + gap) {
       cardStyle.top = targetRect.bottom + gap;
-    } else {
+    } else if (spaceAbove >= cardHeight + gap) {
       cardStyle.top = targetRect.top - cardHeight - gap;
+    } else {
+      // Not enough space above or below - position to the right of target
+      cardStyle.top = Math.max(16, Math.min(targetRect.top, window.innerHeight - cardHeight - bottomMargin));
     }
 
     // Center horizontally relative to target
