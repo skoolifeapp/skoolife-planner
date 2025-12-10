@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { HelpCircle, X } from 'lucide-react';
 import SupportDrawer from './SupportDrawer';
 
@@ -14,54 +13,6 @@ const SupportButton = ({ onShowTutorial }: SupportButtonProps) => {
   const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  // Fetch unread admin messages count (only from open conversations)
-  const fetchUnreadCount = async () => {
-    if (!user) {
-      setUnreadCount(0);
-      return;
-    }
-
-    try {
-      // Get user's OPEN conversations only
-      const { data: conversations } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('status', 'open');
-
-      if (!conversations || conversations.length === 0) {
-        setUnreadCount(0);
-        return;
-      }
-
-      const conversationIds = conversations.map(c => c.id);
-
-      // Count unread admin messages from open conversations only
-      const { count } = await supabase
-        .from('conversation_messages')
-        .select('*', { count: 'exact', head: true })
-        .in('conversation_id', conversationIds)
-        .eq('sender_type', 'admin')
-        .eq('read_by_user', false);
-
-      setUnreadCount(count || 0);
-    } catch (err) {
-      console.error('Error fetching unread count:', err);
-    }
-  };
-
-  useEffect(() => {
-    fetchUnreadCount();
-  }, [user]);
-
-  // Refresh count when drawer closes
-  useEffect(() => {
-    if (!drawerOpen) {
-      fetchUnreadCount();
-    }
-  }, [drawerOpen]);
 
   useEffect(() => {
     const checkSupportHint = async () => {
@@ -136,30 +87,20 @@ const SupportButton = ({ onShowTutorial }: SupportButtonProps) => {
       )}
 
       {/* Floating button */}
-      <div className="fixed bottom-4 right-4 z-40">
-        <Button
-          onClick={handleOpenDrawer}
-          className="rounded-full shadow-lg hover:shadow-xl transition-shadow gap-2 px-4"
-          size="lg"
-        >
-          <HelpCircle className="w-5 h-5" />
-          <span className="hidden sm:inline">Besoin d'aide ?</span>
-        </Button>
-        {unreadCount > 0 && (
-          <Badge 
-            className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground"
-          >
-            {unreadCount}
-          </Badge>
-        )}
-      </div>
+      <Button
+        onClick={handleOpenDrawer}
+        className="fixed bottom-4 right-4 z-40 rounded-full shadow-lg hover:shadow-xl transition-shadow gap-2 px-4"
+        size="lg"
+      >
+        <HelpCircle className="w-5 h-5" />
+        <span className="hidden sm:inline">Besoin d'aide ?</span>
+      </Button>
 
       {/* Support drawer */}
       <SupportDrawer 
         open={drawerOpen} 
         onOpenChange={setDrawerOpen}
         onShowTutorial={onShowTutorial}
-        onUnreadCountChange={fetchUnreadCount}
       />
     </>
   );

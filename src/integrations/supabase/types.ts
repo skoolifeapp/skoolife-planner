@@ -129,7 +129,6 @@ export type Database = {
           id: string
           message: string
           read_by_admin: boolean
-          read_by_user: boolean
           sender_id: string
           sender_type: string
         }
@@ -139,7 +138,6 @@ export type Database = {
           id?: string
           message: string
           read_by_admin?: boolean
-          read_by_user?: boolean
           sender_id: string
           sender_type: string
         }
@@ -149,7 +147,6 @@ export type Database = {
           id?: string
           message?: string
           read_by_admin?: boolean
-          read_by_user?: boolean
           sender_id?: string
           sender_type?: string
         }

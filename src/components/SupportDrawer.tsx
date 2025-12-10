@@ -28,7 +28,6 @@ interface SupportDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onShowTutorial?: () => void;
-  onUnreadCountChange?: () => void;
 }
 
 interface Conversation {
@@ -37,7 +36,6 @@ interface Conversation {
   status: string;
   created_at: string;
   updated_at: string;
-  unread_count?: number;
 }
 
 interface Message {
@@ -47,7 +45,7 @@ interface Message {
   created_at: string;
 }
 
-const SupportDrawer = ({ open, onOpenChange, onShowTutorial, onUnreadCountChange }: SupportDrawerProps) => {
+const SupportDrawer = ({ open, onOpenChange, onShowTutorial }: SupportDrawerProps) => {
   const { user } = useAuth();
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -87,22 +85,7 @@ const SupportDrawer = ({ open, onOpenChange, onShowTutorial, onUnreadCountChange
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Fetch unread counts for each conversation
-      const conversationsWithUnread = await Promise.all(
-        (data || []).map(async (conv) => {
-          const { count } = await supabase
-            .from('conversation_messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', conv.id)
-            .eq('sender_type', 'admin')
-            .eq('read_by_user', false);
-          
-          return { ...conv, unread_count: count || 0 };
-        })
-      );
-      
-      setConversations(conversationsWithUnread);
+      setConversations(data || []);
     } catch (err) {
       console.error('Error fetching conversations:', err);
     } finally {
@@ -134,23 +117,6 @@ const SupportDrawer = ({ open, onOpenChange, onShowTutorial, onUnreadCountChange
   const handleSelectConversation = async (conv: Conversation) => {
     setSelectedConversation(conv);
     await fetchMessages(conv.id);
-    
-    // Mark admin messages as read by user
-    const { error } = await supabase
-      .from('conversation_messages')
-      .update({ read_by_user: true })
-      .eq('conversation_id', conv.id)
-      .eq('sender_type', 'admin')
-      .eq('read_by_user', false);
-    
-    if (!error) {
-      // Update local conversation unread count
-      setConversations(prev => 
-        prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
-      );
-      // Notify parent to refresh unread count
-      onUnreadCountChange?.();
-    }
   };
 
   const handleSendMessage = async () => {
@@ -438,12 +404,7 @@ const SupportDrawer = ({ open, onOpenChange, onShowTutorial, onUnreadCountChange
                 className="p-3 rounded-lg border border-border bg-card hover:bg-secondary/50 cursor-pointer transition-colors"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{conv.subject}</span>
-                    {conv.unread_count && conv.unread_count > 0 && (
-                      <span className="w-2 h-2 rounded-full bg-primary" />
-                    )}
-                  </div>
+                  <span className="font-medium text-sm">{conv.subject}</span>
                   <Badge 
                     variant={conv.status === 'open' ? 'default' : 'secondary'}
                     className="text-xs"
