@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Users, Search, GraduationCap, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, Search, GraduationCap, Calendar, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -47,12 +48,44 @@ const AdminUsers = () => {
 
   const completedOnboarding = profiles.filter(p => p.is_onboarding_complete).length;
 
+  const exportToCSV = () => {
+    const headers = ['Prénom', 'Nom', 'Email', 'École', 'Niveau', 'Date inscription', 'Statut'];
+    const rows = filteredProfiles.map(profile => [
+      profile.first_name || '',
+      profile.last_name || '',
+      profile.email || '',
+      profile.school || '',
+      profile.level || '',
+      profile.created_at ? format(new Date(profile.created_at), 'dd/MM/yyyy') : '',
+      profile.is_onboarding_complete ? 'Actif' : 'En cours'
+    ]);
+
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(';'))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `utilisateurs_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AdminSidebar>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Utilisateurs</h1>
-          <p className="text-muted-foreground">Liste des étudiants inscrits sur la plateforme</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Utilisateurs</h1>
+            <p className="text-muted-foreground">Liste des étudiants inscrits sur la plateforme</p>
+          </div>
+          <Button onClick={exportToCSV} variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Exporter CSV
+          </Button>
         </div>
 
         {/* Stats */}
