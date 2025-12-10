@@ -13,7 +13,7 @@ interface AdminSidebarProps {
 
 const NAV_ITEMS = [
   { path: '/admin', label: 'Conversations', icon: MessageSquare },
-  { path: '/admin/users', label: 'Utilisateurs', icon: Users, disabled: true },
+  { path: '/admin/users', label: 'Utilisateurs', icon: Users },
   { path: '/admin/stats', label: 'Statistiques', icon: BarChart3, disabled: true },
 ];
 
