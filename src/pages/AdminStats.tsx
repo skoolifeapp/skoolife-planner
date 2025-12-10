@@ -11,10 +11,11 @@ const AdminStats = () => {
 
   // Subscribe to presence channel for live users count
   useEffect(() => {
-    const channel = supabase.channel('online-users');
+    const channel = supabase.channel('skoolife-presence');
 
     const updateCount = () => {
       const state = channel.presenceState();
+      // Count unique users (each key in presenceState is a user)
       const count = Object.keys(state).length;
       setLiveUsersCount(count);
     };
@@ -25,13 +26,19 @@ const AdminStats = () => {
       .on('presence', { event: 'leave' }, updateCount)
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // Track admin presence to receive sync events
-          await channel.track({ admin: true, online_at: new Date().toISOString() });
-          updateCount();
+          // Admin must also track to see others
+          await channel.track({ 
+            user_id: 'admin',
+            online_at: new Date().toISOString() 
+          });
         }
       });
 
+    // Poll presence state regularly as backup
+    const interval = setInterval(updateCount, 5000);
+
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, []);

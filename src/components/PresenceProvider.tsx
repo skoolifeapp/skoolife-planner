@@ -8,17 +8,11 @@ export const PresenceProvider = ({ children }: { children: React.ReactNode }) =>
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase.channel('online-users', {
-      config: {
-        presence: {
-          key: user.id,
-        },
-      },
-    });
+    const channel = supabase.channel('skoolife-presence');
 
     channel
       .on('presence', { event: 'sync' }, () => {
-        // Presence state synced
+        // Presence synced
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -29,7 +23,18 @@ export const PresenceProvider = ({ children }: { children: React.ReactNode }) =>
         }
       });
 
+    // Keep connection alive with heartbeat
+    const heartbeat = setInterval(async () => {
+      if (channel.state === 'joined') {
+        await channel.track({
+          user_id: user.id,
+          online_at: new Date().toISOString(),
+        });
+      }
+    }, 30000);
+
     return () => {
+      clearInterval(heartbeat);
       supabase.removeChannel(channel);
     };
   }, [user]);
