@@ -133,17 +133,20 @@ const Profile = () => {
 
   return (
     <AppSidebar>
-      <div className="p-4 md:p-8 max-w-2xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-          Mon profil
-        </h1>
+      <div className="flex-1 p-6 md:p-8 space-y-8 overflow-auto">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Mon profil</h1>
+          <p className="text-muted-foreground">
+            Gère tes informations personnelles
+          </p>
+        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
-          <Card>
+          <Card className="border-0 shadow-md max-w-2xl">
             <CardHeader>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
