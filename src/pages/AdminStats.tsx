@@ -13,13 +13,23 @@ const AdminStats = () => {
   useEffect(() => {
     const channel = supabase.channel('online-users');
 
+    const updateCount = () => {
+      const state = channel.presenceState();
+      const count = Object.keys(state).length;
+      setLiveUsersCount(count);
+    };
+
     channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const count = Object.keys(state).length;
-        setLiveUsersCount(count);
-      })
-      .subscribe();
+      .on('presence', { event: 'sync' }, updateCount)
+      .on('presence', { event: 'join' }, updateCount)
+      .on('presence', { event: 'leave' }, updateCount)
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Track admin presence to receive sync events
+          await channel.track({ admin: true, online_at: new Date().toISOString() });
+          updateCount();
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
