@@ -3,12 +3,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, BookOpen, Calendar, MessageSquare, TrendingUp, CheckCircle, Radio } from 'lucide-react';
-import { useLiveUserCount } from '@/hooks/useLiveUserCount';
+import { Users, BookOpen, Calendar, MessageSquare, TrendingUp, CheckCircle } from 'lucide-react';
+import LiveUsersPanel from '@/components/LiveUsersPanel';
 
 const AdminStats = () => {
   const queryClient = useQueryClient();
-  const liveUsersCount = useLiveUserCount();
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-stats'],
@@ -92,7 +91,6 @@ const AdminStats = () => {
   }, [queryClient]);
 
   const statCards = [
-    { title: 'Connectés en live', value: liveUsersCount, icon: Radio, color: 'text-red-500', pulse: true },
     { title: 'Total utilisateurs', value: stats?.totalUsers || 0, icon: Users, color: 'text-blue-500' },
     { title: 'Utilisateurs actifs', value: stats?.activeUsers || 0, icon: CheckCircle, color: 'text-green-500' },
     { title: 'Nouveaux ce mois', value: stats?.newUsersThisMonth || 0, icon: TrendingUp, color: 'text-purple-500' },
@@ -112,15 +110,18 @@ const AdminStats = () => {
           <p className="text-muted-foreground">Vue d'ensemble de la plateforme</p>
         </div>
 
+        {/* Live Users Panel */}
+        <LiveUsersPanel />
+
         {isLoading ? (
           <div className="text-center text-muted-foreground py-12">Chargement...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {statCards.map((stat) => (
-              <Card key={stat.title} className={stat.pulse ? 'ring-1 ring-red-500/30' : ''}>
+              <Card key={stat.title}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                  <stat.icon className={`w-5 h-5 ${stat.color} ${stat.pulse ? 'animate-pulse' : ''}`} />
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">{stat.value}</div>
