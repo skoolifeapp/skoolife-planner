@@ -378,7 +378,7 @@ const Progression = () => {
                         borderRadius: '8px'
                       }}
                     />
-                    <Bar dataKey="doneHours" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="doneHours" radius={[0, 4, 4, 0]} barSize={24}>
                       {subjectStats.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
