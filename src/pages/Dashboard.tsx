@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, getDay } from 'date-fns';
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import ImportCalendarDialog from '@/components/ImportCalendarDialog';
 import EditSessionDialog from '@/components/EditSessionDialog';
@@ -33,7 +33,6 @@ import { EventTutorialOverlay } from '@/components/EventTutorialOverlay';
 import { SessionStatusDialog } from '@/components/SessionStatusDialog';
 import SupportButton from '@/components/SupportButton';
 import AppSidebar from '@/components/AppSidebar';
-import useMobile from '@/hooks/useMobile';
 import type { Profile, Subject, RevisionSession, CalendarEvent } from '@/types/planning';
 
 const Dashboard = () => {
@@ -56,15 +55,6 @@ const Dashboard = () => {
   const [showEventTutorial, setShowEventTutorial] = useState(false);
   const [sessionPopoverOpen, setSessionPopoverOpen] = useState<string | null>(null);
   const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false);
-  
-  // Mobile day view
-  const isMobile = useMobile(1024); // lg breakpoint
-  const [currentDayIndex, setCurrentDayIndex] = useState(() => {
-    // Initialize to today's day index (0=Mon, 6=Sun)
-    const today = new Date();
-    const dayOfWeek = getDay(today);
-    return dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Mon=0, Sun=6
-  });
   
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -816,55 +806,52 @@ const Dashboard = () => {
 
   return (
     <AppSidebar>
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="grid lg:grid-cols-[300px_1fr] gap-6 lg:gap-8">
-          {/* Sidebar - Hidden on mobile, shown in collapsed form */}
-          <aside className="space-y-4 lg:space-y-6">
-            {/* Welcome card - Smaller on mobile */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-[300px_1fr] gap-8">
+          {/* Sidebar */}
+          <aside className="space-y-6">
+            {/* Welcome card */}
             <Card className="border-0 shadow-md bg-gradient-to-br from-primary/10 to-accent/10">
-              <CardContent className="pt-4 lg:pt-6 pb-4">
-                <h2 className="text-xl lg:text-2xl font-bold mb-1 lg:mb-2">
+              <CardContent className="pt-6">
+                <h2 className="text-2xl font-bold mb-2">
                   Bonjour {profile?.first_name} 👋
                 </h2>
-                <p className="text-muted-foreground text-xs lg:text-sm">
+                <p className="text-muted-foreground text-sm">
                   Prêt pour une session productive ?
                 </p>
               </CardContent>
             </Card>
 
-            {/* Stats - Horizontal on mobile, vertical on desktop */}
-            <div className="flex lg:block gap-3 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-              <Card className="border-0 shadow-md flex-shrink-0 min-w-[140px] lg:min-w-0 lg:w-full">
-                <CardContent className="p-3 lg:p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Clock className="w-4 h-4 lg:w-5 lg:h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-lg lg:text-2xl font-bold">{totalPlannedHours}h</p>
-                      <p className="text-[10px] lg:text-xs text-muted-foreground">planifiées</p>
-                    </div>
+            {/* Stats */}
+            <Card className="border-0 shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Cette semaine</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-primary" />
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-md flex-shrink-0 min-w-[140px] lg:min-w-0 lg:w-full lg:mt-4">
-                <CardContent className="p-3 lg:p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-subject-green/10 flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4 lg:w-5 lg:h-5 text-subject-green" />
-                    </div>
-                    <div>
-                      <p className="text-lg lg:text-2xl font-bold">{completedSessions}</p>
-                      <p className="text-[10px] lg:text-xs text-muted-foreground">terminées</p>
-                    </div>
+                  <div>
+                    <p className="text-2xl font-bold">{totalPlannedHours}h</p>
+                    <p className="text-xs text-muted-foreground">planifiées</p>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-subject-green/10 flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5 text-subject-green" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{completedSessions}</p>
+                    <p className="text-xs text-muted-foreground">sessions terminées</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Upcoming exams - Hidden on mobile */}
+            {/* Upcoming exams */}
             {upcomingExams.length > 0 && (
-              <Card className="border-0 shadow-md hidden lg:block">
+              <Card className="border-0 shadow-md">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Target className="w-4 h-4" />
@@ -890,8 +877,8 @@ const Dashboard = () => {
               </Card>
             )}
 
-            {/* Actions - Desktop only */}
-            <div className="hidden lg:block space-y-3">
+            {/* Actions */}
+            <div className="space-y-3">
               <Button 
                 id="generate-planning-btn"
                 variant="hero" 
@@ -947,41 +934,28 @@ const Dashboard = () => {
           </aside>
 
           {/* Calendar */}
-          <div className="space-y-3 lg:space-y-4">
-            {/* Week navigation - Simplified on mobile */}
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-base lg:text-xl font-bold truncate">
+          <div className="space-y-4">
+            {/* Week navigation */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">
                 Semaine du {format(weekStart, 'dd MMM', { locale: fr })}
               </h2>
-              <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
-                {/* Add event button - Icon only on mobile */}
+              <div className="flex items-center gap-2">
                 <Button 
                   id="add-event-btn"
                   variant="outline" 
                   size="sm"
                   onClick={() => setAddEventDialogOpen(true)}
-                  className="hidden sm:flex"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="hidden md:inline">Ajouter un évènement</span>
+                  Ajouter un évènement
                 </Button>
-                <Button 
-                  id="add-event-btn-mobile"
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => setAddEventDialogOpen(true)}
-                  className="sm:hidden h-8 w-8"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-                
-                {/* Delete all button - Hidden on mobile */}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
                       variant="outline" 
                       size="icon"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50 hidden lg:flex h-8 w-8"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50"
                       disabled={calendarEvents.length === 0}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1012,13 +986,10 @@ const Dashboard = () => {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                
-                {/* Week navigation */}
                 <Button 
                   variant="outline" 
                   size="icon"
                   onClick={() => setWeekStart(subWeeks(weekStart, 1))}
-                  className="h-8 w-8"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
@@ -1026,15 +997,13 @@ const Dashboard = () => {
                   variant="outline" 
                   size="sm"
                   onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-                  className="text-xs h-8 px-2"
                 >
-                  Auj.
+                  Aujourd'hui
                 </Button>
                 <Button 
                   variant="outline" 
                   size="icon"
                   onClick={() => setWeekStart(addWeeks(weekStart, 1))}
-                  className="h-8 w-8"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -1062,65 +1031,8 @@ const Dashboard = () => {
               onEventMove={handleEventMove}
               onSessionResize={handleSessionResize}
               onEventResize={handleEventResize}
-              viewMode={isMobile ? 'day' : 'week'}
-              currentDayIndex={currentDayIndex}
-              onDayIndexChange={setCurrentDayIndex}
             />
 
-            {/* Mobile Actions - Fixed at bottom */}
-            <div className="lg:hidden grid grid-cols-2 gap-2 pt-2">
-              <Button 
-                id="generate-planning-btn-mobile"
-                variant="hero" 
-                size="default" 
-                className="w-full text-sm"
-                onClick={generatePlanning}
-                disabled={generating || adjusting}
-              >
-                {generating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
-                )}
-                <span className="truncate">{generating ? 'Génération...' : 'Générer'}</span>
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="default" 
-                className="w-full text-sm"
-                onClick={adjustWeek}
-                disabled={adjusting || generating}
-              >
-                {adjusting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4" />
-                )}
-                <span className="truncate">{adjusting ? 'Ajustement...' : 'Ajuster'}</span>
-              </Button>
-              <Button 
-                id="import-calendar-btn-mobile"
-                variant="outline" 
-                size="default" 
-                className="w-full text-sm"
-                onClick={() => setImportDialogOpen(true)}
-              >
-                <Upload className="w-4 h-4" />
-                <span className="truncate">Importer .ics</span>
-              </Button>
-              <Button 
-                id="manage-subjects-btn-mobile"
-                variant="outline" 
-                size="default" 
-                className="w-full text-sm"
-                asChild
-              >
-                <Link to="/subjects">
-                  <GraduationCap className="w-4 h-4" />
-                  <span className="truncate">Matières</span>
-                </Link>
-              </Button>
-            </div>
           </div>
         </div>
       </div>

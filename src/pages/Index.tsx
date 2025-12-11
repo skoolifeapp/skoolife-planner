@@ -34,39 +34,39 @@ const Index = () => {
       </header>
 
       {/* Hero */}
-      <main className="relative pt-16 sm:pt-20">
+      <main className="relative pt-20">
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-48 sm:w-72 h-48 sm:h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
-          <div className="absolute top-40 right-10 sm:right-20 w-64 sm:w-96 h-64 sm:h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-soft delay-1000" />
-          <div className="absolute bottom-20 left-1/3 w-48 sm:w-64 h-48 sm:h-64 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
+          <div className="absolute top-40 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-soft delay-1000" />
+          <div className="absolute bottom-20 left-1/3 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 pt-8 sm:pt-16 pb-20 sm:pb-32">
+        <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-32">
           {/* Hero Section with Text + 3D Dashboard */}
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
             {/* Left - Text Content */}
             <div className="flex-1 text-center lg:text-left">
               {/* Main heading */}
-              <div className="space-y-4 sm:space-y-6 animate-slide-up">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight">
+              <div className="space-y-6 animate-slide-up">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-foreground leading-tight">
                   Tes révisions,
                   <br />
                   <span className="gradient-text-animated">
                     enfin organisées
                   </span>
                 </h1>
-                <p className="max-w-xl mx-auto lg:mx-0 text-base sm:text-lg md:text-xl text-muted-foreground">
+                <p className="max-w-xl text-lg sm:text-xl text-muted-foreground">
                   Skoolife génère automatiquement ton planning de révisions personnalisé 
                   en fonction de tes examens, ton emploi du temps et ton rythme.
                 </p>
               </div>
 
               {/* CTA */}
-              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-3 sm:gap-4 mt-8 sm:mt-10 animate-slide-up">
-                <Link to="/auth" className="w-full sm:w-auto">
-                  <Button variant="hero" size="xl" className="w-full sm:w-auto">
-                    Tester gratuitement
+              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mt-10 animate-slide-up">
+                <Link to="/auth">
+                  <Button variant="hero" size="xl">
+                    Commencer gratuitement
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
@@ -77,7 +77,7 @@ const Index = () => {
             </div>
 
             {/* Right - 3D Mini Dashboard */}
-            <div className="flex-1 w-full max-w-sm sm:max-w-md lg:max-w-none mx-auto lg:mx-0 animate-slide-up">
+            <div className="flex-1 w-full lg:w-auto animate-slide-up">
               <HeroMiniDashboard3D />
             </div>
           </div>
