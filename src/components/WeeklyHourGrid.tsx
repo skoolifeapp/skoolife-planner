@@ -29,6 +29,7 @@ interface WeeklyHourGridProps {
   sessions: RevisionSession[];
   calendarEvents: CalendarEvent[];
   exams?: ExamInfo[];
+  isPastWeek?: boolean;
   onSessionClick: (session: RevisionSession) => void;
   onEventClick?: (event: CalendarEvent) => void;
   onGridClick?: (data: GridClickData) => void;
@@ -143,7 +144,7 @@ export interface ResizeData {
   endTime?: string;
 }
 
-const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSessionClick, onEventClick, onGridClick, onSessionMove, onEventMove, onSessionResize, onEventResize }: WeeklyHourGridProps & {
+const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], isPastWeek = false, onSessionClick, onEventClick, onGridClick, onSessionMove, onEventMove, onSessionResize, onEventResize }: WeeklyHourGridProps & {
   onSessionResize?: (sessionId: string, data: ResizeData) => void;
   onEventResize?: (eventId: string, data: ResizeData) => void;
 }) => {
@@ -462,7 +463,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
   };
 
   return (
-    <div className="border border-border rounded-xl overflow-hidden bg-card">
+    <div className={`border border-border rounded-xl overflow-hidden bg-card relative ${isPastWeek ? 'opacity-60 pointer-events-none' : ''}`}>
       {/* Header row with days */}
       <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
         <div className="p-2 bg-secondary/30 border-r border-border" />
