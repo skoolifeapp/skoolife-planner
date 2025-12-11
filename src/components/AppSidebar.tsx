@@ -36,6 +36,11 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
     return location.pathname === path;
   };
 
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
@@ -97,7 +102,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+      <header className="lg:hidden sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="Skoolife" className="h-8 w-auto rounded-lg" />
           <span className="font-bold text-lg text-foreground">Skoolife</span>
@@ -134,15 +139,14 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16">
-          <nav className="p-4 space-y-2">
+        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16 overflow-y-auto">
+          <nav className="p-4 space-y-2 pb-20">
             {NAV_ITEMS.map((item) => (
-              <Link
+              <button
                 key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => handleNavClick(item.path)}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-4 rounded-xl transition-colors",
+                  "w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-colors text-left",
                   isActive(item.path)
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:bg-secondary/50"
@@ -150,7 +154,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
               >
                 <item.icon className="w-5 h-5" />
                 <span className="text-lg">{item.label}</span>
-              </Link>
+              </button>
             ))}
             <Button
               variant="ghost"
@@ -168,9 +172,38 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
       )}
 
       {/* Main content */}
-      <main className="lg:ml-56 min-h-screen">
+      <main className="lg:ml-56 min-h-screen pb-20 lg:pb-0">
         {children}
       </main>
+
+      {/* Bottom Navigation Bar - Mobile Only */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 border-t border-border bg-card/95 backdrop-blur-sm z-40 safe-area-pb">
+        <div className="flex justify-around items-center py-2">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.path);
+            return (
+              <button
+                key={item.path}
+                onClick={() => handleNavClick(item.path)}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[64px]",
+                  active 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <div className="relative">
+                  {active && (
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full" />
+                  )}
+                  <item.icon className="w-5 h-5" />
+                </div>
+                <span className={cn("text-xs", active && "font-medium")}>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 };

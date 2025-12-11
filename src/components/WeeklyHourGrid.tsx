@@ -2,7 +2,8 @@ import { format, isSameDay, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useEffect, useRef, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { RevisionSession, CalendarEvent, Subject } from '@/types/planning';
 
 export interface GridClickData {
@@ -34,6 +35,10 @@ interface WeeklyHourGridProps {
   onGridClick?: (data: GridClickData) => void;
   onSessionMove?: (sessionId: string, data: DragDropData) => void;
   onEventMove?: (eventId: string, data: DragDropData) => void;
+  // Mobile day view props
+  viewMode?: 'week' | 'day';
+  currentDayIndex?: number;
+  onDayIndexChange?: (index: number) => void;
 }
 
 // Grid configuration - Full 24h display
@@ -143,7 +148,22 @@ export interface ResizeData {
   endTime?: string;
 }
 
-const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSessionClick, onEventClick, onGridClick, onSessionMove, onEventMove, onSessionResize, onEventResize }: WeeklyHourGridProps & {
+const WeeklyHourGrid = ({ 
+  weekDays, 
+  sessions, 
+  calendarEvents, 
+  exams = [], 
+  onSessionClick, 
+  onEventClick, 
+  onGridClick, 
+  onSessionMove, 
+  onEventMove, 
+  onSessionResize, 
+  onEventResize,
+  viewMode = 'week',
+  currentDayIndex = 0,
+  onDayIndexChange
+}: WeeklyHourGridProps & {
   onSessionResize?: (sessionId: string, data: ResizeData) => void;
   onEventResize?: (eventId: string, data: ResizeData) => void;
 }) => {
@@ -154,6 +174,10 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
   const [resizingItem, setResizingItem] = useState<{ type: 'session' | 'event'; id: string; direction: 'top' | 'bottom' } | null>(null);
   const [resizePreview, setResizePreview] = useState<{ id: string; newStartTime?: string; newEndTime?: string; top?: number; height: number } | null>(null);
   const justResizedRef = useRef(false);
+
+  // Determine which days to display
+  const displayDays = viewMode === 'day' ? [weekDays[currentDayIndex]] : weekDays;
+  const isSingleDayView = viewMode === 'day';
 
   // Update current time every minute
   useEffect(() => {
@@ -176,6 +200,19 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
     const hours = currentTime.getHours();
     const minutes = currentTime.getMinutes();
     return (hours - START_HOUR) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
+  };
+
+  // Day navigation for mobile
+  const goToPreviousDay = () => {
+    if (currentDayIndex > 0 && onDayIndexChange) {
+      onDayIndexChange(currentDayIndex - 1);
+    }
+  };
+
+  const goToNextDay = () => {
+    if (currentDayIndex < 6 && onDayIndexChange) {
+      onDayIndexChange(currentDayIndex + 1);
+    }
   };
 
   // Drag handlers
@@ -239,7 +276,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
     }
   };
 
-  const handleDrop = (e: React.DragEvent, day: Date) => {
+  const handleDrop = (e: React.DragEvent, day: Date, dayIndex: number) => {
     e.preventDefault();
     if (!draggedItem) return;
 
@@ -461,95 +498,180 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
     return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`;
   };
 
+  // Helper cn function if not imported
+  const cn = (...classes: (string | boolean | undefined)[]) => {
+    return classes.filter(Boolean).join(' ');
+  };
+
   return (
     <div className="border border-border rounded-xl overflow-hidden bg-card">
-      {/* Header row with days */}
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
-        <div className="p-2 bg-secondary/30 border-r border-border" />
-        {weekDays.map((day, index) => {
-          const isToday = isSameDay(day, new Date());
-          const dayExams = getExamsForDay(day);
-          return (
-            <div 
-              key={index}
-              className={`text-center border-r border-border last:border-r-0 min-w-0 ${
-                isToday ? 'bg-primary/10' : 'bg-secondary/30'
-              }`}
-            >
-              <div className="p-3">
-                <p className="text-xs text-muted-foreground uppercase">
-                  {format(day, 'EEE', { locale: fr })}
-                </p>
-                <p className={`text-lg font-bold ${isToday ? 'text-primary' : ''}`}>
-                  {format(day, 'd')}
-                </p>
-              </div>
-              {/* Exam banners */}
-              {dayExams.length > 0 && (
-                <div className="px-1 pb-1 space-y-1">
-                  {dayExams.map((exam) => {
-                    const examDate = parseISO(exam.exam_date);
-                    const daysUntil = differenceInDays(examDate, new Date());
-                    const daysLabel = daysUntil === 0 ? "Aujourd'hui" : daysUntil === 1 ? "Demain" : `Dans ${daysUntil} jours`;
-                    
-                    return (
-                      <Popover key={exam.id}>
-                        <PopoverTrigger asChild>
-                          <div 
-                            className="px-2 py-1 rounded-md text-xs font-medium min-w-0 text-left cursor-pointer hover:opacity-80 transition-opacity"
-                            style={{ 
-                              backgroundColor: exam.color + '20',
-                              borderLeft: `3px solid ${exam.color}`
-                            }}
-                          >
-                            <span className="truncate block min-w-0 text-left" style={{ color: exam.color }}>
-                              {exam.name}
-                            </span>
-                          </div>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-3" align="start">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-3 h-3 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: exam.color }}
-                              />
-                              <h4 className="font-semibold text-sm">{exam.name}</h4>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="w-4 h-4" />
-                              <span>{format(examDate, 'EEEE d MMMM yyyy', { locale: fr })}</span>
-                            </div>
+      {/* Mobile Day Navigation Header */}
+      {isSingleDayView && (
+        <div className="flex items-center justify-between p-3 border-b border-border bg-secondary/30">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPreviousDay}
+            disabled={currentDayIndex === 0}
+            className="h-9 w-9"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <div className="text-center">
+            <p className="font-semibold capitalize">
+              {format(weekDays[currentDayIndex], 'EEEE', { locale: fr })}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {format(weekDays[currentDayIndex], 'd MMMM', { locale: fr })}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNextDay}
+            disabled={currentDayIndex === 6}
+            className="h-9 w-9"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
+      )}
+
+      {/* Header row with days - only show in week view */}
+      {!isSingleDayView && (
+        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
+          <div className="p-2 bg-secondary/30 border-r border-border" />
+          {displayDays.map((day, index) => {
+            const isToday = isSameDay(day, new Date());
+            const dayExams = getExamsForDay(day);
+            return (
+              <div 
+                key={index}
+                className={`text-center border-r border-border last:border-r-0 min-w-0 ${
+                  isToday ? 'bg-primary/10' : 'bg-secondary/30'
+                }`}
+              >
+                <div className="p-3">
+                  <p className="text-xs text-muted-foreground uppercase">
+                    {format(day, 'EEE', { locale: fr })}
+                  </p>
+                  <p className={`text-lg font-bold ${isToday ? 'text-primary' : ''}`}>
+                    {format(day, 'd')}
+                  </p>
+                </div>
+                {/* Exam banners */}
+                {dayExams.length > 0 && (
+                  <div className="px-1 pb-1 space-y-1">
+                    {dayExams.map((exam) => {
+                      const examDate = parseISO(exam.exam_date);
+                      const daysUntil = differenceInDays(examDate, new Date());
+                      const daysLabel = daysUntil === 0 ? "Aujourd'hui" : daysUntil === 1 ? "Demain" : `Dans ${daysUntil} jours`;
+                      
+                      return (
+                        <Popover key={exam.id}>
+                          <PopoverTrigger asChild>
                             <div 
-                              className="text-xs font-medium px-2 py-1 rounded-md w-fit"
+                              className="px-2 py-1 rounded-md text-xs font-medium min-w-0 text-left cursor-pointer hover:opacity-80 transition-opacity"
                               style={{ 
                                 backgroundColor: exam.color + '20',
-                                color: exam.color
+                                borderLeft: `3px solid ${exam.color}`
                               }}
                             >
-                              {daysLabel}
+                              <span className="truncate block min-w-0 text-left" style={{ color: exam.color }}>
+                                {exam.name}
+                              </span>
                             </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-3" align="start">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-3 h-3 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: exam.color }}
+                                />
+                                <h4 className="font-semibold text-sm">{exam.name}</h4>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Calendar className="w-4 h-4" />
+                                <span>{format(examDate, 'EEEE d MMMM yyyy', { locale: fr })}</span>
+                              </div>
+                              <div 
+                                className="text-xs font-medium px-2 py-1 rounded-md w-fit"
+                                style={{ 
+                                  backgroundColor: exam.color + '20',
+                                  color: exam.color
+                                }}
+                              >
+                                {daysLabel}
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Single day header with exams - for mobile view */}
+      {isSingleDayView && (
+        <>
+          {(() => {
+            const dayExams = getExamsForDay(weekDays[currentDayIndex]);
+            if (dayExams.length === 0) return null;
+            return (
+              <div className="px-3 py-2 border-b border-border bg-secondary/20">
+                {dayExams.map((exam) => {
+                  const examDate = parseISO(exam.exam_date);
+                  const daysUntil = differenceInDays(examDate, new Date());
+                  const daysLabel = daysUntil === 0 ? "Aujourd'hui" : daysUntil === 1 ? "Demain" : `J-${daysUntil}`;
+                  
+                  return (
+                    <div 
+                      key={exam.id}
+                      className="flex items-center justify-between px-3 py-2 rounded-md"
+                      style={{ 
+                        backgroundColor: exam.color + '15',
+                        borderLeft: `3px solid ${exam.color}`
+                      }}
+                    >
+                      <span className="font-medium text-sm" style={{ color: exam.color }}>
+                        📚 Examen: {exam.name}
+                      </span>
+                      <span 
+                        className="text-xs font-medium px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: exam.color + '25', color: exam.color }}
+                      >
+                        {daysLabel}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </>
+      )}
 
       {/* Scrollable time grid */}
-      <div ref={scrollContainerRef} className="overflow-y-auto max-h-[600px]">
-        <div className="grid grid-cols-[60px_repeat(7,1fr)]">
+      <div ref={scrollContainerRef} className={cn("overflow-y-auto", isSingleDayView ? "max-h-[70vh]" : "max-h-[600px]")}>
+        <div className={cn(
+          "grid",
+          isSingleDayView ? "grid-cols-[50px_1fr]" : "grid-cols-[60px_repeat(7,1fr)]"
+        )}>
           {/* Hour labels column */}
           <div className="border-r border-border">
             {HOURS.map(hour => (
               <div 
                 key={hour}
-                className="border-b border-border/50 text-xs text-muted-foreground flex items-start justify-end pr-2 pt-1"
+                className={cn(
+                  "border-b border-border/50 text-xs text-muted-foreground flex items-start justify-end pr-2 pt-1",
+                  isSingleDayView && "pr-1"
+                )}
                 style={{ height: HOUR_HEIGHT }}
               >
                 {hour}:00
@@ -558,7 +680,8 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
           </div>
 
           {/* Day columns */}
-          {weekDays.map((day, dayIndex) => {
+          {displayDays.map((day, dayIndex) => {
+            const actualDayIndex = isSingleDayView ? currentDayIndex : dayIndex;
             const daySessions = getSessionsForDay(day);
             const dayEvents = getEventsForDay(day);
             const isToday = isSameDay(day, new Date());
@@ -594,9 +717,11 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
             return (
               <div 
                 key={dayIndex}
-                className={`relative border-r border-border last:border-r-0 cursor-pointer ${
-                  isToday ? 'bg-primary/5' : ''
-                } ${draggedItem ? 'bg-primary/5' : ''}`}
+                className={cn(
+                  "relative border-r border-border last:border-r-0 cursor-pointer",
+                  isToday && 'bg-primary/5',
+                  draggedItem && 'bg-primary/5'
+                )}
                 onClick={(e) => {
                   // Don't trigger if we just resized
                   if (justResizedRef.current) return;
@@ -605,9 +730,9 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                   if ((e.target as HTMLElement).closest('[data-event-id]')) return;
                   handleGridClick(e, day);
                 }}
-                onDragOver={(e) => handleDragOver(e, dayIndex)}
+                onDragOver={(e) => handleDragOver(e, actualDayIndex)}
                 onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, day)}
+                onDrop={(e) => handleDrop(e, day, actualDayIndex)}
               >
                 {/* Hour grid lines */}
                 {HOURS.map(hour => (
@@ -619,7 +744,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                 ))}
 
                 {/* Drop preview */}
-                {dropPreview && dropPreview.dayIndex === dayIndex && (
+                {dropPreview && dropPreview.dayIndex === actualDayIndex && (
                   <div 
                     className="absolute left-1 right-1 rounded-md border-2 border-dashed border-primary bg-primary/20 z-25 pointer-events-none flex items-center justify-center"
                     style={{ 
@@ -648,14 +773,14 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                 {positionedBlocks.map((block) => {
                   const widthPercent = 100 / block.totalColumns;
                   const leftPercent = block.column * widthPercent;
-                  const gap = 2; // px gap between columns
+                  const gap = isSingleDayView ? 4 : 2; // px gap between columns
                   const durationMinutes = block.endMinutes - block.startMinutes;
 
                   if (block.type === 'event') {
                     const event = block.data as CalendarEvent;
                     const style = getItemStyle(event.start_datetime, event.end_datetime, true);
                     const isClickable = !!onEventClick;
-                    const isDraggable = !!onEventMove;
+                    const isDraggable = !!onEventMove && !isSingleDayView; // Disable drag on mobile
                     
                     return (
                       <div
@@ -666,7 +791,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                         onDragEnd={handleDragEnd}
                         onClick={() => { if (!justResizedRef.current) onEventClick?.(event); }}
                         className={cn(
-                          "absolute rounded-md px-1 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10 flex flex-col items-start justify-start text-left group",
+                          "absolute rounded-md px-2 py-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 z-10 flex flex-col items-start justify-start text-left group",
                           isClickable && "cursor-pointer transition-all hover:shadow-md",
                           isDraggable && !resizingItem && "cursor-grab active:cursor-grabbing"
                         )}
@@ -679,23 +804,29 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                         }}
                         title={`${event.title}\n${formatTimeRange(event.start_datetime, event.end_datetime, true)}`}
                       >
-                        {/* Top resize handle - only visible when hovering near top */}
-                        {onEventResize && (
+                        {/* Top resize handle - only visible when hovering near top (desktop only) */}
+                        {onEventResize && !isSingleDayView && (
                           <div
                             className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize hover:bg-blue-400/50 rounded-t-md transition-colors"
                             onMouseDown={(e) => handleResizeStart(e, 'event', event.id, block.startMinutes, block.endMinutes, 'top')}
                           />
                         )}
-                        <p className="text-xs font-medium text-blue-800 dark:text-blue-200 truncate w-full pt-1">
+                        <p className={cn(
+                          "font-medium text-blue-800 dark:text-blue-200 truncate w-full pt-1",
+                          isSingleDayView ? "text-sm" : "text-xs"
+                        )}>
                           {event.title}
                         </p>
-                        <p className="text-[10px] text-blue-600 dark:text-blue-300">
+                        <p className={cn(
+                          "text-blue-600 dark:text-blue-300",
+                          isSingleDayView ? "text-xs" : "text-[10px]"
+                        )}>
                           {resizePreview?.id === event.id 
                             ? `${resizePreview.newStartTime || formatTimeRange(event.start_datetime, event.end_datetime, true).split(' - ')[0]} - ${resizePreview.newEndTime || formatTimeRange(event.start_datetime, event.end_datetime, true).split(' - ')[1]}`
                             : formatTimeRange(event.start_datetime, event.end_datetime, true)}
                         </p>
-                        {/* Bottom resize handle - only visible when hovering near bottom */}
-                        {onEventResize && (
+                        {/* Bottom resize handle - only visible when hovering near bottom (desktop only) */}
+                        {onEventResize && !isSingleDayView && (
                           <div
                             className="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize hover:bg-blue-400/50 rounded-b-md transition-colors"
                             onMouseDown={(e) => handleResizeStart(e, 'event', event.id, block.startMinutes, block.endMinutes, 'bottom')}
@@ -708,7 +839,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                     const style = getItemStyle(session.start_time, session.end_time, false);
                     const isDone = session.status === 'done';
                     const isSkipped = session.status === 'skipped';
-                    const isDraggable = !!onSessionMove;
+                    const isDraggable = !!onSessionMove && !isSingleDayView; // Disable drag on mobile
                     
                     // Determine border color based on status
                     let borderColor = session.subject?.color || '#FFC107';
@@ -723,7 +854,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                         onDragEnd={handleDragEnd}
                         onClick={() => { if (!justResizedRef.current) onSessionClick(session); }}
                         className={cn(
-                          "absolute rounded-md px-1 py-1 overflow-hidden flex flex-col items-start justify-start text-left transition-all hover:shadow-md z-20 group",
+                          "absolute rounded-md px-2 py-1 overflow-hidden flex flex-col items-start justify-start text-left transition-all hover:shadow-md z-20 group",
                           isSkipped && "opacity-50",
                           isDraggable && !resizingItem && "cursor-grab active:cursor-grabbing"
                         )}
@@ -738,8 +869,8 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                         }}
                         title={`${session.subject?.name}\n${formatTimeRange(session.start_time, session.end_time)}${isDone ? ' ✓' : isSkipped ? ' ✗' : ''}`}
                       >
-                        {/* Top resize handle - only visible when hovering near top */}
-                        {onSessionResize && (
+                        {/* Top resize handle - only visible when hovering near top (desktop only) */}
+                        {onSessionResize && !isSingleDayView && (
                           <div
                             className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize rounded-t-md transition-colors hover:opacity-100 opacity-0"
                             style={{ backgroundColor: `${borderColor}50` }}
@@ -748,7 +879,11 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                         )}
                         <div className="flex items-center gap-1 w-full pt-1">
                           <p 
-                            className={`text-xs font-semibold truncate flex-1 ${isDone ? 'line-through' : ''}`}
+                            className={cn(
+                              "font-semibold truncate flex-1",
+                              isDone && 'line-through',
+                              isSingleDayView ? "text-sm" : "text-xs"
+                            )}
                             style={{ color: isDone ? '#22c55e' : isSkipped ? '#ef4444' : session.subject?.color }}
                           >
                             {session.subject?.name}
@@ -756,13 +891,16 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
                           {isDone && <span className="text-green-500 text-xs">✓</span>}
                           {isSkipped && <span className="text-red-500 text-xs">✗</span>}
                         </div>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className={cn(
+                          "text-muted-foreground",
+                          isSingleDayView ? "text-xs" : "text-[10px]"
+                        )}>
                           {resizePreview?.id === session.id 
                             ? `${resizePreview.newStartTime || session.start_time.slice(0, 5)} - ${resizePreview.newEndTime || session.end_time.slice(0, 5)}`
                             : formatTimeRange(session.start_time, session.end_time)}
                         </p>
-                        {/* Bottom resize handle - only visible when hovering near bottom */}
-                        {onSessionResize && (
+                        {/* Bottom resize handle - only visible when hovering near bottom (desktop only) */}
+                        {onSessionResize && !isSingleDayView && (
                           <div
                             className="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize rounded-b-md transition-colors hover:opacity-100 opacity-0"
                             style={{ backgroundColor: `${borderColor}50` }}
@@ -781,10 +919,5 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], onSess
     </div>
   );
 };
-
-// Helper cn function if not imported
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
-}
 
 export default WeeklyHourGrid;
