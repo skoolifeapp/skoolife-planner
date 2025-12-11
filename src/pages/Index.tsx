@@ -66,7 +66,7 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row items-center lg:items-start gap-3 sm:gap-4 mt-8 sm:mt-10 animate-slide-up">
                 <Link to="/auth" className="w-full sm:w-auto">
                   <Button variant="hero" size="xl" className="w-full sm:w-auto">
-                    Commencer gratuitement
+                    Tester gratuitement
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
