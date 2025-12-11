@@ -315,9 +315,18 @@ const Dashboard = () => {
           });
 
           if (!hasConflict) {
+            // Filter subjects that still have exams after this date
+            const eligibleSubjects = sortedSubjects.filter(s => {
+              if (!s.exam_date) return true; // No exam date = always eligible
+              const examDate = parseISO(s.exam_date);
+              return currentDate < examDate; // Only if session date is BEFORE exam date
+            });
+            
+            if (eligibleSubjects.length === 0) continue; // No subject to assign for this day
+            
             // Select subject based on weighted distribution
-            const subjectIndex = sessionIndex % sortedSubjects.length;
-            const subject = sortedSubjects[subjectIndex];
+            const subjectIndex = sessionIndex % eligibleSubjects.length;
+            const subject = eligibleSubjects[subjectIndex];
 
             newSessions.push({
               user_id: user.id,
@@ -558,8 +567,17 @@ const Dashboard = () => {
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
           };
 
+          // Filter subjects whose exam is after this date
+          const eligibleSubjects = subjectsNeedingHours.filter(s => {
+            if (!s.exam_date) return true;
+            const examDate = parseISO(s.exam_date);
+            return currentDate < examDate;
+          });
+          
+          if (eligibleSubjects.length === 0) continue; // No subject to assign for this day
+          
           // Pick subject using round-robin based on priority
-          const subject = subjectsNeedingHours[subjectIndex % subjectsNeedingHours.length];
+          const subject = eligibleSubjects[subjectIndex % eligibleSubjects.length];
 
           newSessions.push({
             user_id: user.id,
