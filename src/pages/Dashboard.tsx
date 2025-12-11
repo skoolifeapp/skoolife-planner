@@ -1086,6 +1086,7 @@ const Dashboard = () => {
                   exam_date: s.exam_date!
                 }))
               }
+              isPastWeek={isPastWeek}
               onSessionClick={handleSessionClick}
               onEventClick={setSelectedEvent}
               onGridClick={handleGridClick}
