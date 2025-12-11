@@ -72,9 +72,7 @@ const Onboarding = () => {
         .maybeSingle();
 
       if (data?.is_onboarding_complete) {
-        // Redirect to /today on mobile, /app on desktop
-        const isMobile = window.innerWidth < 768;
-        navigate(isMobile ? '/today' : '/app');
+        navigate('/app');
       } else if (data?.first_name) {
         setFirstName(data.first_name);
         setLastName(data.last_name || '');
@@ -112,9 +110,7 @@ const Onboarding = () => {
 
       if (profileError) throw profileError;
 
-      // Redirect to /today on mobile, /app on desktop
-      const isMobile = window.innerWidth < 768;
-      navigate(isMobile ? '/today' : '/app');
+      navigate('/app');
     } catch (err) {
       console.error(err);
       toast.error('Une erreur est survenue');

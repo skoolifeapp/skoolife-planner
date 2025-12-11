@@ -40,9 +40,7 @@ const Auth = () => {
           .single();
         
         if (profile?.is_onboarding_complete) {
-          // Redirect to /today on mobile, /app on desktop
-          const isMobile = window.innerWidth < 768;
-          navigate(isMobile ? '/today' : '/app');
+          navigate('/app');
         } else {
           navigate('/onboarding');
         }
