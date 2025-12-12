@@ -2,13 +2,15 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Target, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar, Clock, Target, ArrowRight, Sparkles, Monitor } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import HeroMiniDashboard3D from '@/components/HeroMiniDashboard3D';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!loading && user) {
@@ -18,8 +20,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Mobile Warning Banner */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-primary/10 border-b border-primary/20 px-4 py-3">
+          <div className="flex items-center justify-center gap-2 text-center">
+            <Monitor className="w-4 h-4 text-primary shrink-0" />
+            <p className="text-sm text-foreground">
+              <span className="font-medium">Skoolife est optimisé pour ordinateur.</span>{' '}
+              <span className="text-muted-foreground">Reviens sur PC pour une meilleure expérience.</span>
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-6 bg-background/80 backdrop-blur-md">
+      <header className={`fixed left-0 right-0 z-50 p-6 bg-background/80 backdrop-blur-md ${isMobile ? 'top-12' : 'top-0'}`}>
         <nav className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl shadow-glow" />
@@ -34,7 +49,7 @@ const Index = () => {
       </header>
 
       {/* Hero */}
-      <main className="relative pt-20">
+      <main className={`relative ${isMobile ? 'pt-32' : 'pt-20'}`}>
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
