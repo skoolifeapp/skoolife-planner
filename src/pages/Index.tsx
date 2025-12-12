@@ -46,9 +46,11 @@ const Index = () => {
                 Espace étudiants
               </Button>
             </Link>
-            <Button variant="outline" size="sm" disabled className="opacity-60 cursor-not-allowed">
-              Espace écoles
-            </Button>
+            <Link to="/ecoles">
+              <Button variant="outline" size="sm" className="opacity-70 hover:opacity-100">
+                Espace écoles
+              </Button>
+            </Link>
           </div>
         </nav>
       </header>

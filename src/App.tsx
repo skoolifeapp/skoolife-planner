@@ -17,6 +17,7 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStats from "./pages/AdminStats";
+import SchoolsLanding from "./pages/SchoolsLanding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/stats" element={<AdminStats />} />
+                <Route path="/ecoles" element={<SchoolsLanding />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </PresenceProvider>
