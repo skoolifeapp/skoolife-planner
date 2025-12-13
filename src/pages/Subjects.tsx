@@ -21,8 +21,15 @@ const Subjects = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [filter, setFilter] = useState<'all' | 'active' | 'terminated'>('all');
+  const [filter, setFilter] = useState<'all' | 'partiel' | 'controle_continu' | 'oral' | 'projet'>('all');
   const [showTutorial, setShowTutorial] = useState(false);
+
+  const EXAM_TYPES = [
+    { value: 'partiel', label: 'Partiel' },
+    { value: 'controle_continu', label: 'Contrôle continu' },
+    { value: 'oral', label: 'Oral' },
+    { value: 'projet', label: 'Projet' },
+  ];
 
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -121,13 +128,21 @@ const Subjects = () => {
     ? differenceInDays(parseISO(nextExam.exam_date), new Date()) 
     : null;
 
-  // Filter subjects based on selection
+  // Filter subjects based on exam type selection
   const filteredSubjects = subjects.filter(s => {
-    const status = s.status || 'active';
     if (filter === 'all') return true;
-    if (filter === 'terminated') return status === 'archived';
-    return status === filter;
+    return (s as any).exam_type === filter;
   });
+
+  // Count subjects per exam type
+  const getExamTypeCount = (type: string) => {
+    return subjects.filter(s => (s as any).exam_type === type).length;
+  };
+
+  const getExamTypeLabel = (type: string | null) => {
+    const found = EXAM_TYPES.find(t => t.value === type);
+    return found ? found.label : null;
+  };
 
   const getPriorityLabel = (weight: number) => {
     if (weight <= 2) return 'Basse';
@@ -229,8 +244,8 @@ const Subjects = () => {
               </Card>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex gap-2">
+            {/* Filter Tabs by Exam Type */}
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 variant={filter === 'all' ? 'default' : 'outline'} 
                 size="sm"
@@ -238,20 +253,16 @@ const Subjects = () => {
               >
                 Toutes ({subjects.length})
               </Button>
-              <Button 
-                variant={filter === 'active' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setFilter('active')}
-              >
-                Actives ({activeSubjects.length})
-              </Button>
-              <Button 
-                variant={filter === 'terminated' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setFilter('terminated')}
-              >
-                Terminées ({terminatedSubjects.length})
-              </Button>
+              {EXAM_TYPES.map(type => (
+                <Button 
+                  key={type.value}
+                  variant={filter === type.value ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setFilter(type.value as any)}
+                >
+                  {type.label} ({getExamTypeCount(type.value)})
+                </Button>
+              ))}
             </div>
 
             {/* Subjects List - Desktop Table */}
@@ -321,16 +332,14 @@ const Subjects = () => {
                     <GraduationCap className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
                     <h3 className="text-lg font-medium text-foreground mb-2">Aucune matière</h3>
                     <p className="text-muted-foreground mb-4">
-                      {filter === 'terminated' 
-                        ? "Tu n'as pas encore de matière terminée."
+                      {filter !== 'all' 
+                        ? `Aucune matière avec ce type d'examen.`
                         : "Commence par ajouter tes matières pour générer ton planning."}
                     </p>
-                    {filter !== 'terminated' && (
-                      <Button onClick={handleAddSubject} className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        Ajouter une matière
-                      </Button>
-                    )}
+                    <Button onClick={handleAddSubject} className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Ajouter une matière
+                    </Button>
                   </CardContent>
                 </Card>
               )}
@@ -387,8 +396,8 @@ const Subjects = () => {
                   <CardContent className="py-12 text-center">
                     <GraduationCap className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
                     <p className="text-muted-foreground">
-                      {filter === 'terminated' 
-                        ? "Aucune matière terminée"
+                      {filter !== 'all' 
+                        ? "Aucune matière avec ce type"
                         : "Aucune matière"}
                     </p>
                   </CardContent>
