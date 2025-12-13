@@ -934,20 +934,32 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {upcomingExams.map((subject) => (
-                    <div key={subject.id} className="flex items-center gap-3">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: subject.color }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{subject.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(parseISO(subject.exam_date!), 'dd MMM', { locale: fr })}
-                        </p>
+                  {upcomingExams.map((subject) => {
+                    const examType = (subject as any).exam_type;
+                    const examTypeLabel = examType === 'partiel' ? 'Partiel' 
+                      : examType === 'controle_continu' ? 'CC'
+                      : examType === 'oral' ? 'Oral'
+                      : examType === 'projet' ? 'Projet'
+                      : null;
+                    
+                    return (
+                      <div key={subject.id} className="flex items-center gap-3">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: subject.color }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">
+                            {subject.name}
+                            {examTypeLabel && <span className="text-muted-foreground font-normal"> ({examTypeLabel})</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(parseISO(subject.exam_date!), 'dd MMM', { locale: fr })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </CardContent>
               </Card>
             )}
