@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface LiveUser {
@@ -9,34 +9,55 @@ export interface LiveUser {
 }
 
 /**
- * Hook to get real-time list of connected users via Supabase Presence.
- * No manual heartbeat, no polling - pure Supabase Presence.
+ * Optimized hook to get real-time list of connected users via Supabase Presence.
+ * Uses debouncing and memoization for scalability (20,000+ users).
  */
 export function useLiveUsers() {
   const [users, setUsers] = useState<LiveUser[]>([]);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const processPresenceState = useCallback((state: Record<string, unknown[]>) => {
+    // Debounce rapid presence updates to prevent UI thrashing
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      const allEntries: LiveUser[] = [];
+      Object.values(state).forEach((presences) => {
+        (presences as unknown as LiveUser[]).forEach((p) => {
+          if (p.odliysfuq && p.email) {
+            allEntries.push(p);
+          }
+        });
+      });
+      
+      setUsers(allEntries);
+    }, 100); // 100ms debounce
+  }, []);
 
   useEffect(() => {
-    console.log('[LiveUsers] Initializing hook');
+    console.log('[LiveUsers] Initializing optimized hook');
     
-    const channel = supabase.channel('skoolife-presence');
+    // Reuse existing channel if possible
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channel = supabase.channel('skoolife-presence', {
+      config: {
+        presence: {
+          key: 'admin-observer',
+        },
+      },
+    });
+    channelRef.current = channel;
 
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        console.log('[LiveUsers] Presence state:', state);
-        
-        // Get all presence entries and flatten
-        const allEntries: LiveUser[] = [];
-        Object.values(state).forEach((presences) => {
-          (presences as unknown as LiveUser[]).forEach((p) => {
-            if (p.odliysfuq && p.email) {
-              allEntries.push(p);
-            }
-          });
-        });
-        
-        console.log('[LiveUsers] Filtered users:', allEntries);
-        setUsers(allEntries);
+        processPresenceState(state);
       })
       .subscribe(async (status) => {
         console.log('[LiveUsers] Subscribe status:', status);
@@ -51,9 +72,15 @@ export function useLiveUsers() {
 
     return () => {
       console.log('[LiveUsers] Cleanup');
-      supabase.removeChannel(channel);
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, []);
+  }, [processPresenceState]);
 
   // Filter out admin observer from count
   return users.filter(u => u.odliysfuq !== 'admin-observer');
