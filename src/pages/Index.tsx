@@ -145,25 +145,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Testimonial */}
-          <div className="mt-32 max-w-3xl mx-auto text-center">
-            <div className="p-10 rounded-3xl bg-card border border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <Sparkles className="w-8 h-8 text-primary mx-auto mb-6 opacity-60" />
-              <p className="text-xl sm:text-2xl text-foreground mb-8 leading-relaxed">
-                "Avant Skoolife, je procrastinais tout le temps. Maintenant, j'ai enfin 
-                un planning clair et je sais exactement quoi réviser chaque jour."
-              </p>
-              <div className="flex items-center justify-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="font-bold text-primary font-heading text-lg">L</span>
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold font-heading">Léa M.</p>
-                  <p className="text-sm text-muted-foreground">Étudiante en L2 Droit</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Final CTA */}
           <div className="mt-32 text-center py-16 px-8 rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
