@@ -44,12 +44,13 @@ const AdminStats = () => {
 
       const adminIds = adminRoles?.map(r => r.user_id) || [];
 
-      const [profilesRes, subjectsRes, sessionsRes, conversationsRes, eventsRes, aiPlansRes, activityRes] = await Promise.all([
+      // Fetch counts separately for accurate totals (bypasses 1000 row limit)
+      const [profilesRes, subjectsRes, sessionsRes, conversationsRes, eventsCountRes, aiPlansRes, activityRes] = await Promise.all([
         supabase.from('profiles').select('id, created_at, is_onboarding_complete'),
         supabase.from('subjects').select('id, created_at'),
         supabase.from('revision_sessions').select('id, status, created_at'),
         supabase.from('conversations').select('id, status, created_at'),
-        supabase.from('calendar_events').select('id, created_at'),
+        supabase.from('calendar_events').select('id', { count: 'exact', head: true }),
         supabase.from('ai_plans').select('id, user_id, created_at'),
         supabase.from('user_activity').select('id, user_id, source, created_at'),
       ]);
@@ -58,7 +59,7 @@ const AdminStats = () => {
       const subjects = subjectsRes.data || [];
       const sessions = sessionsRes.data || [];
       const conversations = conversationsRes.data || [];
-      const events = eventsRes.data || [];
+      const totalEventsCount = eventsCountRes.count || 0;
       const aiPlans = (aiPlansRes.data || []).filter(p => !adminIds.includes(p.user_id));
       const activity = (activityRes.data || []).filter(a => !adminIds.includes(a.user_id));
 
@@ -165,9 +166,7 @@ const AdminStats = () => {
         const weekActivity = activity.filter(a => 
           a.created_at && isWithinInterval(new Date(a.created_at), { start: weekStart, end: weekEnd })
         );
-        const weekEvents = events.filter(e => 
-          e.created_at && isWithinInterval(new Date(e.created_at), { start: weekStart, end: weekEnd })
-        );
+        // Note: weekEvents calculation removed since we use count query for total
         
         const weekActiveUsers = new Set(weekActivity.map(a => a.user_id)).size;
         const weekPlanningUsers = new Set(weekPlans.map(p => p.user_id)).size;
@@ -186,7 +185,7 @@ const AdminStats = () => {
           activeUsersWeek: weekActiveUsers,
           planningUsers: weekPlanningUsers,
           retention2Plus: week2PlusSessions,
-          eventsCreated: weekEvents.length,
+          eventsCreated: 0, // Removed weekly breakdown - using total count only
         });
       }
 
@@ -199,7 +198,7 @@ const AdminStats = () => {
         completedSessions: sessions.filter(s => s.status === 'done').length,
         totalConversations: conversations.length,
         openConversations: conversations.filter(c => c.status === 'open').length,
-        totalEvents: events.length,
+        totalEvents: totalEventsCount,
         nbPlanningGeneratedFirstTime,
         firstWeekActivationRate,
         nbPlanningGeneratedWeekly,
