@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useInviteFreeUser } from '@/hooks/useInviteFreeUser';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { 
   Clock, CheckCircle2, Target, TrendingUp, Loader2, BarChart3, ChevronLeft, ChevronRight
