@@ -49,7 +49,9 @@ export function ShareSessionDialog({ session, subject, onClose }: ShareSessionDi
         .insert({
           session_id: session.id,
           invited_by: user.id,
-          expires_at: expiresAt.toISOString()
+          expires_at: expiresAt.toISOString(),
+          meeting_format: meetingFormat,
+          meeting_address: meetingFormat === 'presentiel' ? meetingAddress || null : null
         })
         .select('unique_token')
         .single();
@@ -131,7 +133,9 @@ export function ShareSessionDialog({ session, subject, onClose }: ShareSessionDi
           invited_by: user.id,
           expires_at: expiresAt.toISOString(),
           accepted_by: targetProfile.id,
-          accepted_at: new Date().toISOString()
+          accepted_at: new Date().toISOString(),
+          meeting_format: meetingFormat,
+          meeting_address: meetingFormat === 'presentiel' ? meetingAddress || null : null
         });
 
       if (inviteError) {
