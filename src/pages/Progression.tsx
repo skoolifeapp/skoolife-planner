@@ -11,7 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { Button } from '@/components/ui/button';
 import SupportButton from '@/components/SupportButton';
 import AppSidebar from '@/components/AppSidebar';
-import { ProgressionTutorialOverlay } from '@/components/ProgressionTutorialOverlay';
+
 import { format, startOfWeek, endOfWeek, subWeeks, addWeeks, isSameWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -54,7 +54,7 @@ const Progression = () => {
   const [currentWeekStats, setCurrentWeekStats] = useState<WeekStats | null>(null);
   const [subjectStats, setSubjectStats] = useState<SubjectStats[]>([]);
   const [weekHistory, setWeekHistory] = useState<WeekStats[]>([]);
-  const [showTutorial, setShowTutorial] = useState(false);
+  
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [allSessions, setAllSessions] = useState<RevisionSession[]>([]);
   const { user, signOut } = useAuth();
@@ -68,23 +68,6 @@ const Progression = () => {
     fetchData();
   }, [user, navigate]);
 
-  useEffect(() => {
-    if (!loading) {
-      const hasSeenTutorial = localStorage.getItem('hasSeenProgressionTutorial');
-      if (!hasSeenTutorial) {
-        // Petit délai pour s'assurer que le DOM est prêt
-        const timer = setTimeout(() => {
-          setShowTutorial(true);
-        }, 100);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [loading]);
-
-  const handleTutorialComplete = () => {
-    localStorage.setItem('hasSeenProgressionTutorial', 'true');
-    setShowTutorial(false);
-  };
 
   const calculateSessionDuration = (startTime: string, endTime: string): number => {
     const [startH, startM] = startTime.split(':').map(Number);
@@ -266,9 +249,6 @@ const Progression = () => {
   return (
     <AppSidebar>
       <div className="flex-1 p-6 md:p-8 space-y-6 overflow-auto">
-        {showTutorial && (
-          <ProgressionTutorialOverlay onComplete={handleTutorialComplete} />
-        )}
         
         <div className="flex items-center gap-3 mb-8">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
