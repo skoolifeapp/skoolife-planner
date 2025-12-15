@@ -20,6 +20,7 @@ export interface RevisionSession {
   subject?: Subject;
   // Properties for invited sessions
   isInvitedSession?: boolean;
+  inviteConfirmed?: boolean;
   inviterName?: string | null;
   inviteMeetingFormat?: string | null;
   inviteMeetingAddress?: string | null;

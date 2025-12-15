@@ -170,6 +170,7 @@ const Dashboard = () => {
           meeting_format,
           meeting_address,
           meeting_link,
+          confirmed,
           invited_by,
           inviter:profiles!session_invites_invited_by_fkey (
             first_name,
@@ -215,6 +216,7 @@ const Dashboard = () => {
           ...invite.session,
           subject: invite.session.subject,
           isInvitedSession: true as const,
+          inviteConfirmed: invite.confirmed || false,
           inviterName: invite.inviter ? `${invite.inviter.first_name || ''} ${invite.inviter.last_name || ''}`.trim() : null,
           inviteMeetingFormat: invite.meeting_format,
           inviteMeetingAddress: invite.meeting_address,

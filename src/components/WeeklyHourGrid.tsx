@@ -724,6 +724,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                     const isDone = session.status === 'done';
                     const isSkipped = session.status === 'skipped';
                     const isInvited = session.isInvitedSession;
+                    const isInviteConfirmed = session.inviteConfirmed;
                     const isDraggable = !!onSessionMove && !isInvited; // Can't drag invited sessions
                     const inviteInfo = sessionInvites?.[session.id];
                     const hasInvite = !!inviteInfo;
@@ -732,7 +733,9 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                     let borderColor = session.subject?.color || '#FFC107';
                     if (isDone) borderColor = '#22c55e'; // green-500
                     if (isSkipped) borderColor = '#ef4444'; // red-500
-                    if (isInvited) borderColor = '#8b5cf6'; // violet-500 for invited sessions
+                    if (isInvited) {
+                      borderColor = isInviteConfirmed ? '#22c55e' : '#f59e0b'; // green if confirmed, amber if pending
+                    }
                     
                     return (
                       <div
@@ -745,14 +748,17 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                           "absolute rounded-md px-1 py-1 overflow-hidden flex flex-col items-start justify-start text-left transition-all hover:shadow-md z-20 group",
                           isSkipped && "opacity-50",
                           isDraggable && !resizingItem && "cursor-grab active:cursor-grabbing",
-                          isInvited && "border-2 border-dashed"
+                          isInvited && !isInviteConfirmed && "border-2 border-dashed",
+                          isInvited && isInviteConfirmed && "border-2"
                         )}
                         style={{
                           ...style,
                           left: `calc(${leftPercent}% + ${gap}px)`,
                           width: `calc(${widthPercent}% - ${gap * 2}px)`,
                           backgroundColor: isInvited 
-                            ? 'rgba(139, 92, 246, 0.15)' // violet background for invited
+                            ? isInviteConfirmed 
+                              ? 'rgba(34, 197, 94, 0.12)' // light green for confirmed
+                              : 'rgba(245, 158, 11, 0.12)' // light amber for pending
                             : isDone 
                               ? 'rgba(34, 197, 94, 0.15)' 
                               : isSkipped 
@@ -763,7 +769,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                           top: resizePreview?.id === session.id && resizePreview.top !== undefined ? `${resizePreview.top}px` : style.top,
                           height: resizePreview?.id === session.id ? `${resizePreview.height}px` : style.height,
                         }}
-                        title={`${session.subject?.name}\n${formatTimeRange(session.start_time, session.end_time)}${isDone ? ' ✓' : isSkipped ? ' ✗' : ''}${isInvited && session.inviterName ? `\nInvité par ${session.inviterName}` : ''}${hasInvite && inviteInfo.invitees?.some(i => i.accepted_by) ? `\nAvec ${inviteInfo.invitees.filter(i => i.accepted_by && i.first_name).map(i => i.first_name).join(', ')}` : ''}`}
+                        title={`${session.subject?.name}\n${formatTimeRange(session.start_time, session.end_time)}${isDone ? ' ✓' : isSkipped ? ' ✗' : ''}${isInvited && session.inviterName ? `\nInvité par ${session.inviterName}${isInviteConfirmed ? ' ✓ Confirmé' : ' ⏳ En attente'}` : ''}${hasInvite && inviteInfo.invitees?.some(i => i.accepted_by) ? `\nAvec ${inviteInfo.invitees.filter(i => i.accepted_by && i.first_name).map(i => i.first_name).join(', ')}` : ''}`}
                       >
                         {/* Top resize handle - only for own sessions */}
                         {onSessionResize && !isInvited && (
@@ -776,12 +782,14 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                         <div className="flex items-center gap-1 w-full pt-1">
                           <p 
                             className={`text-xs font-semibold truncate flex-1 ${isDone ? 'line-through' : ''}`}
-                            style={{ color: isInvited ? '#8b5cf6' : isDone ? '#22c55e' : isSkipped ? '#ef4444' : session.subject?.color }}
+                            style={{ color: isInvited ? (isInviteConfirmed ? '#22c55e' : '#f59e0b') : isDone ? '#22c55e' : isSkipped ? '#ef4444' : session.subject?.color }}
                           >
                             {session.subject?.name}
                           </p>
                           {isDone && <span className="text-green-500 text-xs">✓</span>}
                           {isSkipped && <span className="text-red-500 text-xs">✗</span>}
+                          {isInvited && isInviteConfirmed && <span className="text-green-500 text-xs">✓</span>}
+                          {isInvited && !isInviteConfirmed && <span className="text-amber-500 text-xs">⏳</span>}
                         </div>
                         <p className="text-[10px] text-muted-foreground">
                           {resizePreview?.id === session.id 
@@ -791,7 +799,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                         {/* Show invited session info */}
                         {isInvited && (
                           <div className="flex items-center gap-1 mt-0.5 w-full">
-                            <span className="text-[9px] text-violet-500 flex items-center gap-0.5 truncate">
+                            <span className={`text-[9px] flex items-center gap-0.5 truncate ${isInviteConfirmed ? 'text-green-500' : 'text-amber-500'}`}>
                               <Users className="w-2.5 h-2.5 flex-shrink-0" />
                               {session.inviterName || 'Invité'}
                             </span>
