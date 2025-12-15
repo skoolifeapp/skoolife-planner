@@ -1,4 +1,4 @@
-import { Check, X, Pencil, Share2, Users } from 'lucide-react';
+import { Check, X, Pencil, Share2, Users, MapPin, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,6 +10,14 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RevisionSession } from '@/types/planning';
 
+export interface InviteInfo {
+  accepted_by: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  meeting_format: string | null;
+  meeting_address: string | null;
+}
+
 interface SessionStatusDialogProps {
   session: RevisionSession | null;
   open: boolean;
@@ -19,6 +27,7 @@ interface SessionStatusDialogProps {
   onEdit: () => void;
   onShare?: () => void;
   hasAcceptedInvite?: boolean;
+  inviteInfo?: InviteInfo;
 }
 
 export function SessionStatusDialog({
@@ -30,6 +39,7 @@ export function SessionStatusDialog({
   onEdit,
   onShare,
   hasAcceptedInvite = false,
+  inviteInfo,
 }: SessionStatusDialogProps) {
   if (!session) return null;
 
@@ -61,6 +71,35 @@ export function SessionStatusDialog({
             <p className="capitalize">{formattedDate}</p>
             <p>{timeRange}</p>
           </div>
+
+          {/* Invite info */}
+          {inviteInfo && (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
+              {inviteInfo.accepted_by && inviteInfo.first_name && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span className="font-medium">
+                    Avec {inviteInfo.first_name} {inviteInfo.last_name || ''}
+                  </span>
+                </div>
+              )}
+              {inviteInfo.meeting_format && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {inviteInfo.meeting_format === 'visio' ? (
+                    <>
+                      <Video className="w-4 h-4 text-blue-500" />
+                      <span>Visio (lien à venir)</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="w-4 h-4 text-green-500" />
+                      <span>{inviteInfo.meeting_address || 'Présentiel'}</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Status indicator */}
           {session.status !== 'planned' && (

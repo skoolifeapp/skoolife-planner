@@ -2,8 +2,16 @@ import { format, isSameDay, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useEffect, useRef, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from 'lucide-react';
+import { Calendar, Users, MapPin, Video } from 'lucide-react';
 import type { RevisionSession, CalendarEvent, Subject } from '@/types/planning';
+
+export interface SessionInviteInfo {
+  accepted_by: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  meeting_format: string | null;
+  meeting_address: string | null;
+}
 
 export interface GridClickData {
   date: string;
@@ -29,6 +37,7 @@ interface WeeklyHourGridProps {
   sessions: RevisionSession[];
   calendarEvents: CalendarEvent[];
   exams?: ExamInfo[];
+  sessionInvites?: Record<string, SessionInviteInfo>;
   isPastWeek?: boolean;
   onSessionClick: (session: RevisionSession) => void;
   onEventClick?: (event: CalendarEvent) => void;
@@ -144,7 +153,7 @@ export interface ResizeData {
   endTime?: string;
 }
 
-const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], isPastWeek = false, onSessionClick, onEventClick, onGridClick, onSessionMove, onEventMove, onSessionResize, onEventResize }: WeeklyHourGridProps & {
+const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessionInvites = {}, isPastWeek = false, onSessionClick, onEventClick, onGridClick, onSessionMove, onEventMove, onSessionResize, onEventResize }: WeeklyHourGridProps & {
   onSessionResize?: (sessionId: string, data: ResizeData) => void;
   onEventResize?: (eventId: string, data: ResizeData) => void;
 }) => {
@@ -710,6 +719,8 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], isPast
                     const isDone = session.status === 'done';
                     const isSkipped = session.status === 'skipped';
                     const isDraggable = !!onSessionMove;
+                    const inviteInfo = sessionInvites[session.id];
+                    const hasInvite = !!inviteInfo;
                     
                     // Determine border color based on status
                     let borderColor = session.subject?.color || '#FFC107';
@@ -737,7 +748,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], isPast
                           top: resizePreview?.id === session.id && resizePreview.top !== undefined ? `${resizePreview.top}px` : style.top,
                           height: resizePreview?.id === session.id ? `${resizePreview.height}px` : style.height,
                         }}
-                        title={`${session.subject?.name}\n${formatTimeRange(session.start_time, session.end_time)}${isDone ? ' ✓' : isSkipped ? ' ✗' : ''}`}
+                        title={`${session.subject?.name}\n${formatTimeRange(session.start_time, session.end_time)}${isDone ? ' ✓' : isSkipped ? ' ✗' : ''}${hasInvite && inviteInfo.accepted_by ? `\nAvec ${inviteInfo.first_name || ''}` : ''}`}
                       >
                         {/* Top resize handle - only visible when hovering near top */}
                         {onSessionResize && (
@@ -762,6 +773,25 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], isPast
                             ? `${resizePreview.newStartTime || session.start_time.slice(0, 5)} - ${resizePreview.newEndTime || session.end_time.slice(0, 5)}`
                             : formatTimeRange(session.start_time, session.end_time)}
                         </p>
+                        {/* Show invite info if exists */}
+                        {hasInvite && (
+                          <div className="flex items-center gap-1 mt-0.5 w-full">
+                            {inviteInfo.accepted_by && inviteInfo.first_name ? (
+                              <span className="text-[9px] text-primary flex items-center gap-0.5 truncate">
+                                <Users className="w-2.5 h-2.5 flex-shrink-0" />
+                                {inviteInfo.first_name}
+                              </span>
+                            ) : inviteInfo.meeting_format && (
+                              <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                                {inviteInfo.meeting_format === 'visio' ? (
+                                  <Video className="w-2.5 h-2.5 text-blue-500" />
+                                ) : (
+                                  <MapPin className="w-2.5 h-2.5 text-green-500" />
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {/* Bottom resize handle - only visible when hovering near bottom */}
                         {onSessionResize && (
                           <div
