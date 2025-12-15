@@ -749,11 +749,15 @@ const Dashboard = () => {
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
           };
 
-          // Filter subjects whose exam is after this date
+          // Filter subjects whose exam is after this date AND still have remaining hours to schedule
+          const sessionHoursToAdd = sessionDuration / 60;
           const eligibleSubjects = subjectsNeedingHours.filter(s => {
-            if (!s.exam_date) return true;
+            if (!s.exam_date) return s.remaining > 0;
             const examDate = parseISO(s.exam_date);
-            return currentDate < examDate;
+            if (currentDate >= examDate) return false;
+            // Check if adding this session would exceed target_hours
+            const currentScheduled = hoursPerSubject[s.id] || 0;
+            return currentScheduled + sessionHoursToAdd <= (s.target_hours || 0);
           });
           
           if (eligibleSubjects.length === 0) continue; // No subject to assign for this day
@@ -771,7 +775,9 @@ const Dashboard = () => {
             notes: null
           });
 
-          hoursAddedToday += sessionDuration / 60;
+          hoursAddedToday += sessionHoursToAdd;
+          // Track hours added per subject to respect target_hours
+          hoursPerSubject[subject.id] = (hoursPerSubject[subject.id] || 0) + sessionHoursToAdd;
           subjectIndex++;
 
           // Update slot cursor for potential next session
