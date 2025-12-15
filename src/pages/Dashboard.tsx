@@ -524,6 +524,17 @@ const Dashboard = () => {
           .insert(newSessions);
 
         if (error) throw error;
+        
+        // Check if all subjects have reached their target_hours
+        const allObjectivesReached = sortedSubjects.every(s => {
+          if (!s.target_hours || s.target_hours <= 0) return true;
+          const scheduled = scheduledHoursPerSubject[s.id] || 0;
+          return scheduled >= s.target_hours;
+        });
+        
+        if (allObjectivesReached && sortedSubjects.some(s => s.target_hours && s.target_hours > 0)) {
+          toast.success("L'objectif de révisions a été atteint ✨");
+        }
       }
 
       // Save AI plan record
@@ -792,9 +803,27 @@ const Dashboard = () => {
           .insert(newSessions);
 
         if (error) throw error;
-        toast.success(`Semaine ajustée : ${newSessions.length} nouvelle${newSessions.length > 1 ? 's' : ''} session${newSessions.length > 1 ? 's' : ''} ajoutée${newSessions.length > 1 ? 's' : ''} ✨`);
+        
+        // Check if all subjects have reached their target_hours
+        const allObjectivesReached = subjectsNeedingHours.every(s => {
+          if (!s.target_hours || s.target_hours <= 0) return true;
+          const scheduled = hoursPerSubject[s.id] || 0;
+          return scheduled >= s.target_hours;
+        });
+        
+        if (allObjectivesReached && subjectsNeedingHours.some(s => s.target_hours && s.target_hours > 0)) {
+          toast.success("L'objectif de révisions a été atteint ✨");
+        } else {
+          toast.success(`Semaine ajustée : ${newSessions.length} nouvelle${newSessions.length > 1 ? 's' : ''} session${newSessions.length > 1 ? 's' : ''} ajoutée${newSessions.length > 1 ? 's' : ''} ✨`);
+        }
       } else {
-        toast.info("Aucun créneau libre disponible cette semaine");
+        // Check if objectives are already reached (no sessions needed)
+        const allObjectivesReached = subjectsNeedingHours.every(s => s.remaining <= 0);
+        if (allObjectivesReached && subjectsNeedingHours.some(s => s.target_hours && s.target_hours > 0)) {
+          toast.success("L'objectif de révisions a été atteint ✨");
+        } else {
+          toast.info("Aucun créneau libre disponible cette semaine");
+        }
       }
 
       fetchData();
