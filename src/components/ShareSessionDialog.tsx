@@ -37,12 +37,37 @@ export function ShareSessionDialog({ session, subject, onClose }: ShareSessionDi
   const [invitedUser, setInvitedUser] = useState<{ first_name: string; last_name: string } | null>(null);
 
   const generateShareLink = async () => {
-    if (!session || !user) return;
+    if (!session || !user || !subject) return;
 
     setLoading(true);
     try {
       const sessionDateTime = parseISO(`${session.date}T${session.start_time}`);
       const expiresAt = subHours(sessionDateTime, 24);
+
+      let meetingLink: string | null = null;
+
+      // Create Daily.co room if visio format selected
+      if (meetingFormat === 'visio') {
+        try {
+          const { data: roomData, error: roomError } = await supabase.functions.invoke('create-daily-room', {
+            body: {
+              sessionId: session.id,
+              sessionDate: session.date,
+              sessionTime: session.start_time,
+              subjectName: subject.name
+            }
+          });
+
+          if (roomError) {
+            console.error('Error creating Daily room:', roomError);
+            toast.error('Erreur lors de la création de la room visio');
+          } else if (roomData?.roomUrl) {
+            meetingLink = roomData.roomUrl;
+          }
+        } catch (err) {
+          console.error('Error calling create-daily-room:', err);
+        }
+      }
 
       const { data, error } = await supabase
         .from('session_invites')
@@ -51,7 +76,8 @@ export function ShareSessionDialog({ session, subject, onClose }: ShareSessionDi
           invited_by: user.id,
           expires_at: expiresAt.toISOString(),
           meeting_format: meetingFormat,
-          meeting_address: meetingFormat === 'presentiel' ? meetingAddress || null : null
+          meeting_address: meetingFormat === 'presentiel' ? meetingAddress || null : null,
+          meeting_link: meetingLink
         })
         .select('unique_token')
         .single();
@@ -126,6 +152,30 @@ export function ShareSessionDialog({ session, subject, onClose }: ShareSessionDi
       const sessionDateTime = parseISO(`${session.date}T${session.start_time}`);
       const expiresAt = subHours(sessionDateTime, 24);
 
+      let meetingLink: string | null = null;
+
+      // Create Daily.co room if visio format selected
+      if (meetingFormat === 'visio' && subject) {
+        try {
+          const { data: roomData, error: roomError } = await supabase.functions.invoke('create-daily-room', {
+            body: {
+              sessionId: session.id,
+              sessionDate: session.date,
+              sessionTime: session.start_time,
+              subjectName: subject.name
+            }
+          });
+
+          if (roomError) {
+            console.error('Error creating Daily room:', roomError);
+          } else if (roomData?.roomUrl) {
+            meetingLink = roomData.roomUrl;
+          }
+        } catch (err) {
+          console.error('Error calling create-daily-room:', err);
+        }
+      }
+
       const { error: inviteError } = await supabase
         .from('session_invites')
         .insert({
@@ -135,7 +185,8 @@ export function ShareSessionDialog({ session, subject, onClose }: ShareSessionDi
           accepted_by: targetProfile.id,
           accepted_at: new Date().toISOString(),
           meeting_format: meetingFormat,
-          meeting_address: meetingFormat === 'presentiel' ? meetingAddress || null : null
+          meeting_address: meetingFormat === 'presentiel' ? meetingAddress || null : null,
+          meeting_link: meetingLink
         });
 
       if (inviteError) {

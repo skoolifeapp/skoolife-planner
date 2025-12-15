@@ -364,6 +364,7 @@ export type Database = {
           invited_by: string
           meeting_address: string | null
           meeting_format: string | null
+          meeting_link: string | null
           session_id: string
           unique_token: string
         }
@@ -376,6 +377,7 @@ export type Database = {
           invited_by: string
           meeting_address?: string | null
           meeting_format?: string | null
+          meeting_link?: string | null
           session_id: string
           unique_token?: string
         }
@@ -388,6 +390,7 @@ export type Database = {
           invited_by?: string
           meeting_address?: string | null
           meeting_format?: string | null
+          meeting_link?: string | null
           session_id?: string
           unique_token?: string
         }

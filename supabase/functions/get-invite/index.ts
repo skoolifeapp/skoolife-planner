@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
         accepted_at,
         meeting_format,
         meeting_address,
+        meeting_link,
         session:revision_sessions (
           id,
           date,
@@ -93,7 +94,8 @@ Deno.serve(async (req) => {
         expires_at: invite.expires_at,
         already_accepted: alreadyAccepted,
         meeting_format: invite.meeting_format,
-        meeting_address: invite.meeting_address
+        meeting_address: invite.meeting_address,
+        meeting_link: invite.meeting_link
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
