@@ -57,8 +57,15 @@ const Progression = () => {
   
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [allSessions, setAllSessions] = useState<RevisionSession[]>([]);
-  const { user, signOut } = useAuth();
+  const { user, signOut, isSubscribed, subscriptionLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect free users
+  useEffect(() => {
+    if (!subscriptionLoading && !isSubscribed) {
+      navigate('/app');
+    }
+  }, [isSubscribed, subscriptionLoading, navigate]);
 
   useEffect(() => {
     if (!user) {

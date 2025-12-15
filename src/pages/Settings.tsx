@@ -78,8 +78,15 @@ const Settings = () => {
     notes: '',
   });
 
-  const { user } = useAuth();
+  const { user, isSubscribed, subscriptionLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect free users
+  useEffect(() => {
+    if (!subscriptionLoading && !isSubscribed) {
+      navigate('/app');
+    }
+  }, [isSubscribed, subscriptionLoading, navigate]);
 
   useEffect(() => {
     if (!user) {
