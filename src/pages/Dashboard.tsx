@@ -57,7 +57,13 @@ const Dashboard = () => {
   const [sessionPopoverOpen, setSessionPopoverOpen] = useState<string | null>(null);
   const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false);
   const [shareSessionDialogOpen, setShareSessionDialogOpen] = useState(false);
-  const [sessionInvites, setSessionInvites] = useState<Record<string, boolean>>({});
+  const [sessionInvites, setSessionInvites] = useState<Record<string, { 
+    accepted_by: string | null; 
+    first_name: string | null;
+    last_name: string | null;
+    meeting_format: string | null;
+    meeting_address: string | null;
+  }>>({});
   
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -170,17 +176,37 @@ const Dashboard = () => {
 
       setCalendarEvents(eventsData || []);
 
-      // Fetch session invites with accepted users
+      // Fetch session invites with accepted users and meeting info
       const { data: invitesData } = await supabase
         .from('session_invites')
-        .select('session_id, accepted_by')
-        .eq('invited_by', user.id)
-        .not('accepted_by', 'is', null);
+        .select(`
+          session_id, 
+          accepted_by, 
+          meeting_format, 
+          meeting_address,
+          profile:profiles!session_invites_accepted_by_fkey (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('invited_by', user.id);
 
-      // Create a map of session_id -> hasAcceptedInvite
-      const invitesMap: Record<string, boolean> = {};
-      (invitesData || []).forEach(invite => {
-        invitesMap[invite.session_id] = true;
+      // Create a map of session_id -> invite details
+      const invitesMap: Record<string, { 
+        accepted_by: string | null; 
+        first_name: string | null;
+        last_name: string | null;
+        meeting_format: string | null;
+        meeting_address: string | null;
+      }> = {};
+      (invitesData || []).forEach((invite: any) => {
+        invitesMap[invite.session_id] = {
+          accepted_by: invite.accepted_by,
+          first_name: invite.profile?.first_name || null,
+          last_name: invite.profile?.last_name || null,
+          meeting_format: invite.meeting_format,
+          meeting_address: invite.meeting_address
+        };
       });
       setSessionInvites(invitesMap);
 
@@ -1132,6 +1158,7 @@ const Dashboard = () => {
                   exam_date: s.exam_date!
                 }))
               }
+              sessionInvites={sessionInvites}
               isPastWeek={isPastWeek}
               onSessionClick={handleSessionClick}
               onEventClick={setSelectedEvent}
@@ -1197,7 +1224,8 @@ const Dashboard = () => {
           setSessionPopoverOpen(null);
           setShareSessionDialogOpen(true);
         }}
-        hasAcceptedInvite={selectedSession ? sessionInvites[selectedSession.id] || false : false}
+        hasAcceptedInvite={selectedSession ? !!sessionInvites[selectedSession.id]?.accepted_by : false}
+        inviteInfo={selectedSession ? sessionInvites[selectedSession.id] : undefined}
       />
 
       {/* Share session dialog */}
