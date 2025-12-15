@@ -90,7 +90,7 @@ const Pricing = () => {
   };
 
   const isCurrentPlan = (planId: string): boolean => {
-    return subscriptionTier === planId;
+    return !!user && subscriptionTier === planId;
   };
 
   return (
