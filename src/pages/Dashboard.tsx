@@ -32,6 +32,7 @@ import WeeklyHourGrid, { type GridClickData } from '@/components/WeeklyHourGrid'
 import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { EventTutorialOverlay } from '@/components/EventTutorialOverlay';
 import { SessionStatusDialog } from '@/components/SessionStatusDialog';
+import { InvitedSessionDialog } from '@/components/InvitedSessionDialog';
 import SupportButton from '@/components/SupportButton';
 import AppSidebar from '@/components/AppSidebar';
 import type { Profile, Subject, RevisionSession, CalendarEvent } from '@/types/planning';
@@ -57,6 +58,8 @@ const Dashboard = () => {
   const [sessionPopoverOpen, setSessionPopoverOpen] = useState<string | null>(null);
   const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false);
   const [shareSessionDialogOpen, setShareSessionDialogOpen] = useState(false);
+  const [invitedSessionDialogOpen, setInvitedSessionDialogOpen] = useState(false);
+  const [selectedInvitedSession, setSelectedInvitedSession] = useState<RevisionSession | null>(null);
   const [sessionInvites, setSessionInvites] = useState<Record<string, { 
     accepted_by: string | null; 
     first_name: string | null;
@@ -938,8 +941,46 @@ const Dashboard = () => {
   };
 
   const handleSessionClick = (session: RevisionSession) => {
+    // If it's an invited session, show the invited session dialog
+    if (session.isInvitedSession) {
+      setSelectedInvitedSession(session);
+      setInvitedSessionDialogOpen(true);
+      return;
+    }
+    // Otherwise show the regular session status dialog
     setSelectedSession(session);
     setSessionPopoverOpen(session.id);
+  };
+
+  const handleInviteConfirm = async (sessionId: string) => {
+    // Nothing to do for confirm - the user is already accepted
+    // Just close the dialog and show a message
+    toast.success('Participation confirmée !');
+  };
+
+  const handleInviteDecline = async (sessionId: string) => {
+    if (!user) return;
+    
+    try {
+      // Remove the accepted_by from the invite
+      const { error } = await supabase
+        .from('session_invites')
+        .update({ 
+          accepted_by: null, 
+          accepted_at: null 
+        })
+        .eq('session_id', sessionId)
+        .eq('accepted_by', user.id);
+
+      if (error) throw error;
+      
+      // Remove the session from local state
+      setSessions(prev => prev.filter(s => !(s.id === sessionId && s.isInvitedSession)));
+      toast.success('Invitation refusée');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erreur lors du refus de l\'invitation');
+    }
   };
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -1294,6 +1335,18 @@ const Dashboard = () => {
         onClose={() => {
           setShareSessionDialogOpen(false);
         }}
+      />
+
+      {/* Invited session dialog */}
+      <InvitedSessionDialog
+        session={selectedInvitedSession}
+        open={invitedSessionDialogOpen}
+        onOpenChange={(open) => {
+          setInvitedSessionDialogOpen(open);
+          if (!open) setSelectedInvitedSession(null);
+        }}
+        onConfirm={handleInviteConfirm}
+        onDecline={handleInviteDecline}
       />
 
       {/* Tutorial overlay */}
