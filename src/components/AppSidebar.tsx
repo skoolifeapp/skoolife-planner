@@ -2,16 +2,16 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Home, TrendingUp, GraduationCap, Settings, LogOut, Menu, X, User, Video } from 'lucide-react';
+import { Home, TrendingUp, GraduationCap, Settings, LogOut, Menu, X, User, Video, Lock } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
-  { path: '/app', label: 'Dashboard', icon: Home },
-  { path: '/progression', label: 'Progression', icon: TrendingUp },
-  { path: '/subjects', label: 'Matières', icon: GraduationCap },
-  { path: '/settings', label: 'Paramètres', icon: Settings },
+  { path: '/app', label: 'Dashboard', icon: Home, requiresSubscription: false },
+  { path: '/progression', label: 'Progression', icon: TrendingUp, requiresSubscription: true },
+  { path: '/subjects', label: 'Matières', icon: GraduationCap, requiresSubscription: true },
+  { path: '/settings', label: 'Paramètres', icon: Settings, requiresSubscription: true },
 ];
 
 interface AppSidebarProps {
@@ -22,7 +22,9 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, isSubscribed, subscriptionLoading } = useAuth();
+
+  const isFreeUser = !subscriptionLoading && !isSubscribed;
 
   const handleSignOut = async () => {
     await signOut();
@@ -36,6 +38,44 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
     return location.pathname === path;
   };
 
+  const renderNavItem = (item: typeof NAV_ITEMS[0], isMobile: boolean = false) => {
+    const isLocked = isFreeUser && item.requiresSubscription;
+    
+    if (isLocked) {
+      return (
+        <div
+          key={item.path}
+          className={cn(
+            "flex items-center gap-3 px-4 rounded-xl cursor-not-allowed opacity-50",
+            isMobile ? "py-4" : "py-3"
+          )}
+        >
+          <item.icon className="w-5 h-5 text-muted-foreground" />
+          <span className={cn("text-muted-foreground", isMobile && "text-lg")}>{item.label}</span>
+          <Lock className="w-4 h-4 text-muted-foreground ml-auto" />
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        onClick={isMobile ? () => setMobileMenuOpen(false) : undefined}
+        className={cn(
+          "flex items-center gap-3 px-4 rounded-xl transition-colors",
+          isMobile ? "py-4" : "py-3",
+          isActive(item.path)
+            ? "bg-primary/10 text-primary font-medium"
+            : "text-muted-foreground hover:bg-secondary/50"
+        )}
+      >
+        <item.icon className="w-5 h-5" />
+        <span className={cn(isMobile && "text-lg")}>{item.label}</span>
+      </Link>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
@@ -46,21 +86,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
         </Link>
 
         <nav className="flex-1 space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-colors",
-                isActive(item.path)
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-secondary/50"
-              )}
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => renderNavItem(item))}
         </nav>
 
         <div className="pt-6 border-t border-border space-y-3">
@@ -151,22 +177,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16">
           <nav className="p-4 space-y-2">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-4 rounded-xl transition-colors",
-                  isActive(item.path)
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-secondary/50"
-                )}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="text-lg">{item.label}</span>
-              </Link>
-            ))}
+            {NAV_ITEMS.map((item) => renderNavItem(item, true))}
             <Button
               variant="ghost"
               className="w-full justify-start gap-3 px-4 py-4 text-muted-foreground hover:text-foreground"
