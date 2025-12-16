@@ -49,10 +49,10 @@ Deno.serve(async (req) => {
 
     console.log('Accepting invite:', { invite_id, user_id: user.id, first_name })
 
-    // 1. Get invite first to validate it (expiry + single-use)
-    const { data: existingInvite, error: inviteError } = await supabase
+    // 1. Get the original invite (template)
+    const { data: templateInvite, error: inviteError } = await supabase
       .from('session_invites')
-      .select('id, session_id, expires_at, accepted_by')
+      .select('id, session_id, expires_at, invited_by, meeting_format, meeting_address, meeting_link')
       .eq('id', invite_id)
       .maybeSingle()
 
@@ -64,15 +64,16 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (!existingInvite) {
+    if (!templateInvite) {
       return new Response(
         JSON.stringify({ error: 'Invite not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    // Check expiry
     const now = new Date()
-    const expiresAt = new Date(existingInvite.expires_at)
+    const expiresAt = new Date(templateInvite.expires_at)
     if (now > expiresAt) {
       return new Response(
         JSON.stringify({ error: 'Invite has expired', expired: true }),
@@ -80,53 +81,58 @@ Deno.serve(async (req) => {
       )
     }
 
-    // If the invite has already been accepted by someone else, do NOT overwrite it.
-    if (existingInvite.accepted_by && existingInvite.accepted_by !== user.id) {
+    // Prevent user from accepting their own invite
+    if (templateInvite.invited_by === user.id) {
       return new Response(
-        JSON.stringify({ error: 'Invite already accepted', already_accepted: true }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'You cannot accept your own invite' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // 2. Mark invite as accepted (idempotent)
-    if (!existingInvite.accepted_by) {
-      const { data: updatedInvite, error: updateError } = await supabase
+    // 2. Check if this user already has an invite for this session
+    const { data: existingUserInvite } = await supabase
+      .from('session_invites')
+      .select('id')
+      .eq('session_id', templateInvite.session_id)
+      .eq('accepted_by', user.id)
+      .maybeSingle()
+
+    let userInviteId: string
+
+    if (existingUserInvite) {
+      // User already joined this session - just update their info
+      userInviteId = existingUserInvite.id
+      console.log('User already has invite for this session:', userInviteId)
+    } else {
+      // 3. Create a NEW invite record for this user (copying meeting details from template)
+      const { data: newInvite, error: insertError } = await supabase
         .from('session_invites')
-        .update({
+        .insert({
+          session_id: templateInvite.session_id,
+          invited_by: templateInvite.invited_by,
           accepted_by: user.id,
           accepted_at: new Date().toISOString(),
+          expires_at: templateInvite.expires_at,
+          meeting_format: templateInvite.meeting_format,
+          meeting_address: templateInvite.meeting_address,
+          meeting_link: templateInvite.meeting_link,
         })
-        .eq('id', invite_id)
-        .is('accepted_by', null)
-        .select('id, session_id')
-        .maybeSingle()
+        .select('id')
+        .single()
 
-      if (updateError) {
-        console.error('Invite update error:', updateError)
+      if (insertError) {
+        console.error('Insert invite error:', insertError)
         return new Response(
-          JSON.stringify({ error: 'Failed to accept invite', details: updateError.message }),
+          JSON.stringify({ error: 'Failed to accept invite', details: insertError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
-      // Race protection: if no row updated, re-check who accepted it
-      if (!updatedInvite) {
-        const { data: latestInvite } = await supabase
-          .from('session_invites')
-          .select('accepted_by')
-          .eq('id', invite_id)
-          .maybeSingle()
-
-        if (latestInvite?.accepted_by && latestInvite.accepted_by !== user.id) {
-          return new Response(
-            JSON.stringify({ error: 'Invite already accepted', already_accepted: true }),
-            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          )
-        }
-      }
+      userInviteId = newInvite.id
+      console.log('Created new invite for user:', userInviteId)
     }
 
-    // 3. Update profile with first name + mark onboarding complete + signed_up_via_invite
+    // 4. Update profile with first name + mark onboarding complete + signed_up_via_invite
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert(
@@ -148,19 +154,23 @@ Deno.serve(async (req) => {
       )
     }
 
-    // 4. Get session date
+    // 5. Get session date
     const { data: sessionData } = await supabase
       .from('revision_sessions')
       .select('date')
-      .eq('id', existingInvite.session_id)
+      .eq('id', templateInvite.session_id)
       .maybeSingle()
 
-    console.log('Invite accepted successfully:', { invite_id, session_id: existingInvite.session_id })
+    console.log('Invite accepted successfully:', { 
+      template_invite_id: invite_id, 
+      user_invite_id: userInviteId,
+      session_id: templateInvite.session_id 
+    })
 
     return new Response(
       JSON.stringify({
         success: true,
-        session_id: existingInvite.session_id,
+        session_id: templateInvite.session_id,
         session_date: sessionData?.date || null,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
