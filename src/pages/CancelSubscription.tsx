@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Heart, Gift, MessageCircle, Crown } from "lucide-react";
+import { Heart, Gift, MessageCircle, Crown } from "lucide-react";
 
 const CancelSubscription = () => {
   const navigate = useNavigate();
@@ -35,32 +35,28 @@ const CancelSubscription = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-lg space-y-6">
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour
-        </Button>
+    <div className="flex-1 p-6 md:p-8 space-y-8 overflow-auto">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Annuler l'abonnement</h1>
+        <p className="text-muted-foreground">Gérer la résiliation de ton abonnement</p>
+      </div>
 
+      <div className="max-w-xl space-y-6">
         {/* Main retention card */}
-        <Card className="border-2 border-primary/20">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              <Heart className="w-8 h-8 text-primary" />
+        <Card className="border-0 shadow-md">
+          <CardContent className="pt-6 space-y-6">
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <Heart className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">On ne veut pas te voir partir !</h2>
+                <p className="text-muted-foreground mt-1">
+                  Avant de partir, voici ce que tu vas perdre :
+                </p>
+              </div>
             </div>
-            <CardTitle className="text-2xl font-bold">
-              On ne veut pas te voir partir !
-            </CardTitle>
-            <p className="text-muted-foreground mt-2">
-              Avant de partir, voici ce que tu vas perdre :
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
+
             {/* What they'll lose */}
             <div className="space-y-3 bg-destructive/5 p-4 rounded-xl border border-destructive/20">
               <div className="flex items-center gap-3">
@@ -95,7 +91,7 @@ const CancelSubscription = () => {
             </div>
 
             {/* Action buttons */}
-            <div className="space-y-3 pt-4">
+            <div className="space-y-3 pt-2">
               <Button
                 onClick={handleKeepSubscription}
                 className="w-full"
@@ -126,7 +122,7 @@ const CancelSubscription = () => {
             </div>
 
             {/* Reassurance */}
-            <p className="text-xs text-center text-muted-foreground pt-2">
+            <p className="text-xs text-center text-muted-foreground">
               Tu conserveras l'accès jusqu'à la fin de ta période payée
             </p>
           </CardContent>

@@ -18,6 +18,7 @@ const getSkeletonForRoute = (pathname: string) => {
   if (pathname === '/settings') return <SettingsSkeleton />;
   if (pathname === '/profile') return <ProfileSkeleton />;
   if (pathname === '/subscription') return <SubscriptionSkeleton />;
+  if (pathname === '/cancel') return <SubscriptionSkeleton />;
   return <GenericSkeleton />;
 };
 
