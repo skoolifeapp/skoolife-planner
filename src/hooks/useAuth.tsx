@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useMemo, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,6 +35,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Cache for subscription data to avoid redundant calls
+const subscriptionCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minute cache
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -43,8 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const subscriptionCheckInProgress = useRef(false);
 
-  const checkIsAdmin = async (): Promise<boolean> => {
+  const checkIsAdmin = useCallback(async (): Promise<boolean> => {
     const currentUser = user || (await supabase.auth.getUser()).data.user;
     if (!currentUser) return false;
 
@@ -58,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const adminStatus = !!data;
     setIsAdmin(adminStatus);
     return adminStatus;
-  };
+  }, [user]);
 
   const checkSubscription = useCallback(async () => {
     const currentSession = session || (await supabase.auth.getSession()).data.session;
@@ -70,6 +75,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
+    // Prevent duplicate concurrent calls
+    if (subscriptionCheckInProgress.current) {
+      return null;
+    }
+
+    // Check cache first
+    const cacheKey = currentSession.user.id;
+    const cached = subscriptionCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      const data = cached.data;
+      const subscribed = data?.subscribed || false;
+      setIsSubscribed(subscribed);
+      if (subscribed && data?.product_id) {
+        setSubscriptionTier(data.product_id === STRIPE_PRODUCTS.major ? 'major' : 'student');
+      } else {
+        setSubscriptionTier(subscribed ? 'student' : null);
+      }
+      setSubscriptionLoading(false);
+      return data;
+    }
+
+    subscriptionCheckInProgress.current = true;
     setSubscriptionLoading(true);
 
     try {
@@ -86,6 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
+      // Cache the result
+      subscriptionCache.set(cacheKey, { data, timestamp: Date.now() });
+
       const subscribed = data?.subscribed || false;
       setIsSubscribed(subscribed);
 
@@ -96,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (data.product_id === STRIPE_PRODUCTS.student) {
           setSubscriptionTier('student');
         } else {
-          setSubscriptionTier('student'); // Default to student if unknown product
+          setSubscriptionTier('student');
         }
       } else {
         setSubscriptionTier(subscribed ? 'student' : null);
@@ -110,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     } finally {
       setSubscriptionLoading(false);
+      subscriptionCheckInProgress.current = false;
     }
   }, [session]);
 
@@ -153,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -164,38 +195,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
     return { error };
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     return { error };
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
+    // Clear cache on sign out
+    subscriptionCache.clear();
     await supabase.auth.signOut();
     setIsAdmin(false);
     setIsSubscribed(false);
     setSubscriptionTier(null);
-  };
+  }, []);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({ 
+    user, 
+    session, 
+    loading, 
+    isAdmin, 
+    isSubscribed,
+    subscriptionTier,
+    subscriptionLoading,
+    signUp, 
+    signIn, 
+    signOut, 
+    checkIsAdmin,
+    checkSubscription
+  }), [user, session, loading, isAdmin, isSubscribed, subscriptionTier, subscriptionLoading, signUp, signIn, signOut, checkIsAdmin, checkSubscription]);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      loading, 
-      isAdmin, 
-      isSubscribed,
-      subscriptionTier,
-      subscriptionLoading,
-      signUp, 
-      signIn, 
-      signOut, 
-      checkIsAdmin,
-      checkSubscription
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
