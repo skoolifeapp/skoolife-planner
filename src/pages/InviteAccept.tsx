@@ -110,31 +110,16 @@ export default function InviteAccept() {
 
       if (profileError) throw profileError;
 
-      // 2. Check if user already accepted this session
-      const { data: existingInvite } = await supabase
+      // 2. Update the existing invite record to mark it as accepted by this user
+      const { error: updateError } = await supabase
         .from('session_invites')
-        .select('id')
-        .eq('session_id', inviteData.session.id)
-        .eq('accepted_by', user.id)
-        .maybeSingle();
+        .update({
+          accepted_by: user.id,
+          accepted_at: new Date().toISOString(),
+        })
+        .eq('unique_token', token);
 
-      if (!existingInvite) {
-        // 3. Create session invite record for this user
-        const { error: insertError } = await supabase
-          .from('session_invites')
-          .insert({
-            session_id: inviteData.session.id,
-            invited_by: inviteData.inviter_id,
-            accepted_by: user.id,
-            accepted_at: new Date().toISOString(),
-            expires_at: inviteData.expires_at,
-            meeting_format: inviteData.meeting_format,
-            meeting_address: inviteData.meeting_address,
-            meeting_link: inviteData.meeting_link,
-          });
-
-        if (insertError) throw insertError;
-      }
+      if (updateError) throw updateError;
 
       // 4. Clear pending token
       localStorage.removeItem('pending_invite_token');
