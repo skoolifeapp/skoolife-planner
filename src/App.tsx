@@ -63,7 +63,7 @@ const App = () => (
                   <Route path="/post-checkout" element={<PostCheckout />} />
                   <Route path="/onboarding" element={<Onboarding />} />
                   
-                  {/* App routes with persistent sidebar */}
+                  {/* App routes with persistent sidebar - no Suspense here, handled in AppLayout */}
                   <Route element={<AppLayout />}>
                     <Route path="/app" element={<Dashboard />} />
                     <Route path="/settings" element={<Settings />} />
