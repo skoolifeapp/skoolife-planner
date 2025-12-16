@@ -167,8 +167,9 @@ const Dashboard = () => {
       setSignedUpViaInvite(profileData?.signed_up_via_invite || false);
 
       // Check if tutorial should be shown (first visit after onboarding)
+      // Skip tutorial for users who signed up via invite link
       const tutorialSeen = localStorage.getItem(`tutorial_seen_${user.id}`);
-      if (!tutorialSeen) {
+      if (!tutorialSeen && !profileData?.signed_up_via_invite) {
         setShowTutorial(true);
       }
 
@@ -329,13 +330,15 @@ const Dashboard = () => {
       setSessionInvites(invitesMap);
 
       // Check if event tutorial should be shown
+      // Skip for users who signed up via invite link
       const eventTutorialSeen = localStorage.getItem(`event_tutorial_seen_${user.id}`);
       const mainTutorialSeen = localStorage.getItem(`tutorial_seen_${user.id}`);
       // Show event tutorial only if:
       // - Main tutorial has been seen (or not needed)
       // - Event tutorial hasn't been seen
       // - There are events in the calendar
-      if (mainTutorialSeen && !eventTutorialSeen && (eventsData?.length || 0) > 0) {
+      // - User did NOT sign up via invite
+      if (mainTutorialSeen && !eventTutorialSeen && (eventsData?.length || 0) > 0 && !profileData?.signed_up_via_invite) {
         setShowEventTutorial(true);
       }
 
