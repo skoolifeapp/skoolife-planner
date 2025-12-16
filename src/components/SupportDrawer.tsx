@@ -20,7 +20,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { BookOpen, HelpCircle, MessageSquare, Upload, Target, Calendar, Sparkles, Send, Loader2, ArrowLeft, Plus } from 'lucide-react';
+import { BookOpen, HelpCircle, MessageSquare, Upload, Target, Calendar, Sparkles, Send, Loader2, ArrowLeft, Plus, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -206,14 +206,19 @@ const SupportDrawer = ({ open, onOpenChange, onShowTutorial }: SupportDrawerProp
       description: "Exporte ton emploi du temps depuis ton ENT ou Google Calendar et importe-le dans Skoolife.",
     },
     {
+      icon: Calendar,
+      title: 'Ajouter tes évènements',
+      description: "Ajoute tes activités récurrentes (alternance, sport, job, perso...) pour bloquer ces créneaux.",
+    },
+    {
       icon: Target,
-      title: "Ajouter tes matières et dates d'examen",
+      title: "Ajouter tes matières",
       description: "Crée tes matières avec leur coefficient, leur date d'examen et un objectif d'heures.",
     },
     {
-      icon: Calendar,
-      title: 'Ajouter tes contraintes',
-      description: "Indique tes activités régulières (sport, job, perso) pour que Skoolife les évite.",
+      icon: Settings,
+      title: 'Configurer tes préférences',
+      description: "Définis tes préférences de révision : jours disponibles, horaires, durée des sessions...",
     },
     {
       icon: Sparkles,
@@ -225,15 +230,15 @@ const SupportDrawer = ({ open, onOpenChange, onShowTutorial }: SupportDrawerProp
   const faqItems = [
     {
       question: "Je n'ai aucun événement après l'import .ics, que faire ?",
-      answer: "Vérifie que ton fichier .ics est bien valide et qu'il contient des événements pour les prochaines semaines.",
+      answer: "Vérifie que ton fichier .ics est bien valide et qu'il contient des événements pour les prochaines semaines. Si ça ne fonctionne toujours pas, contacte-nous via les messages.",
     },
     {
       question: 'Comment modifier ou déplacer un événement ?',
-      answer: "Clique sur n'importe quel événement dans la grille pour ouvrir ses options. Tu peux aussi glisser-déposer.",
+      answer: "Clique sur n'importe quel événement ou session dans la grille pour ouvrir ses options. Tu peux aussi glisser-déposer pour changer l'horaire, ou utiliser les poignées en haut/bas pour redimensionner.",
     },
     {
-      question: "Comment fonctionne 'Générer' vs 'Ajuster' ?",
-      answer: "'Générer' recrée tout. 'Ajuster' garde tes sessions existantes et ajoute seulement ce qui manque.",
+      question: "Que fait le bouton 'Générer mon planning' ?",
+      answer: "'Générer mon planning' supprime les sessions de révision existantes de la semaine et en crée de nouvelles en fonction de tes matières, préférences et créneaux disponibles.",
     },
   ];
 
@@ -462,7 +467,7 @@ const SupportDrawer = ({ open, onOpenChange, onShowTutorial }: SupportDrawerProp
           {/* Guide rapide */}
           <TabsContent value="guide" className="space-y-4 overflow-auto">
             <p className="text-sm text-muted-foreground mb-4">
-              Les 4 étapes pour bien utiliser Skoolife :
+              Les 5 étapes pour bien utiliser Skoolife :
             </p>
             
             <div className="space-y-4">
