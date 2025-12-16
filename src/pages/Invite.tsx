@@ -99,11 +99,13 @@ export default function Invite() {
     try {
       // Use fetch directly since we need query params
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const res = await fetch(
         `${supabaseUrl}/functions/v1/get-invite?token=${token}`,
         {
           headers: {
             'Content-Type': 'application/json',
+            'apikey': anonKey,
           }
         }
       );
