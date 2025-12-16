@@ -451,17 +451,29 @@ const Dashboard = () => {
       
       const newSessions: { user_id: string; subject_id: string; date: string; start_time: string; end_time: string; status: string; notes: string | null }[] = [];
 
-      // Sort subjects by exam proximity and weight, excluding terminated subjects
+      // Sort subjects by urgency score (exam proximity + weight), excluding terminated subjects
       const activeSubjects = subjects.filter(s => (s.status || 'active') === 'active');
-      const sortedSubjects = [...activeSubjects].sort((a, b) => {
-        // Prioritize subjects with closer exam dates
-        if (a.exam_date && b.exam_date) {
-          return new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime();
+      
+      // Calculate urgency score for each subject
+      const getUrgencyScore = (subject: Subject): number => {
+        const today = new Date();
+        const weight = subject.exam_weight || 3;
+        
+        if (!subject.exam_date) {
+          // No exam date = lowest priority
+          return weight;
         }
-        if (a.exam_date) return -1;
-        if (b.exam_date) return 1;
-        // Then by weight
-        return b.exam_weight - a.exam_weight;
+        
+        const examDate = new Date(subject.exam_date);
+        const daysUntilExam = Math.max(1, Math.ceil((examDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+        
+        // Higher score = higher priority
+        // Formula: weight * (100 / daysUntilExam) - closer exams get exponentially higher scores
+        return weight * (100 / daysUntilExam);
+      };
+      
+      const sortedSubjects = [...activeSubjects].sort((a, b) => {
+        return getUrgencyScore(b) - getUrgencyScore(a); // Highest score first
       });
 
       const today = startOfDay(new Date());
@@ -552,9 +564,9 @@ const Dashboard = () => {
             
             if (eligibleSubjects.length === 0) continue; // No subject to assign for this day
             
-            // Select subject based on weighted distribution
-            const subjectIndex = newSessions.length % eligibleSubjects.length;
-            const subject = eligibleSubjects[subjectIndex];
+            // ALWAYS pick the most urgent subject (first in sorted list)
+            // This ensures subjects with closer exams get filled first
+            const subject = eligibleSubjects[0];
 
             newSessions.push({
               user_id: user.id,
@@ -675,10 +687,11 @@ const Dashboard = () => {
         })
         .filter(s => s.remaining > 0 && s.daysUntilExam > 0)
         .sort((a, b) => {
-          // Sort by priority (exam_weight desc), then by exam proximity, then by remaining hours
-          if (b.exam_weight !== a.exam_weight) return b.exam_weight - a.exam_weight;
-          if (a.daysUntilExam !== b.daysUntilExam) return a.daysUntilExam - b.daysUntilExam;
-          return b.remaining - a.remaining;
+          // Calculate urgency score: weight * (100 / daysUntilExam)
+          // Closer exams with higher weight get exponentially higher priority
+          const scoreA = a.exam_weight * (100 / Math.max(1, a.daysUntilExam));
+          const scoreB = b.exam_weight * (100 / Math.max(1, b.daysUntilExam));
+          return scoreB - scoreA; // Highest score first
         });
 
       if (subjectsNeedingHours.length === 0) {
@@ -736,7 +749,6 @@ const Dashboard = () => {
       
       // Find available slots for each day
       const newSessions: { user_id: string; subject_id: string; date: string; start_time: string; end_time: string; status: string; notes: string | null }[] = [];
-      let subjectIndex = 0;
       // Track total hours added this week (CRITICAL: never exceed weeklyGoalHours)
       let totalHoursAddedThisWeek = existingWeeklyHours;
       const sessionHoursToAdd = sessionDuration / 60;
@@ -850,8 +862,8 @@ const Dashboard = () => {
           
           if (eligibleSubjects.length === 0) continue; // No subject to assign for this day
           
-          // Pick subject using round-robin based on priority
-          const subject = eligibleSubjects[subjectIndex % eligibleSubjects.length];
+          // ALWAYS pick the most urgent subject (first in sorted list)
+          const subject = eligibleSubjects[0];
 
           newSessions.push({
             user_id: user.id,
@@ -867,7 +879,6 @@ const Dashboard = () => {
           totalHoursAddedThisWeek += sessionHoursToAdd;
           // Track hours added per subject to respect target_hours
           hoursPerSubject[subject.id] = (hoursPerSubject[subject.id] || 0) + sessionHoursToAdd;
-          subjectIndex++;
 
           // Update slot cursor for potential next session
           slot.start = sessionEnd + 30; // 30 min break
