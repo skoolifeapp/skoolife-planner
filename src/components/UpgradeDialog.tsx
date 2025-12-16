@@ -52,7 +52,7 @@ export const UpgradeDialog = ({ open, onOpenChange, featureName, onUpgradeSucces
             <Crown className="w-6 h-6 text-primary" />
           </div>
           <DialogTitle className="text-xl text-center">
-            Passe à Major pour débloquer {featureName || 'cette fonctionnalité'}
+            Skoolife Student
           </DialogTitle>
           <DialogDescription className="text-center pt-2">
             Accède à toutes les fonctionnalités avancées pour seulement <span className="font-semibold">4,99€/mois</span>.
