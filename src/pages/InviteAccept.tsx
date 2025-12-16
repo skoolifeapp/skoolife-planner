@@ -88,7 +88,7 @@ export default function InviteAccept() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !inviteData || !firstName.trim() || !token) {
+    if (!user || !inviteData || !firstName.trim()) {
       toast.error('Entre ton prénom');
       return;
     }
@@ -97,41 +97,42 @@ export default function InviteAccept() {
     setError(null);
 
     try {
-      // 1. Update profile with first name + mark onboarding complete + signed_up_via_invite
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
+      // Call edge function to accept invite (bypasses RLS)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/accept-invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          invite_id: inviteData.id,
           first_name: firstName.trim(),
-          is_onboarding_complete: true,
-          signed_up_via_invite: true,
-        }, { onConflict: 'id' });
+        }),
+      });
 
-      if (profileError) throw profileError;
+      const result = await res.json();
 
-      // 2. Update the existing invite record (by its id) to mark it as accepted by this user
-      const { data: updatedInvite, error: updateError } = await supabase
-        .from('session_invites')
-        .update({
-          accepted_by: user.id,
-          accepted_at: new Date().toISOString(),
-        })
-        .eq('id', inviteData.id)
-        .select('id')
-        .maybeSingle();
+      if (!res.ok) {
+        console.error('Accept invite error:', result);
+        throw new Error(result.error || 'Failed to accept invite');
+      }
 
-      if (updateError) throw updateError;
-      if (!updatedInvite) throw new Error('Invite not updated');
-
-      // 4. Clear pending token
+      // Clear pending token
       localStorage.removeItem('pending_invite_token');
       
       setAccepted(true);
 
-      // 5. Redirect to dashboard with the session highlighted
+      // Redirect to dashboard with the session highlighted
       setTimeout(() => {
-        navigate(`/app?week=${inviteData.session.date}&invitedSession=${inviteData.session.id}`);
+        navigate(`/app?week=${result.session_date || inviteData.session.date}&invitedSession=${result.session_id || inviteData.session.id}`);
       }, 1200);
 
     } catch (err) {
