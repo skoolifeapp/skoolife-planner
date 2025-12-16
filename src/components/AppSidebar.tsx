@@ -66,8 +66,8 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
           key={item.path}
           onClick={() => navigate('/subscription')}
           className={cn(
-            "flex items-center gap-3 px-4 rounded-xl cursor-pointer opacity-50 hover:opacity-70 transition-opacity",
-            isMobile ? "py-4 text-muted-foreground" : "py-3 text-sidebar-foreground/50"
+            "flex items-center gap-3 px-4 rounded-xl cursor-pointer opacity-60 hover:opacity-80 transition-opacity",
+            isMobile ? "py-4 text-muted-foreground" : "py-3 text-sidebar-foreground"
           )}
         >
           <item.icon className={cn("w-5 h-5", isMobile ? "" : "")} />
@@ -88,7 +88,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
           isMobile ? "py-4" : "py-3",
           isActive(item.path)
             ? "bg-sidebar-accent text-sidebar-foreground font-medium"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/50"
         )}
       >
         <item.icon className="w-5 h-5" />
@@ -194,7 +194,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start gap-2 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10 text-xs"
+              className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-foreground/10 text-xs"
             >
               <Video className="w-4 h-4 shrink-0" />
               <span className="truncate">Réserver une démo</span>
@@ -206,7 +206,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
             className={cn(
               "w-full justify-start gap-2 text-xs",
               isSubscribed 
-                ? "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10" 
+                ? "text-sidebar-foreground hover:bg-sidebar-foreground/10" 
                 : "bg-sidebar-foreground text-sidebar hover:bg-sidebar-foreground/90"
             )}
             onClick={handleManageSubscription}
@@ -216,7 +216,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10"
+            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-foreground/10"
             onClick={handleSignOut}
           >
             <LogOut className="w-5 h-5" />
