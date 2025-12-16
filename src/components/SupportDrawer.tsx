@@ -236,6 +236,14 @@ const SupportDrawer = ({ open, onOpenChange, onShowTutorial }: SupportDrawerProp
       question: 'Comment modifier ou déplacer un événement ?',
       answer: "Clique sur n'importe quel événement ou session dans la grille pour ouvrir ses options. Tu peux aussi glisser-déposer pour changer l'horaire, ou utiliser les poignées en haut/bas pour redimensionner.",
     },
+    {
+      question: 'Puis-je inviter un camarade à réviser ?',
+      answer: "Oui ! Avec l'abonnement Major, tu peux inviter des camarades à tes sessions de révision. Clique sur une session, puis sur 'Inviter un camarade' pour partager un lien ou utiliser leur code de liaison.",
+    },
+    {
+      question: 'Comment changer mon abonnement ?',
+      answer: "Va dans 'Mon abonnement' depuis le menu à gauche. Tu pourras passer de Student à Major (ou inversement) et gérer ta facturation.",
+    },
   ];
 
   // Render conversation view
