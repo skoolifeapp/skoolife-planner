@@ -655,15 +655,65 @@ const Dashboard = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Fetch all past sessions to calculate hours already done
+      // Get current week bounds (Monday to Sunday inclusive)
+      const weekEndDate = addDays(weekStart, 6);
+      const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+      const weekEndStr = format(weekEndDate, 'yyyy-MM-dd');
+
+      // Fetch sessions with their invites to identify protected sessions
+      const { data: weekSessionsWithInvites } = await supabase
+        .from('revision_sessions')
+        .select(`
+          *,
+          session_invites!session_invites_session_id_fkey(id, invited_by, accepted_by)
+        `)
+        .eq('user_id', user.id)
+        .gte('date', weekStartStr)
+        .lte('date', weekEndStr);
+
+      // Identify sessions that have invites (either sent or received) - these are PROTECTED
+      const protectedSessionIds: string[] = [];
+      const sessionsToDelete: string[] = [];
+      
+      (weekSessionsWithInvites || []).forEach(session => {
+        const hasInvites = session.session_invites && session.session_invites.length > 0;
+        if (hasInvites) {
+          protectedSessionIds.push(session.id);
+        } else {
+          sessionsToDelete.push(session.id);
+        }
+      });
+
+      // Also check for sessions where user is invited (accepted_by = user.id)
+      const { data: invitedSessions } = await supabase
+        .from('session_invites')
+        .select('session_id')
+        .eq('accepted_by', user.id);
+      
+      const invitedSessionIds = (invitedSessions || []).map(i => i.session_id);
+
+      // Delete non-protected sessions for this week
+      if (sessionsToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('revision_sessions')
+          .delete()
+          .in('id', sessionsToDelete);
+        
+        if (deleteError) throw deleteError;
+      }
+
+      // Fetch all sessions (including other weeks) to calculate hours already done
       const { data: allSessions } = await supabase
         .from('revision_sessions')
         .select('*')
         .eq('user_id', user.id);
 
-      // Calculate hours already done per subject
+      // Calculate hours already done per subject (excluding deleted sessions)
       const hoursPerSubject: Record<string, number> = {};
       (allSessions || []).forEach(session => {
+        // Skip sessions we just deleted
+        if (sessionsToDelete.includes(session.id)) return;
+        
         const [startH, startM] = session.start_time.split(':').map(Number);
         const [endH, endM] = session.end_time.split(':').map(Number);
         const durationHours = ((endH * 60 + endM) - (startH * 60 + startM)) / 60;
@@ -688,23 +738,11 @@ const Dashboard = () => {
         .filter(s => s.remaining > 0 && s.daysUntilExam > 0)
         .sort((a, b) => {
           // Calculate urgency score: weight * (100 / daysUntilExam)
-          // Closer exams with higher weight get exponentially higher priority
           const scoreA = a.exam_weight * (100 / Math.max(1, a.daysUntilExam));
           const scoreB = b.exam_weight * (100 / Math.max(1, b.daysUntilExam));
-          return scoreB - scoreA; // Highest score first
+          return scoreB - scoreA;
         });
 
-      if (subjectsNeedingHours.length === 0) {
-        toast.info("Tous tes objectifs sont déjà couverts, rien à ajouter pour cette semaine 👌");
-        setAdjusting(false);
-        return;
-      }
-
-      // Get current week bounds (Monday to Sunday inclusive)
-      const weekEndDate = addDays(weekStart, 6); // Sunday
-      const weekStartStr = format(weekStart, 'yyyy-MM-dd');
-      const weekEndStr = format(weekEndDate, 'yyyy-MM-dd');
-      
       // Extract preferences with defaults
       const preferredDays = preferences?.preferred_days_of_week || [1, 2, 3, 4, 5];
       const dailyStartTime = preferences?.daily_start_time || '08:00';
@@ -714,72 +752,71 @@ const Dashboard = () => {
       const avoidEarlyMorning = preferences?.avoid_early_morning || false;
       const avoidLateEvening = preferences?.avoid_late_evening || false;
 
-      // Parse start/end times
       const [startHour] = dailyStartTime.split(':').map(Number);
       const [endHour] = dailyEndTime.split(':').map(Number);
 
-      // Calculate effective start/end hours
       let effectiveStartHour = startHour;
       let effectiveEndHour = endHour;
       if (avoidEarlyMorning && effectiveStartHour < 9) effectiveStartHour = 9;
       if (avoidLateEvening && effectiveEndHour > 21) effectiveEndHour = 21;
 
-      // Get existing sessions and events for THIS week only (using string comparison for accuracy)
-      const weekSessions = sessions.filter(s => {
-        return s.date >= weekStartStr && s.date <= weekEndStr;
-      });
+      // Get protected sessions that remain for this week (invited sessions)
+      const protectedSessions = (weekSessionsWithInvites || []).filter(s => protectedSessionIds.includes(s.id));
+      
+      // Also fetch sessions user was invited to
+      const invitedSessionsThisWeek = (allSessions || [])?.filter(s => 
+        invitedSessionIds.includes(s.id) && 
+        s.date >= weekStartStr && 
+        s.date <= weekEndStr
+      ) || [];
 
+      const allProtectedSessions = [...protectedSessions, ...invitedSessionsThisWeek];
+
+      // Get calendar events for blocking
       const weekEvents = calendarEvents.filter(e => {
         const eventDateStr = format(parseISO(e.start_datetime), 'yyyy-MM-dd');
         return eventDateStr >= weekStartStr && eventDateStr <= weekEndStr && e.is_blocking;
       });
 
-      // Convert preferred days (1=Mon..6=Sat, 0=Sun) to day offsets for Monday-based week
+      // Convert preferred days to day offsets
       const workDays = preferredDays.map(d => (d === 0 ? 6 : d - 1)).sort((a, b) => a - b);
       
-      // Weekly goal from profile (CRITICAL: never exceed this)
+      // Weekly goal from profile
       const weeklyGoalHours = profile?.weekly_revision_hours || 10;
       
-      // Calculate hours already scheduled this week (from existing sessions)
-      const existingWeeklyHours = weekSessions.reduce((acc, s) => {
+      // Calculate hours from protected sessions this week
+      const protectedHours = allProtectedSessions.reduce((acc, s) => {
         const [sh, sm] = s.start_time.split(':').map(Number);
         const [eh, em] = s.end_time.split(':').map(Number);
         return acc + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
       }, 0);
-      
-      // Find available slots for each day
+
       const newSessions: { user_id: string; subject_id: string; date: string; start_time: string; end_time: string; status: string; notes: string | null }[] = [];
-      // Track total hours added this week (CRITICAL: never exceed weeklyGoalHours)
-      let totalHoursAddedThisWeek = existingWeeklyHours;
+      let totalHoursAddedThisWeek = protectedHours;
       const sessionHoursToAdd = sessionDuration / 60;
 
       for (const dayOffset of workDays) {
-        // CRITICAL: Stop if weekly goal is reached
         if (totalHoursAddedThisWeek >= weeklyGoalHours) break;
         
         const currentDate = addDays(weekStart, dayOffset);
-        
-        // Skip past days
         if (currentDate < today && !isSameDay(currentDate, today)) continue;
         
         const dateStr = format(currentDate, 'yyyy-MM-dd');
 
-        // Get existing blocks for this day
         const dayEvents = weekEvents.filter(e => isSameDay(parseISO(e.start_datetime), currentDate));
-        const daySessions = weekSessions.filter(s => s.date === dateStr);
+        const dayProtectedSessions = allProtectedSessions.filter(s => s.date === dateStr);
         const isToday = isSameDay(currentDate, new Date());
 
-        // Calculate hours already scheduled today
-        const hoursScheduledToday = daySessions.reduce((acc, s) => {
+        // Calculate hours from protected sessions today
+        const protectedHoursToday = dayProtectedSessions.reduce((acc, s) => {
           const [sh, sm] = s.start_time.split(':').map(Number);
           const [eh, em] = s.end_time.split(':').map(Number);
           return acc + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
         }, 0);
 
-        // Build list of blocked time ranges
+        // Build blocked time ranges
         const blockedRanges: { start: number; end: number }[] = [];
         
-        // Add events as blocked
         dayEvents.forEach(e => {
           const eventStart = parseISO(e.start_datetime);
           const eventEnd = parseISO(e.end_datetime);
@@ -789,27 +826,23 @@ const Dashboard = () => {
           });
         });
 
-        // Add existing sessions as blocked
-        daySessions.forEach(s => {
+        // Add protected sessions as blocked
+        dayProtectedSessions.forEach(s => {
           const [sh, sm] = s.start_time.split(':').map(Number);
           const [eh, em] = s.end_time.split(':').map(Number);
           blockedRanges.push({ start: sh * 60 + sm, end: eh * 60 + em });
         });
 
-        // Add lunch break as blocked (12:30-14:00)
         blockedRanges.push({ start: 12.5 * 60, end: 14 * 60 });
 
-        // Block time before current time if it's today
         if (isToday) {
           const now = new Date();
           const currentMinutes = now.getHours() * 60 + now.getMinutes();
           blockedRanges.push({ start: 0, end: currentMinutes });
         }
 
-        // Sort blocked ranges
         blockedRanges.sort((a, b) => a.start - b.start);
 
-        // Find free slots
         const freeSlots: { start: number; end: number }[] = [];
         let cursor = effectiveStartHour * 60;
         const dayEnd = effectiveEndHour * 60;
@@ -824,23 +857,18 @@ const Dashboard = () => {
           freeSlots.push({ start: cursor, end: dayEnd });
         }
 
-        // Try to place sessions in free slots
         let hoursAddedToday = 0;
-        const maxToAddToday = maxHoursPerDay - hoursScheduledToday;
+        const maxToAddToday = maxHoursPerDay - protectedHoursToday;
 
         for (const slot of freeSlots) {
-          // CRITICAL: Stop if weekly goal is reached
           if (totalHoursAddedThisWeek >= weeklyGoalHours) break;
           if (hoursAddedToday >= maxToAddToday) break;
           if (subjectsNeedingHours.length === 0) break;
-          
-          // Check if adding this session would exceed weekly goal
           if (totalHoursAddedThisWeek + sessionHoursToAdd > weeklyGoalHours) break;
 
           const slotDuration = slot.end - slot.start;
           if (slotDuration < sessionDuration) continue;
 
-          // Place session
           const sessionStart = slot.start;
           const sessionEnd = sessionStart + sessionDuration;
 
@@ -850,19 +878,16 @@ const Dashboard = () => {
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
           };
 
-          // Filter subjects whose exam is after this date AND still have remaining hours to schedule (ABSOLUTE PRIORITY)
           const eligibleSubjects = subjectsNeedingHours.filter(s => {
             if (!s.exam_date) return s.remaining > 0;
             const examDate = parseISO(s.exam_date);
             if (currentDate >= examDate) return false;
-            // Check if adding this session would exceed target_hours
             const currentScheduled = hoursPerSubject[s.id] || 0;
             return currentScheduled + sessionHoursToAdd <= (s.target_hours || 0);
           });
           
-          if (eligibleSubjects.length === 0) continue; // No subject to assign for this day
+          if (eligibleSubjects.length === 0) continue;
           
-          // ALWAYS pick the most urgent subject (first in sorted list)
           const subject = eligibleSubjects[0];
 
           newSessions.push({
@@ -877,15 +902,12 @@ const Dashboard = () => {
 
           hoursAddedToday += sessionHoursToAdd;
           totalHoursAddedThisWeek += sessionHoursToAdd;
-          // Track hours added per subject to respect target_hours
           hoursPerSubject[subject.id] = (hoursPerSubject[subject.id] || 0) + sessionHoursToAdd;
 
-          // Update slot cursor for potential next session
-          slot.start = sessionEnd + 30; // 30 min break
+          slot.start = sessionEnd + 30;
         }
       }
 
-      // Insert new sessions
       if (newSessions.length > 0) {
         const { error } = await supabase
           .from('revision_sessions')
@@ -893,7 +915,6 @@ const Dashboard = () => {
 
         if (error) throw error;
         
-        // Check if all subjects have reached their target_hours
         const allObjectivesReached = subjectsNeedingHours.every(s => {
           if (!s.target_hours || s.target_hours <= 0) return true;
           const scheduled = hoursPerSubject[s.id] || 0;
