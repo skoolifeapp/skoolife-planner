@@ -108,11 +108,15 @@ const Subscription = () => {
   const isCanceled = subscriptionData?.cancel_at_period_end;
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Mon abonnement</h1>
+    <div className="flex-1 p-6 md:p-8 space-y-8 overflow-auto">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Mon abonnement</h1>
+        <p className="text-muted-foreground">Gère ton abonnement Skoolife</p>
+      </div>
 
-      {/* Current plan card */}
-      <Card className="border-2 border-primary/20">
+      <div className="max-w-2xl space-y-6">
+        {/* Current plan card */}
+        <Card className="border-0 shadow-md">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -162,10 +166,10 @@ const Subscription = () => {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
 
-      {/* Actions */}
-      <Card>
+        {/* Actions */}
+        <Card className="border-0 shadow-md">
         <CardHeader>
           <CardTitle className="text-lg">Gérer mon abonnement</CardTitle>
         </CardHeader>
@@ -225,7 +229,8 @@ const Subscription = () => {
             </Button>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
