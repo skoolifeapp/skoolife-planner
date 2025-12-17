@@ -441,48 +441,6 @@ const Progression = () => {
         )}
       </div>
 
-      {/* Week history */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-semibold">Historique des dernières semaines</h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {weekHistory.map((week, index) => {
-            const weekLabel = index === weekHistory.length - 1 
-              ? 'Cette semaine' 
-              : `Sem. du ${format(week.weekStart, 'd MMM', { locale: fr })}`;
-            const isCurrent = index === weekHistory.length - 1;
-            
-            return (
-              <Card 
-                key={index} 
-                className={`border shadow-sm ${isCurrent ? 'ring-2 ring-primary/20' : ''}`}
-              >
-                <CardContent className="p-4">
-                  <p className="text-sm font-medium mb-2">{weekLabel}</p>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-2xl font-bold">{week.completionRate}%</p>
-                      <p className="text-xs text-muted-foreground">
-                        {week.doneHours}h / {week.plannedHours}h
-                      </p>
-                    </div>
-                    <div className={`text-xs font-medium px-2 py-1 rounded ${
-                      week.completionRate >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                      week.completionRate >= 40 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                      'bg-secondary text-muted-foreground'
-                    }`}>
-                      {week.doneCount} sessions
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Support Button */}
       <SupportButton />
