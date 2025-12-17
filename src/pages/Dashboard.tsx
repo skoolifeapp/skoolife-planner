@@ -33,7 +33,7 @@ import { ShareSessionDialog } from '@/components/ShareSessionDialog';
 import WeeklyHourGrid, { type GridClickData } from '@/components/WeeklyHourGrid';
 import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { EventTutorialOverlay } from '@/components/EventTutorialOverlay';
-import { SessionStatusDialog } from '@/components/SessionStatusDialog';
+
 import { InvitedSessionDialog } from '@/components/InvitedSessionDialog';
 import SupportButton from '@/components/SupportButton';
 
@@ -57,7 +57,7 @@ const Dashboard = () => {
   const [deletingEvents, setDeletingEvents] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showEventTutorial, setShowEventTutorial] = useState(false);
-  const [sessionPopoverOpen, setSessionPopoverOpen] = useState<string | null>(null);
+  
   const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false);
   const [shareSessionDialogOpen, setShareSessionDialogOpen] = useState(false);
   const [invitedSessionDialogOpen, setInvitedSessionDialogOpen] = useState(false);
@@ -864,9 +864,9 @@ const Dashboard = () => {
       setInvitedSessionDialogOpen(true);
       return;
     }
-    // Otherwise show the regular session status dialog
+    // Otherwise open the full edit session dialog directly (like events)
     setSelectedSession(session);
-    setSessionPopoverOpen(session.id);
+    setEditSessionDialogOpen(true);
   };
 
   const handleInviteConfirm = async (sessionId: string) => {
@@ -1241,43 +1241,17 @@ const Dashboard = () => {
           setSelectedSession(null);
         }}
         onUpdate={fetchData}
+        canShare={canInviteClassmates}
+        onShare={() => {
+          setEditSessionDialogOpen(false);
+          setShareSessionDialogOpen(true);
+        }}
       />
       <EditEventDialog
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onUpdate={fetchData}
       />
-      
-      {/* Session status dialog */}
-      <SessionStatusDialog
-        session={selectedSession}
-        open={sessionPopoverOpen !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSessionPopoverOpen(null);
-          }
-        }}
-        onMarkDone={() => selectedSession && handleSessionStatusUpdate(selectedSession.id, 'done')}
-        onMarkSkipped={() => selectedSession && handleSessionStatusUpdate(selectedSession.id, 'skipped')}
-        onEdit={() => {
-          setSessionPopoverOpen(null);
-          setEditSessionDialogOpen(true);
-        }}
-        onDelete={() => {
-          if (selectedSession) {
-            handleSessionDelete(selectedSession.id);
-            setSelectedSession(null);
-          }
-        }}
-        onShare={canInviteClassmates ? () => {
-          setSessionPopoverOpen(null);
-          setShareSessionDialogOpen(true);
-        } : undefined}
-        onFileChange={fetchData}
-        hasAcceptedInvite={selectedSession ? (sessionInvites[selectedSession.id]?.invitees?.some(i => i.accepted_by) ?? false) : false}
-        inviteInfo={selectedSession ? sessionInvites[selectedSession.id] : undefined}
-      />
-
       {/* Share session dialog */}
       <ShareSessionDialog
         session={shareSessionDialogOpen ? selectedSession : null}

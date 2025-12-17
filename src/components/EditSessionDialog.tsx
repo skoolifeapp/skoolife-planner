@@ -1,97 +1,145 @@
 import { useState, useEffect, useCallback, memo, lazy, Suspense } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { CalendarIcon, Loader2, Trash2, Paperclip, Share2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { CheckCircle2, Trash2, Loader2, Clock, Paperclip } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { Subject, RevisionSession } from '@/types/planning';
 
-// Lazy load FileUploadPopover to not block dialog opening
+// Lazy load FileUploadPopover
 const FileUploadPopover = lazy(() => import('./FileUploadPopover').then(m => ({ default: m.FileUploadPopover })));
+
+const formSchema = z.object({
+  subject_id: z.string().min(1, 'Sélectionne une matière'),
+  date: z.date({ required_error: 'La date est obligatoire' }),
+  start_time: z.string().min(1, 'L\'heure de début est obligatoire'),
+  end_time: z.string().min(1, 'L\'heure de fin est obligatoire'),
+  status: z.string(),
+}).refine((data) => {
+  if (data.start_time && data.end_time) {
+    return data.start_time < data.end_time;
+  }
+  return true;
+}, {
+  message: "L'heure de fin doit être après l'heure de début",
+  path: ['end_time'],
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface EditSessionDialogProps {
   session: RevisionSession | null;
   subjects: Subject[];
   onClose: () => void;
   onUpdate: () => void;
+  onShare?: () => void;
+  canShare?: boolean;
 }
 
-const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate }: EditSessionDialogProps) => {
-  const [subjectId, setSubjectId] = useState('');
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
+const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare, canShare = false }: EditSessionDialogProps) => {
+  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      subject_id: '',
+      start_time: '09:00',
+      end_time: '10:30',
+      status: 'planned',
+    },
+  });
+
+  // Populate form when session changes
   useEffect(() => {
     if (session) {
-      setSubjectId(session.subject_id);
-      setDate(session.date);
-      setStartTime(session.start_time.slice(0, 5));
-      setEndTime(session.end_time.slice(0, 5));
-      setNotes(session.notes || '');
+      const sessionDate = parseISO(session.date);
+      
+      form.reset({
+        subject_id: session.subject_id,
+        date: sessionDate,
+        start_time: session.start_time.slice(0, 5),
+        end_time: session.end_time.slice(0, 5),
+        status: session.status || 'planned',
+      });
     }
-  }, [session]);
+  }, [session, form]);
 
-  const handleSave = useCallback(async () => {
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const onSubmit = async (values: FormValues) => {
     if (!session) return;
-    setLoading(true);
+
+    setSaving(true);
 
     try {
+      const year = values.date.getFullYear();
+      const month = String(values.date.getMonth() + 1).padStart(2, '0');
+      const day = String(values.date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+
       const { error } = await supabase
         .from('revision_sessions')
         .update({
-          subject_id: subjectId,
-          date,
-          start_time: startTime,
-          end_time: endTime,
-          notes: notes || null
+          subject_id: values.subject_id,
+          date: dateStr,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          status: values.status,
         })
         .eq('id', session.id);
 
       if (error) throw error;
 
+      handleClose();
       onUpdate();
-      onClose();
     } catch (err) {
-      console.error(err);
-      toast.error('Erreur lors de la mise à jour');
+      console.error('Error updating session:', err);
+      toast.error('Erreur lors de la modification');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  }, [session, subjectId, date, startTime, endTime, notes, onUpdate, onClose]);
+  };
 
-  const handleMarkDone = useCallback(async () => {
+  const handleDelete = async () => {
     if (!session) return;
-    setLoading(true);
 
-    try {
-      const newStatus = session.status === 'done' ? 'planned' : 'done';
-      const { error } = await supabase
-        .from('revision_sessions')
-        .update({ status: newStatus })
-        .eq('id', session.id);
-
-      if (error) throw error;
-
-      onUpdate();
-      onClose();
-    } catch (err) {
-      console.error(err);
-      toast.error('Erreur lors de la mise à jour');
-    } finally {
-      setLoading(false);
-    }
-  }, [session, onUpdate, onClose]);
-
-  const handleDelete = useCallback(async () => {
-    if (!session) return;
     setDeleting(true);
 
     try {
@@ -102,178 +150,217 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate }: EditSe
 
       if (error) throw error;
 
+      handleClose();
       onUpdate();
-      onClose();
     } catch (err) {
-      console.error(err);
+      console.error('Error deleting session:', err);
       toast.error('Erreur lors de la suppression');
     } finally {
       setDeleting(false);
     }
-  }, [session, onUpdate, onClose]);
+  };
 
-  const currentSubject = subjects.find(s => s.id === subjectId);
+  const currentSubject = subjects.find(s => s.id === form.watch('subject_id'));
+  const currentStatus = form.watch('status');
 
   return (
-    <Dialog open={!!session} onOpenChange={() => onClose()}>
+    <Dialog open={!!session} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            Modifier la session
-          </DialogTitle>
+          <DialogTitle>Modifier la session</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Subject indicator */}
-          {currentSubject && (
-            <div 
-              className="p-3 rounded-lg"
-              style={{ 
-                backgroundColor: `${currentSubject.color}15`,
-                borderLeft: `4px solid ${currentSubject.color}`
-              }}
-            >
-              <p className="font-semibold" style={{ color: currentSubject.color }}>
-                {currentSubject.name}
-              </p>
-            </div>
-          )}
-
-          {/* Subject select */}
-          <div className="space-y-2">
-            <Label>Matière</Label>
-            <Select value={subjectId} onValueChange={setSubjectId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une matière" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: subject.color }}
-                      />
-                      {subject.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Date */}
-          <div className="space-y-2">
-            <Label>Date</Label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
-
-          {/* Time */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Début</Label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Fin</Label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label>Notes (optionnel)</Label>
-            <Textarea
-              placeholder="Ajoute des notes pour cette session..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          {/* Files - Lazy loaded, shared at subject level */}
-          {session && currentSubject && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Paperclip className="w-4 h-4" />
-                Fichiers de cours
-                <span className="text-xs text-muted-foreground font-normal">
-                  (partagés pour "{currentSubject.name}")
-                </span>
-              </Label>
-              <div className="p-3 border rounded-lg bg-muted/30">
-                <Suspense fallback={<div className="flex items-center justify-center py-2"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>}>
-                  <FileUploadPopover 
-                    targetId={session.id} 
-                    targetType="session"
-                    subjectName={currentSubject.name}
-                    onFileChange={onUpdate}
-                  />
-                </Suspense>
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="space-y-3 pt-2">
-            <Button 
-              variant={session?.status === 'done' ? 'outline' : 'hero'}
-              className="w-full"
-              onClick={handleMarkDone}
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  {session?.status === 'done' ? 'Marquer comme à faire' : 'Marquer comme fait'}
-                </>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {/* Subject selector */}
+            <FormField
+              control={form.control}
+              name="subject_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Matière</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionne une matière" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: subject.color }}
+                            />
+                            {subject.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )}
-            </Button>
+            />
 
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
+            {/* Date picker */}
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, 'PPP', { locale: fr })
+                          ) : (
+                            <span>Choisis une date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Time pickers */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="start_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Heure de début</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="end_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Heure de fin</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Status checkbox */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/30">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value === 'done'}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked ? 'done' : 'planned');
+                      }}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="font-medium cursor-pointer">
+                      Marquer comme terminée
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Cette session sera comptabilisée dans ta progression.
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* Course files section - shared at subject level */}
+            {session && currentSubject && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Paperclip className="w-4 h-4 text-primary" />
+                  <span>Fichiers de cours</span>
+                  <span className="text-xs text-muted-foreground font-normal">
+                    (partagés pour "{currentSubject.name}")
+                  </span>
+                </div>
+                <div className="p-3 border rounded-lg bg-muted/30">
+                  <Suspense fallback={<div className="flex items-center justify-center py-2"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>}>
+                    <FileUploadPopover 
+                      targetId={session.id} 
+                      targetType="session"
+                      subjectName={currentSubject.name}
+                      onFileChange={onUpdate}
+                    />
+                  </Suspense>
+                </div>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
                     <Trash2 className="w-4 h-4" />
-                    Supprimer
-                  </>
+                  )}
+                </Button>
+                {canShare && onShare && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      handleClose();
+                      onShare();
+                    }}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
                 )}
-              </Button>
-              <Button 
-                variant="default"
-                onClick={handleSave}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Enregistrer'
-                )}
+              </div>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Enregistrer
               </Button>
             </div>
-          </div>
-        </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
