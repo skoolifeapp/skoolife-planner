@@ -481,6 +481,51 @@ export type Database = {
           },
         ]
       }
+      session_links: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          id: string
+          session_id: string | null
+          title: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          session_id?: string | null
+          title?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          session_id?: string | null
+          title?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_links_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_links_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "revision_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stats_snapshots: {
         Row: {
           active_users: number
