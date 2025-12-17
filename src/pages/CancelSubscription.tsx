@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,8 +8,19 @@ import { Heart, Gift, MessageCircle, Crown } from "lucide-react";
 
 const CancelSubscription = () => {
   const navigate = useNavigate();
-  const { subscriptionTier } = useAuth();
+  const { subscriptionTier, refreshSubscription } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // Rafraîchir les données et rediriger au retour du portail Stripe
+  useEffect(() => {
+    const handleFocus = async () => {
+      await refreshSubscription();
+      navigate("/subscription");
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [refreshSubscription, navigate]);
 
   const handleKeepSubscription = () => {
     navigate("/app");
