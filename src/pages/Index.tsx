@@ -34,19 +34,19 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="fixed left-0 right-0 z-50 p-6 bg-background/80 backdrop-blur-md top-0">
+      <header className="fixed left-0 right-0 z-50 px-4 py-3 md:p-6 bg-background/80 backdrop-blur-md top-0">
         <nav className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl shadow-glow" />
-            <span className="text-xl font-bold text-foreground font-heading">Skoolife</span>
+            <img src={logo} alt="Skoolife" className="w-8 h-8 md:w-10 md:h-10 rounded-xl shadow-glow" />
+            <span className="text-lg md:text-xl font-bold text-foreground font-heading">Skoolife</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/auth">
-              <Button variant="default" size="sm">
+              <Button variant="default" size="sm" className="text-xs md:text-sm px-3 md:px-4">
                 Espace étudiants
               </Button>
             </Link>
-            <Button variant="outline" size="sm" disabled className="opacity-60 cursor-not-allowed">
+            <Button variant="outline" size="sm" disabled className="opacity-60 cursor-not-allowed hidden md:inline-flex">
               Espace écoles
             </Button>
           </div>
@@ -54,69 +54,66 @@ const Index = () => {
       </header>
 
       {/* Hero */}
-      <main className="relative pt-20">
-        {/* Background decorations */}
+      <main className="relative pt-16 md:pt-20">
+        {/* Background decorations - smaller on mobile */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
-          <div className="absolute top-40 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-soft delay-1000" />
-          <div className="absolute bottom-20 left-1/3 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-5 md:left-10 w-48 md:w-72 h-48 md:h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
+          <div className="absolute top-40 right-5 md:right-20 w-64 md:w-96 h-64 md:h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-soft delay-1000" />
+          <div className="absolute bottom-20 left-1/3 w-40 md:w-64 h-40 md:h-64 bg-primary/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-20">
+        <div className="relative max-w-6xl mx-auto px-4 pt-8 md:pt-16 pb-12 md:pb-20">
           {/* Hero Section with Text + 3D Dashboard */}
-          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+          <div className="flex flex-col lg:flex-row items-center gap-6 md:gap-8 lg:gap-12">
             {/* Left - Text Content */}
             <div className="flex-1 text-center lg:text-left">
               {/* Main heading */}
-              <div className="space-y-6 animate-slide-up">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight font-heading">
+              <div className="space-y-4 md:space-y-6 animate-slide-up">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight font-heading">
                   Tes révisions,
                   <br />
                   <span className="gradient-text-animated font-heading">
                     enfin organisées
                   </span>
                 </h1>
-                <p className="max-w-xl text-lg sm:text-xl text-muted-foreground">
+                <p className="max-w-xl text-base md:text-lg lg:text-xl text-muted-foreground mx-auto lg:mx-0">
                   Skoolife génère automatiquement ton planning de révisions personnalisé 
                   en fonction de tes examens, ton emploi du temps et ton rythme.
                 </p>
               </div>
 
               {/* CTA */}
-              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mt-10 animate-slide-up">
-                <Link to="/auth?mode=signup">
-                  <Button variant="hero" size="xl">
+              <div className="flex flex-col items-center lg:items-start gap-3 mt-6 md:mt-10 animate-slide-up">
+                <Link to="/auth?mode=signup" className="w-full sm:w-auto">
+                  <Button variant="hero" size="lg" className="w-full sm:w-auto md:text-base">
                     Commencer gratuitement
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
                   </Button>
                 </Link>
-                <p className="text-xs text-muted-foreground/70 self-center">
-                  Disponible sur ordinateur uniquement
-                </p>
               </div>
             </div>
 
-            {/* Right - 3D Mini Dashboard */}
-            <div className="flex-1 w-full lg:w-auto animate-slide-up">
+            {/* Right - 3D Mini Dashboard - Hidden on mobile, visible on md+ */}
+            <div className="hidden md:flex flex-1 w-full lg:w-auto animate-slide-up">
               <HeroMiniDashboard3D />
             </div>
           </div>
         </div>
 
         {/* Problem Section */}
-        <section className="py-20 bg-card/30">
+        <section className="py-12 md:py-20 bg-card/30">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-6 font-heading">
+            <div className="text-center max-w-3xl mx-auto mb-8 md:mb-16">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 font-heading">
                 Tu connais cette situation ?
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-base md:text-lg text-muted-foreground">
                 Les révisions, c'est souvent le chaos. Tu ne sais pas par où commencer, 
                 tu procrastines, et à la fin tu révises tout au dernier moment.
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               <ProblemCard 
                 emoji="😰"
                 title="Le stress des examens"
@@ -137,133 +134,133 @@ const Index = () => {
         </section>
 
         {/* Solution Section */}
-        <section className="py-24">
+        <section className="py-12 md:py-24">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-sm font-medium">La solution</span>
+            <div className="text-center mb-8 md:mb-16">
+              <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 text-primary mb-4 md:mb-6">
+                <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="text-xs md:text-sm font-medium">La solution</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-6 font-heading">
-                Un planning de révisions qui te ressemble
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 font-heading">
+                Un planning qui te ressemble
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
                 Skoolife analyse tes examens, ton emploi du temps et tes préférences 
                 pour créer un planning réaliste et personnalisé.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
               <FeatureCard
-                icon={<Calendar className="w-6 h-6" />}
+                icon={<Calendar className="w-5 h-5 md:w-6 md:h-6" />}
                 title="Import emploi du temps"
-                description="Importe ton calendrier (.ics) depuis ton ENT ou Google Calendar. Skoolife évite automatiquement tes créneaux occupés."
+                description="Importe ton calendrier (.ics) depuis ton ENT ou Google Calendar."
                 highlight
               />
               <FeatureCard
-                icon={<Target className="w-6 h-6" />}
+                icon={<Target className="w-5 h-5 md:w-6 md:h-6" />}
                 title="Priorisation intelligente"
-                description="Les matières avec des examens proches et les plus importantes sont planifiées en priorité. Plus de stress."
+                description="Les matières avec des examens proches sont planifiées en priorité."
               />
               <FeatureCard
-                icon={<Clock className="w-6 h-6" />}
+                icon={<Clock className="w-5 h-5 md:w-6 md:h-6" />}
                 title="Adapté à ton rythme"
-                description="Tu préfères réviser le matin ? Le soir ? En sessions courtes ? Skoolife s'adapte à toi."
+                description="Tu préfères réviser le matin ou le soir ? Skoolife s'adapte."
               />
               <FeatureCard
-                icon={<Users className="w-6 h-6" />}
-                title="Révise avec tes camarades"
-                description="Invite tes amis à réviser ensemble. En présentiel ou en visio, Skoolife organise vos sessions."
+                icon={<Users className="w-5 h-5 md:w-6 md:h-6" />}
+                title="Révise avec tes amis"
+                description="Invite tes amis à réviser ensemble, en présentiel ou en visio."
               />
               <FeatureCard
-                icon={<BarChart3 className="w-6 h-6" />}
+                icon={<BarChart3 className="w-5 h-5 md:w-6 md:h-6" />}
                 title="Suis ta progression"
-                description="Visualise tes heures de révision par matière, ta régularité et ton taux de complétion."
+                description="Visualise tes heures de révision et ton taux de complétion."
               />
               <FeatureCard
-                icon={<Zap className="w-6 h-6" />}
+                icon={<Zap className="w-5 h-5 md:w-6 md:h-6" />}
                 title="Ajustement intelligent"
-                description="Session ratée ? Pas de problème. Skoolife réajuste automatiquement ton planning."
+                description="Session ratée ? Skoolife réajuste automatiquement ton planning."
               />
             </div>
           </div>
         </section>
 
         {/* How it works */}
-        <section className="py-24 bg-card/30">
+        <section className="py-12 md:py-24 bg-card/30">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-6 font-heading">
+            <div className="text-center mb-8 md:mb-16">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 font-heading">
                 Comment ça marche ?
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
                 En quelques minutes, ton planning est prêt. Vraiment.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
               <Step 
                 number={1} 
-                icon={<GraduationCap className="w-5 h-5" />}
+                icon={<GraduationCap className="w-4 h-4 md:w-5 md:h-5" />}
                 title="Crée ton compte" 
-                description="Inscription en 30 secondes avec email ou Google" 
+                description="Inscription en 30 secondes" 
               />
               <Step 
                 number={2} 
-                icon={<BookOpen className="w-5 h-5" />}
+                icon={<BookOpen className="w-4 h-4 md:w-5 md:h-5" />}
                 title="Ajoute tes matières" 
-                description="Dates d'examens, importance, objectifs d'heures" 
+                description="Dates et objectifs" 
               />
               <Step 
                 number={3} 
-                icon={<CalendarCheck className="w-5 h-5" />}
+                icon={<CalendarCheck className="w-4 h-4 md:w-5 md:h-5" />}
                 title="Importe ton EDT" 
-                description="Fichier .ics depuis ton ENT ou calendrier" 
+                description="Fichier .ics" 
               />
               <Step 
                 number={4} 
-                icon={<Brain className="w-5 h-5" />}
+                icon={<Brain className="w-4 h-4 md:w-5 md:h-5" />}
                 title="Génère ton planning" 
-                description="En un clic, ta semaine est organisée" 
+                description="En un clic !" 
               />
             </div>
           </div>
         </section>
 
         {/* Benefits Section */}
-        <section className="py-24">
+        <section className="py-12 md:py-24">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 md:gap-16 items-center">
               <div>
-                <h2 className="text-3xl sm:text-4xl font-bold mb-8 font-heading">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 font-heading text-center lg:text-left">
                   Fini le stress des révisions
                 </h2>
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   <BenefitItem 
                     title="Gagne du temps"
-                    description="Plus besoin de passer des heures à planifier. Skoolife fait le travail pour toi."
+                    description="Plus besoin de passer des heures à planifier."
                   />
                   <BenefitItem 
                     title="Révise sereinement"
-                    description="Avec un planning clair, tu sais exactement quoi faire et quand."
+                    description="Avec un planning clair, tu sais exactement quoi faire."
                   />
                   <BenefitItem 
                     title="Améliore tes résultats"
-                    description="Une révision régulière et structurée = de meilleures notes."
+                    description="Une révision régulière = de meilleures notes."
                   />
                   <BenefitItem 
                     title="Garde l'équilibre"
-                    description="Skoolife respecte ton temps libre et tes contraintes personnelles."
+                    description="Skoolife respecte ton temps libre."
                   />
                 </div>
               </div>
               
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <div className="aspect-square rounded-3xl bg-gradient-to-br from-primary/20 via-primary/5 to-transparent p-8 flex items-center justify-center">
                   <div className="text-center space-y-6">
-                    <div className="text-7xl font-bold text-primary font-heading">89%</div>
-                    <p className="text-xl text-muted-foreground max-w-xs">
-                      des étudiants se sentent plus organisés après une semaine d'utilisation
+                    <div className="text-6xl md:text-7xl font-bold text-primary font-heading">89%</div>
+                    <p className="text-lg md:text-xl text-muted-foreground max-w-xs">
+                      des étudiants se sentent plus organisés après une semaine
                     </p>
                   </div>
                 </div>
@@ -273,17 +270,17 @@ const Index = () => {
         </section>
 
         {/* Pricing Preview */}
-        <section className="py-24 bg-card/30">
+        <section className="py-12 md:py-24 bg-card/30">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6 font-heading">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 font-heading">
               Des tarifs pensés pour les étudiants
             </h2>
-            <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto">
               Parce que les étudiants n'ont pas des budgets illimités, 
               Skoolife reste accessible à tous.
             </p>
 
-            <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-2xl mx-auto">
               <PricingCard 
                 name="Student"
                 price="2,99€"
@@ -311,25 +308,25 @@ const Index = () => {
               />
             </div>
 
-            <p className="mt-8 text-sm text-muted-foreground">
-              7 jours d'essai gratuit sur tous les plans • Annulation à tout moment
+            <p className="mt-6 md:mt-8 text-xs md:text-sm text-muted-foreground">
+              7 jours d'essai gratuit • Annulation à tout moment
             </p>
           </div>
         </section>
 
         {/* Final CTA */}
-        <section className="py-32">
+        <section className="py-16 md:py-32">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6 font-heading">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 font-heading">
               Prêt à réviser sereinement ?
             </h2>
-            <p className="text-lg text-muted-foreground mb-10 max-w-lg mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-10 max-w-lg mx-auto">
               Rejoins les étudiants qui ont repris le contrôle de leurs révisions.
             </p>
-            <Link to="/auth?mode=signup">
-              <Button variant="hero" size="xl" className="hover-lift">
+            <Link to="/auth?mode=signup" className="inline-block w-full sm:w-auto">
+              <Button variant="hero" size="lg" className="hover-lift w-full sm:w-auto md:text-base">
                 Créer mon planning gratuitement
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
             </Link>
           </div>
@@ -338,14 +335,14 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border bg-card/50">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+          <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-8">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl" />
-              <span className="text-xl font-bold font-heading">Skoolife</span>
+              <img src={logo} alt="Skoolife" className="w-8 h-8 md:w-10 md:h-10 rounded-xl" />
+              <span className="text-lg md:text-xl font-bold font-heading">Skoolife</span>
             </Link>
             
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 md:gap-6 text-xs md:text-sm text-muted-foreground">
               <Link to="/pricing" className="hover:text-foreground transition-colors">Tarifs</Link>
               <a 
                 href="https://chat.whatsapp.com/KZaZ5cmGBoM60V5Qmqned5?mode=hqrc" 
@@ -357,7 +354,7 @@ const Index = () => {
               </a>
             </div>
             
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground text-center">
               © 2025 Skoolife. Fait avec ❤️ pour les étudiants.
             </p>
           </div>
@@ -370,54 +367,54 @@ const Index = () => {
 // Components
 
 const ProblemCard = ({ emoji, title, description }: { emoji: string; title: string; description: string }) => (
-  <div className="p-6 rounded-2xl bg-card border border-border/50">
-    <div className="text-4xl mb-4">{emoji}</div>
-    <h3 className="text-lg font-semibold mb-2 font-heading">{title}</h3>
-    <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
+  <div className="p-4 md:p-6 rounded-xl md:rounded-2xl bg-card border border-border/50">
+    <div className="text-3xl md:text-4xl mb-3 md:mb-4">{emoji}</div>
+    <h3 className="text-base md:text-lg font-semibold mb-1.5 md:mb-2 font-heading">{title}</h3>
+    <p className="text-muted-foreground text-xs md:text-sm leading-relaxed">{description}</p>
   </div>
 );
 
 const FeatureCard = ({ icon, title, description, highlight }: { icon: React.ReactNode; title: string; description: string; highlight?: boolean }) => (
-  <div className={`group p-8 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+  <div className={`group p-5 md:p-8 rounded-xl md:rounded-2xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
     highlight 
       ? 'bg-primary/5 border-primary/20 hover:border-primary/40' 
       : 'bg-card border-border hover:border-primary/20'
   }`}>
-    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-300 ${
+    <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 md:mb-5 transition-colors duration-300 ${
       highlight 
         ? 'bg-primary/20 text-primary' 
         : 'bg-primary/10 text-primary group-hover:bg-primary/20'
     }`}>
       {icon}
     </div>
-    <h3 className="text-xl font-semibold mb-3 font-heading">{title}</h3>
-    <p className="text-muted-foreground leading-relaxed">{description}</p>
+    <h3 className="text-base md:text-xl font-semibold mb-2 md:mb-3 font-heading">{title}</h3>
+    <p className="text-muted-foreground text-xs md:text-base leading-relaxed">{description}</p>
   </div>
 );
 
 const Step = ({ number, icon, title, description }: { number: number; icon: React.ReactNode; title: string; description: string }) => (
   <div className="flex flex-col items-center text-center group">
-    <div className="relative mb-6">
-      <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-glow group-hover:scale-110 transition-transform duration-300 font-heading">
+    <div className="relative mb-3 md:mb-6">
+      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl md:text-2xl font-bold shadow-glow group-hover:scale-110 transition-transform duration-300 font-heading">
         {number}
       </div>
-      <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-card border-2 border-primary flex items-center justify-center text-primary">
+      <div className="absolute -bottom-0.5 -right-0.5 md:-bottom-1 md:-right-1 w-6 h-6 md:w-8 md:h-8 rounded-full bg-card border-2 border-primary flex items-center justify-center text-primary">
         {icon}
       </div>
     </div>
-    <h3 className="font-semibold mb-2 font-heading text-lg">{title}</h3>
-    <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+    <h3 className="font-semibold mb-1 md:mb-2 font-heading text-sm md:text-lg">{title}</h3>
+    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{description}</p>
   </div>
 );
 
 const BenefitItem = ({ title, description }: { title: string; description: string }) => (
-  <div className="flex gap-4">
+  <div className="flex gap-3 md:gap-4">
     <div className="flex-shrink-0">
-      <CheckCircle2 className="w-6 h-6 text-primary" />
+      <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-primary" />
     </div>
     <div>
-      <h3 className="font-semibold mb-1 font-heading">{title}</h3>
-      <p className="text-muted-foreground">{description}</p>
+      <h3 className="font-semibold mb-0.5 md:mb-1 font-heading text-sm md:text-base">{title}</h3>
+      <p className="text-muted-foreground text-xs md:text-base">{description}</p>
     </div>
   </div>
 );
@@ -437,23 +434,23 @@ const PricingCard = ({
   features: string[];
   highlighted?: boolean;
 }) => (
-  <div className={`p-8 rounded-2xl border text-left ${
+  <div className={`p-5 md:p-8 rounded-xl md:rounded-2xl border text-left ${
     highlighted 
       ? 'bg-primary/5 border-primary/30 ring-2 ring-primary/20' 
       : 'bg-card border-border'
   }`}>
-    <div className="mb-6">
-      <h3 className="text-xl font-bold mb-2 font-heading">{name}</h3>
+    <div className="mb-4 md:mb-6">
+      <h3 className="text-lg md:text-xl font-bold mb-1.5 md:mb-2 font-heading">{name}</h3>
       <div className="flex items-baseline gap-1">
-        <span className="text-4xl font-bold font-heading">{price}</span>
-        <span className="text-muted-foreground">{period}</span>
+        <span className="text-3xl md:text-4xl font-bold font-heading">{price}</span>
+        <span className="text-muted-foreground text-sm">{period}</span>
       </div>
-      <p className="text-sm text-muted-foreground mt-2">{description}</p>
+      <p className="text-xs md:text-sm text-muted-foreground mt-1.5 md:mt-2">{description}</p>
     </div>
-    <ul className="space-y-3">
+    <ul className="space-y-2 md:space-y-3">
       {features.map((feature, index) => (
-        <li key={index} className="flex items-center gap-3 text-sm">
-          <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+        <li key={index} className="flex items-center gap-2 md:gap-3 text-xs md:text-sm">
+          <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary flex-shrink-0" />
           <span>{feature}</span>
         </li>
       ))}
