@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, addWeeks, addDays, isBefore, isEqual, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Loader2, FileText } from 'lucide-react';
+import { CalendarIcon, Loader2, FileText, Upload, Trash2, Link, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -41,6 +41,55 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+
+interface PendingFile {
+  file: File;
+  id: string;
+}
+
+interface PendingLink {
+  url: string;
+  title: string;
+  id: string;
+}
+
+const ACCEPTED_FILE_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+].join(',');
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+const getFileIcon = (fileType: string): string => {
+  if (fileType.includes('pdf')) return '📄';
+  if (fileType.includes('word') || fileType.includes('document')) return '📝';
+  if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📊';
+  if (fileType.includes('excel') || fileType.includes('sheet')) return '📈';
+  if (fileType.includes('image')) return '🖼️';
+  return '📎';
+};
+
+const extractDomain = (url: string): string => {
+  try {
+    const domain = new URL(url).hostname.replace('www.', '');
+    return domain.length > 20 ? domain.slice(0, 20) + '...' : domain;
+  } catch {
+    return url.slice(0, 20) + '...';
+  }
+};
 
 const EVENT_TYPES = [
   { value: 'cours', label: 'Cours' },
@@ -126,6 +175,12 @@ const formatLocalDate = (date: Date): string => {
 const AddEventDialog = ({ open, onOpenChange, onEventAdded, initialDate, initialStartTime, initialEndTime }: AddEventDialogProps) => {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [pendingLinks, setPendingLinks] = useState<PendingLink[]>([]);
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newLinkTitle, setNewLinkTitle] = useState('');
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -156,6 +211,11 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded, initialDate, initial
         custom_days: [],
         is_blocking: true,
       });
+      setPendingFiles([]);
+      setPendingLinks([]);
+      setNewLinkUrl('');
+      setNewLinkTitle('');
+      setShowLinkInput(false);
     }
   }, [open, initialDate, initialStartTime, initialEndTime]);
 
@@ -172,6 +232,45 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded, initialDate, initial
     } else {
       form.setValue('custom_days', [...current, dayValue]);
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const newFiles: PendingFile[] = Array.from(files).map(file => ({
+      file,
+      id: crypto.randomUUID()
+    }));
+    
+    setPendingFiles(prev => [...prev, ...newFiles]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removePendingFile = (id: string) => {
+    setPendingFiles(prev => prev.filter(f => f.id !== id));
+  };
+
+  const addLink = () => {
+    if (!newLinkUrl.trim()) return;
+    
+    let url = newLinkUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
+    setPendingLinks(prev => [...prev, {
+      url,
+      title: newLinkTitle.trim(),
+      id: crypto.randomUUID()
+    }]);
+    setNewLinkUrl('');
+    setNewLinkTitle('');
+    setShowLinkInput(false);
+  };
+
+  const removeLink = (id: string) => {
+    setPendingLinks(prev => prev.filter(l => l.id !== id));
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -252,13 +351,52 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded, initialDate, initial
         return;
       }
 
-      const { error } = await supabase
+      const { data: createdEvents, error } = await supabase
         .from('calendar_events')
-        .insert(eventsToInsert);
+        .insert(eventsToInsert)
+        .select();
 
       if (error) throw error;
 
+      // Upload files and links to the first created event
+      const firstEventId = createdEvents?.[0]?.id;
+      if (firstEventId && (pendingFiles.length > 0 || pendingLinks.length > 0)) {
+        // Upload files
+        for (const pendingFile of pendingFiles) {
+          const fileExt = pendingFile.file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `${user.id}/event/${firstEventId}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('course_files')
+            .upload(filePath, pendingFile.file);
+
+          if (!uploadError) {
+            await supabase.from('session_files').insert({
+              user_id: user.id,
+              event_id: firstEventId,
+              file_name: pendingFile.file.name,
+              file_path: filePath,
+              file_size: pendingFile.file.size,
+              file_type: pendingFile.file.type
+            });
+          }
+        }
+
+        // Add links
+        for (const link of pendingLinks) {
+          await (supabase.from('session_links') as any).insert({
+            user_id: user.id,
+            event_id: firstEventId,
+            url: link.url,
+            title: link.title || null
+          });
+        }
+      }
+
       form.reset();
+      setPendingFiles([]);
+      setPendingLinks([]);
       onOpenChange(false);
       onEventAdded();
     } catch (err) {
@@ -538,16 +676,134 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded, initialDate, initial
               )}
             />
 
-            {/* Files section hint for cours/revision_libre */}
+            {/* Files section for cours/revision_libre */}
             {showFilesSection && (
-              <div className="rounded-md border p-4 bg-muted/30">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <FileText className="w-4 h-4" />
-                  <span>Fichiers de cours</span>
+              <div className="rounded-md border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <FileText className="w-4 h-4" />
+                    <span>Fichiers de cours</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowLinkInput(!showLinkInput)}
+                      className="h-7 px-2 text-xs"
+                    >
+                      <Link className="w-3 h-3 mr-1" />
+                      Lien
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-7 px-2 text-xs"
+                    >
+                      <Upload className="w-3 h-3 mr-1" />
+                      Fichier
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Vous pourrez ajouter des fichiers et liens après avoir créé l'évènement.
-                </p>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept={ACCEPTED_FILE_TYPES}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+
+                {/* Link input */}
+                {showLinkInput && (
+                  <div className="space-y-2 p-2 rounded bg-muted/30">
+                    <Input
+                      placeholder="URL du lien"
+                      value={newLinkUrl}
+                      onChange={(e) => setNewLinkUrl(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                    <Input
+                      placeholder="Titre (optionnel)"
+                      value={newLinkTitle}
+                      onChange={(e) => setNewLinkTitle(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setShowLinkInput(false); setNewLinkUrl(''); setNewLinkTitle(''); }}
+                        className="h-7 text-xs"
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={addLink}
+                        disabled={!newLinkUrl.trim()}
+                        className="h-7 text-xs"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Ajouter
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pending files list */}
+                {pendingFiles.length > 0 && (
+                  <div className="space-y-1.5">
+                    {pendingFiles.map((pf) => (
+                      <div key={pf.id} className="flex items-center gap-2 p-2 rounded-md bg-background border hover:bg-muted/50 transition-colors">
+                        <span className="text-lg flex-shrink-0">{getFileIcon(pf.file.type)}</span>
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-xs font-medium truncate">{pf.file.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{formatFileSize(pf.file.size)}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removePendingFile(pf.id)}
+                          className="p-1.5 hover:bg-destructive/10 rounded transition-colors text-destructive flex-shrink-0"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Pending links list */}
+                {pendingLinks.length > 0 && (
+                  <div className="space-y-1.5">
+                    {pendingLinks.map((link) => (
+                      <div key={link.id} className="flex items-center gap-2 p-2 rounded-md bg-background border hover:bg-muted/50 transition-colors">
+                        <Link className="w-4 h-4 flex-shrink-0 text-blue-500" />
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-xs text-blue-600 truncate">{link.title || extractDomain(link.url)}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeLink(link.id)}
+                          className="p-1.5 hover:bg-destructive/10 rounded transition-colors text-destructive flex-shrink-0"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {pendingFiles.length === 0 && pendingLinks.length === 0 && !showLinkInput && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    Aucun fichier ou lien ajouté
+                  </p>
+                )}
               </div>
             )}
 
