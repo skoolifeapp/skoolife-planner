@@ -380,30 +380,13 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
 
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <img src={logo} alt="Skoolife" className="h-8 w-auto rounded-lg" />
+          <span className="font-bold text-lg text-foreground">Skoolife</span>
+        </Link>
         <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Skoolife" className="h-8 w-auto rounded-lg" />
-            <span className="font-bold text-lg text-foreground">Skoolife</span>
-          </Link>
           {!subscriptionLoading && renderSubscriptionBadge(true)}
-        </div>
-        <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/profile')}
-            className="w-9 h-9 rounded-full bg-primary/10 hover:bg-primary/20"
-          >
-            <User className="w-4 h-4 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
         </div>
       </header>
 
@@ -444,42 +427,124 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
           </main>
         </div>
       </div>
-
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16">
-          <nav className="p-4 space-y-2">
-            {NAV_ITEMS.map((item) => renderNavItem(item, true))}
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 px-4 py-4 text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                handleManageSubscription();
-              }}
-            >
-              <CreditCard className="w-5 h-5" />
-              <span className="text-lg">Mon abonnement</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 px-4 py-4 text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                handleSignOut();
-              }}
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="text-lg">Déconnexion</span>
-            </Button>
-          </nav>
-        </div>
-      )}
       
-      {/* Mobile main content (no frame) */}
-      <main className="lg:hidden min-h-screen">
+      {/* Mobile main content (with bottom padding for nav bar) */}
+      <main className="lg:hidden min-h-screen pb-20">
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation Bar - Instagram Style */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
+        <div className="flex items-center justify-around h-16 px-2">
+          {/* Calendrier */}
+          <Link
+            to="/app"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors",
+              isActive('/app') ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <Calendar className={cn("w-6 h-6", isActive('/app') && "fill-primary/20")} />
+            <span className="text-[10px] font-medium">Calendrier</span>
+          </Link>
+
+          {/* Progression */}
+          {isInviteFreeUser || (isStudentTier && NAV_ITEMS[1].requiresMajor) || hasNoSubscription ? (
+            <button
+              onClick={() => {
+                setLockedFeatureName('Progression');
+                setUpgradeDialogOpen(true);
+              }}
+              className="flex flex-col items-center justify-center gap-1 flex-1 py-2 text-muted-foreground/50"
+            >
+              <div className="relative">
+                <BarChart3 className="w-6 h-6" />
+                <Lock className="w-3 h-3 absolute -top-1 -right-1" />
+              </div>
+              <span className="text-[10px] font-medium">Progression</span>
+            </button>
+          ) : (
+            <Link
+              to="/progression"
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors",
+                isActive('/progression') ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <BarChart3 className={cn("w-6 h-6", isActive('/progression') && "fill-primary/20")} />
+              <span className="text-[10px] font-medium">Progression</span>
+            </Link>
+          )}
+
+          {/* Matières */}
+          {isInviteFreeUser || hasNoSubscription ? (
+            <button
+              onClick={() => {
+                setLockedFeatureName('Matières');
+                setUpgradeDialogOpen(true);
+              }}
+              className="flex flex-col items-center justify-center gap-1 flex-1 py-2 text-muted-foreground/50"
+            >
+              <div className="relative">
+                <GraduationCap className="w-6 h-6" />
+                <Lock className="w-3 h-3 absolute -top-1 -right-1" />
+              </div>
+              <span className="text-[10px] font-medium">Matières</span>
+            </button>
+          ) : (
+            <Link
+              to="/subjects"
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors",
+                isActive('/subjects') ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <GraduationCap className={cn("w-6 h-6", isActive('/subjects') && "fill-primary/20")} />
+              <span className="text-[10px] font-medium">Matières</span>
+            </Link>
+          )}
+
+          {/* Paramètres */}
+          {isInviteFreeUser || hasNoSubscription ? (
+            <button
+              onClick={() => {
+                setLockedFeatureName('Paramètres');
+                setUpgradeDialogOpen(true);
+              }}
+              className="flex flex-col items-center justify-center gap-1 flex-1 py-2 text-muted-foreground/50"
+            >
+              <div className="relative">
+                <Settings className="w-6 h-6" />
+                <Lock className="w-3 h-3 absolute -top-1 -right-1" />
+              </div>
+              <span className="text-[10px] font-medium">Paramètres</span>
+            </button>
+          ) : (
+            <Link
+              to="/settings"
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors",
+                isActive('/settings') ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Settings className={cn("w-6 h-6", isActive('/settings') && "fill-primary/20")} />
+              <span className="text-[10px] font-medium">Paramètres</span>
+            </Link>
+          )}
+
+          {/* Profil */}
+          <Link
+            to="/profile"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors",
+              isActive('/profile') ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <User className={cn("w-6 h-6", isActive('/profile') && "fill-primary/20")} />
+            <span className="text-[10px] font-medium">Profil</span>
+          </Link>
+        </div>
+      </nav>
 
       {/* Upgrade Dialog */}
       <UpgradeDialog 
