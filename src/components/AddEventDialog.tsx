@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, addWeeks, addDays, isBefore, isEqual, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -161,6 +161,9 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded, initialDate, initial
 
   const recurrence = form.watch('recurrence');
   const customDays = form.watch('custom_days') || [];
+  const eventType = form.watch('event_type');
+
+  const showFilesSection = eventType === 'cours' || eventType === 'revision_libre';
 
   const toggleCustomDay = (dayValue: number) => {
     const current = form.getValues('custom_days') || [];
@@ -531,9 +534,22 @@ const AddEventDialog = ({ open, onOpenChange, onEventAdded, initialDate, initial
                       Aucune session de révision ne sera placée sur ce créneau.
                     </p>
                   </div>
-                </FormItem>
+              </FormItem>
               )}
             />
+
+            {/* Files section hint for cours/revision_libre */}
+            {showFilesSection && (
+              <div className="rounded-md border p-4 bg-muted/30">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileText className="w-4 h-4" />
+                  <span>Fichiers de cours</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Vous pourrez ajouter des fichiers et liens après avoir créé l'évènement.
+                </p>
+              </div>
+            )}
 
             {/* Buttons */}
             <div className="flex gap-3 pt-2">
