@@ -117,9 +117,14 @@ export const FileUploadPopover = ({ targetId, targetType, onFileChange }: FileUp
           className="hidden"
         />
         <Button
+          type="button"
           size="sm"
           variant="outline"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileInputRef.current?.click();
+          }}
           disabled={uploading}
           className="h-8 text-xs"
         >
@@ -156,14 +161,24 @@ export const FileUploadPopover = ({ targetId, targetType, onFileChange }: FileUp
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => handleOpenFile(file)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenFile(file);
+                  }}
                   className="p-1.5 hover:bg-muted rounded transition-colors"
                   title="Ouvrir"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => handleDeleteFile(file)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDeleteFile(file);
+                  }}
                   className="p-1.5 hover:bg-destructive/10 rounded transition-colors text-destructive"
                   title="Supprimer"
                 >
