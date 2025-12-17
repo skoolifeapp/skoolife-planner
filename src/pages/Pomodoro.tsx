@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Timer, Play, Pause, RotateCcw, Coffee, Brain } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, Coffee, Brain, BookOpen, Clock, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import SupportButton from '@/components/SupportButton';
 
 const WORK_TIME = 25 * 60; // 25 minutes in seconds
@@ -13,19 +16,82 @@ const LONG_BREAK = 15 * 60; // 15 minutes
 
 type SessionType = 'work' | 'shortBreak' | 'longBreak';
 
+interface RevisionSession {
+  id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  subject: {
+    id: string;
+    name: string;
+    color: string;
+  } | null;
+}
+
 const Pomodoro = () => {
   const [timeLeft, setTimeLeft] = useState(WORK_TIME);
   const [isRunning, setIsRunning] = useState(false);
   const [sessionType, setSessionType] = useState<SessionType>('work');
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
+  const [suggestedSessions, setSuggestedSessions] = useState<RevisionSession[]>([]);
+  const [selectedSession, setSelectedSession] = useState<RevisionSession | null>(null);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
+      return;
     }
+    fetchTodaySessions();
   }, [user, navigate]);
+
+  const fetchTodaySessions = async () => {
+    if (!user) return;
+    
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const now = format(new Date(), 'HH:mm');
+      
+      const { data, error } = await supabase
+        .from('revision_sessions')
+        .select(`
+          id,
+          date,
+          start_time,
+          end_time,
+          status,
+          subject:subjects(id, name, color)
+        `)
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .neq('status', 'done')
+        .neq('status', 'skipped')
+        .gte('end_time', now)
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+      
+      // Transform the data to match our interface
+      const sessions = (data || []).map(session => ({
+        ...session,
+        subject: Array.isArray(session.subject) ? session.subject[0] : session.subject
+      }));
+      
+      setSuggestedSessions(sessions);
+      
+      // Auto-select the first session if none selected
+      if (sessions.length > 0 && !selectedSession) {
+        setSelectedSession(sessions[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching sessions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getSessionTime = useCallback((type: SessionType) => {
     switch (type) {
@@ -70,6 +136,10 @@ const Pomodoro = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatSessionTime = (startTime: string, endTime: string) => {
+    return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`;
+  };
+
   const toggleTimer = () => setIsRunning(!isRunning);
 
   const resetTimer = () => {
@@ -80,6 +150,14 @@ const Pomodoro = () => {
   const switchSession = (type: SessionType) => {
     setSessionType(type);
     setTimeLeft(getSessionTime(type));
+    setIsRunning(false);
+  };
+
+  const selectRevisionSession = (session: RevisionSession) => {
+    setSelectedSession(session);
+    // Reset to work mode when selecting a new session
+    setSessionType('work');
+    setTimeLeft(WORK_TIME);
     setIsRunning(false);
   };
 
@@ -109,111 +187,205 @@ const Pomodoro = () => {
         <h1 className="text-2xl font-bold">Pomodoro</h1>
       </div>
 
-      {/* Main Timer Card */}
-      <div className="max-w-md mx-auto space-y-6">
-        {/* Session Type Buttons */}
-        <div className="flex gap-2 justify-center">
-          <Button
-            variant={sessionType === 'work' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => switchSession('work')}
-            className="gap-2"
-          >
-            <Brain className="w-4 h-4" />
-            Focus
-          </Button>
-          <Button
-            variant={sessionType === 'shortBreak' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => switchSession('shortBreak')}
-            className="gap-2"
-          >
-            <Coffee className="w-4 h-4" />
-            Pause courte
-          </Button>
-          <Button
-            variant={sessionType === 'longBreak' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => switchSession('longBreak')}
-            className="gap-2"
-          >
-            <Coffee className="w-4 h-4" />
-            Pause longue
-          </Button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Suggested Sessions */}
+        <div className="lg:col-span-1 space-y-4">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-primary" />
+            <h2 className="font-semibold">Sessions du jour</h2>
+          </div>
+
+          {loading ? (
+            <Card className="border shadow-sm">
+              <CardContent className="p-4">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-16 bg-muted rounded-lg" />
+                  <div className="h-16 bg-muted rounded-lg" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : suggestedSessions.length > 0 ? (
+            <div className="space-y-2">
+              {suggestedSessions.map((session) => (
+                <Card
+                  key={session.id}
+                  className={cn(
+                    "border shadow-sm cursor-pointer transition-all hover:shadow-md",
+                    selectedSession?.id === session.id && "ring-2 ring-primary"
+                  )}
+                  onClick={() => selectRevisionSession(session)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: `${session.subject?.color || '#FFC107'}20` }}
+                      >
+                        <BookOpen 
+                          className="w-5 h-5" 
+                          style={{ color: session.subject?.color || '#FFC107' }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{session.subject?.name || 'Sans matière'}</p>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{formatSessionTime(session.start_time, session.end_time)}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className={cn(
+                        "w-5 h-5 text-muted-foreground transition-colors",
+                        selectedSession?.id === session.id && "text-primary"
+                      )} />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border shadow-sm">
+              <CardContent className="p-6 text-center">
+                <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Aucune session prévue aujourd'hui
+                </p>
+                <Button 
+                  variant="link" 
+                  className="mt-2 text-sm"
+                  onClick={() => navigate('/app')}
+                >
+                  Voir le calendrier
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Instructions */}
+          <div className="text-sm text-muted-foreground space-y-1 p-4 bg-muted/50 rounded-lg">
+            <p>🍅 25 min de focus → 5 min de pause</p>
+            <p>Après 4 pomodoros → 15 min de pause longue</p>
+          </div>
         </div>
 
-        {/* Timer Display */}
-        <Card className="border shadow-sm">
-          <CardContent className="p-8 flex flex-col items-center">
-            {/* Progress Ring */}
-            <div className="relative w-48 h-48 mb-6">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                  className="text-muted"
-                />
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                  strokeDasharray={2 * Math.PI * 88}
-                  strokeDashoffset={2 * Math.PI * 88 * (1 - progress / 100)}
-                  strokeLinecap="round"
-                  className={cn("transition-all duration-1000", getSessionColor())}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-bold tabular-nums">{formatTime(timeLeft)}</span>
-                <span className={cn("text-sm font-medium mt-1", getSessionColor())}>{getSessionLabel()}</span>
+        {/* Right Column: Timer */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Selected Session Banner */}
+          {selectedSession && (
+            <Card 
+              className="border-0 shadow-sm overflow-hidden"
+              style={{ 
+                background: `linear-gradient(135deg, ${selectedSession.subject?.color || '#FFC107'}15 0%, ${selectedSession.subject?.color || '#FFC107'}08 100%)`,
+                borderLeft: `4px solid ${selectedSession.subject?.color || '#FFC107'}`
+              }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <Brain className="w-5 h-5" style={{ color: selectedSession.subject?.color || '#FFC107' }} />
+                <div>
+                  <p className="text-sm text-muted-foreground">En train de réviser</p>
+                  <p className="font-semibold">{selectedSession.subject?.name || 'Sans matière'}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Session Type Buttons */}
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant={sessionType === 'work' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => switchSession('work')}
+              className="gap-2"
+            >
+              <Brain className="w-4 h-4" />
+              Focus
+            </Button>
+            <Button
+              variant={sessionType === 'shortBreak' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => switchSession('shortBreak')}
+              className="gap-2"
+            >
+              <Coffee className="w-4 h-4" />
+              Pause courte
+            </Button>
+            <Button
+              variant={sessionType === 'longBreak' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => switchSession('longBreak')}
+              className="gap-2"
+            >
+              <Coffee className="w-4 h-4" />
+              Pause longue
+            </Button>
+          </div>
+
+          {/* Timer Display */}
+          <Card className="border shadow-sm">
+            <CardContent className="p-8 flex flex-col items-center">
+              {/* Progress Ring */}
+              <div className="relative w-48 h-48 mb-6">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="96"
+                    cy="96"
+                    r="88"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    className="text-muted"
+                  />
+                  <circle
+                    cx="96"
+                    cy="96"
+                    r="88"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeDasharray={2 * Math.PI * 88}
+                    strokeDashoffset={2 * Math.PI * 88 * (1 - progress / 100)}
+                    strokeLinecap="round"
+                    className={cn("transition-all duration-1000", getSessionColor())}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-5xl font-bold tabular-nums">{formatTime(timeLeft)}</span>
+                  <span className={cn("text-sm font-medium mt-1", getSessionColor())}>{getSessionLabel()}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Controls */}
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={resetTimer}
-                className="w-12 h-12 rounded-full"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </Button>
-              <Button
-                size="icon"
-                onClick={toggleTimer}
-                className="w-16 h-16 rounded-full"
-              >
-                {isRunning ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Controls */}
+              <div className="flex gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={resetTimer}
+                  className="w-12 h-12 rounded-full"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </Button>
+                <Button
+                  size="icon"
+                  onClick={toggleTimer}
+                  className="w-16 h-16 rounded-full"
+                >
+                  {isRunning ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Stats */}
-        <Card className="border shadow-sm">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Brain className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Pomodoros complétés</p>
-              <p className="text-2xl font-bold">{completedPomodoros}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Instructions */}
-        <div className="text-center text-sm text-muted-foreground space-y-1">
-          <p>🍅 25 min de focus → 5 min de pause</p>
-          <p>Après 4 pomodoros → 15 min de pause longue</p>
+          {/* Stats */}
+          <Card className="border shadow-sm">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Pomodoros complétés</p>
+                <p className="text-2xl font-bold">{completedPomodoros}</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
