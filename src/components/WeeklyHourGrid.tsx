@@ -674,6 +674,8 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                     const isClickable = !!onEventClick;
                     const isDraggable = !!onEventMove;
                     const isElearning = event.title.toUpperCase().includes('ELEARNING');
+                    const isVisio = event.event_type === 'visio';
+                    const isPurpleEvent = isElearning || isVisio;
                     
                     return (
                       <div
@@ -685,7 +687,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                         onClick={() => { if (!justResizedRef.current) onEventClick?.(event); }}
                         className={cn(
                           "absolute rounded-md px-1 py-1 overflow-hidden z-10 flex flex-col items-start justify-start text-left group",
-                          isElearning 
+                          isPurpleEvent 
                             ? "bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800"
                             : "bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",
                           isClickable && "cursor-pointer transition-all hover:shadow-md",
@@ -700,12 +702,12 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                         }}
                         title={`${event.title}\n${formatTimeRange(event.start_datetime, event.end_datetime, true)}`}
                       >
-                        {/* E-learning camera icon */}
-                        {isElearning && (
+                        {/* Camera icon for visio or e-learning events */}
+                        {isPurpleEvent && (
                           <Video className="absolute top-1 right-1 w-3 h-3 text-purple-600 dark:text-purple-300" />
                         )}
                         {/* File indicator for "cours" type events with files for this subject */}
-                        {event.event_type === 'cours' && event.subject_name && (subjectFileCounts?.[event.subject_name] ?? 0) > 0 && !isElearning && (
+                        {event.event_type === 'cours' && event.subject_name && (subjectFileCounts?.[event.subject_name] ?? 0) > 0 && !isPurpleEvent && (
                           <Paperclip className="absolute top-1 right-1 w-3 h-3 text-blue-600 dark:text-blue-300" />
                         )}
                         {/* Top resize handle - only visible when hovering near top */}
@@ -713,23 +715,23 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                           <div
                             className={cn(
                               "absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize rounded-t-md transition-colors",
-                              isElearning ? "hover:bg-purple-400/50" : "hover:bg-blue-400/50"
+                              isPurpleEvent ? "hover:bg-purple-400/50" : "hover:bg-blue-400/50"
                             )}
                             onMouseDown={(e) => handleResizeStart(e, 'event', event.id, block.startMinutes, block.endMinutes, 'top')}
                           />
                         )}
                         <p className={cn(
                           "text-xs font-medium truncate w-full pt-1",
-                          isElearning 
+                          isPurpleEvent 
                             ? "text-purple-800 dark:text-purple-200 pr-4" 
                             : "text-blue-800 dark:text-blue-200",
-                          event.event_type === 'cours' && !isElearning && "pr-4"
+                          event.event_type === 'cours' && !isPurpleEvent && "pr-4"
                         )}>
                           {event.title}
                         </p>
                         <p className={cn(
                           "text-[10px]",
-                          isElearning ? "text-purple-600 dark:text-purple-300" : "text-blue-600 dark:text-blue-300"
+                          isPurpleEvent ? "text-purple-600 dark:text-purple-300" : "text-blue-600 dark:text-blue-300"
                         )}>
                           {resizePreview?.id === event.id 
                             ? `${resizePreview.newStartTime || formatTimeRange(event.start_datetime, event.end_datetime, true).split(' - ')[0]} - ${resizePreview.newEndTime || formatTimeRange(event.start_datetime, event.end_datetime, true).split(' - ')[1]}`
@@ -740,7 +742,7 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
                           <div
                             className={cn(
                               "absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize rounded-b-md transition-colors",
-                              isElearning ? "hover:bg-purple-400/50" : "hover:bg-blue-400/50"
+                              isPurpleEvent ? "hover:bg-purple-400/50" : "hover:bg-blue-400/50"
                             )}
                             onMouseDown={(e) => handleResizeStart(e, 'event', event.id, block.startMinutes, block.endMinutes, 'bottom')}
                           />
