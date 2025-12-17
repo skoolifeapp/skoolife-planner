@@ -426,7 +426,9 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
               </Button>
               <span>/</span>
               <span className="font-medium text-foreground">
-                {NAV_ITEMS.find(item => isActive(item.path))?.label || 'Planning'}
+                {location.pathname === '/profile' ? 'Profil' : 
+                 location.pathname === '/subscription' ? 'Abonnement' : 
+                 NAV_ITEMS.find(item => isActive(item.path))?.label || 'Planning'}
               </span>
             </div>
             <div className="flex items-center gap-2">
