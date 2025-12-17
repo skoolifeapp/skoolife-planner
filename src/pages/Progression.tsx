@@ -272,9 +272,6 @@ const Progression = () => {
   };
 
   const formatHours = (hours: number) => {
-    if (hours < 1) {
-      return `${Math.round(hours * 60)}m`;
-    }
     return `${Math.round(hours * 10) / 10}h`;
   };
 
@@ -324,41 +321,42 @@ const Progression = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Heures d'étude */}
           <Card className="border shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-muted-foreground">Heures d'étude</span>
-                <Clock className="w-4 h-4 text-muted-foreground" />
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-primary" />
               </div>
-              <p className="text-3xl font-bold">{formatHours(currentWeekStats.doneHours)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Cette semaine</p>
+              <div>
+                <p className="text-sm text-muted-foreground">Heures d'étude</p>
+                <p className="text-2xl font-bold">{formatHours(currentWeekStats.doneHours)}</p>
+              </div>
             </CardContent>
           </Card>
 
           {/* Taux de complétion */}
           <Card className="border shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-muted-foreground">Taux de complétion</span>
-                <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
               </div>
-              <p className="text-3xl font-bold">
-                {currentWeekStats.completionRate}<span className="text-xl">%</span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {currentWeekStats.doneHours}h / {currentWeekStats.plannedHours}h planifiées
-              </p>
+              <div>
+                <p className="text-sm text-muted-foreground">Taux de complétion</p>
+                <p className="text-2xl font-bold">
+                  {currentWeekStats.completionRate}<span className="text-lg">%</span>
+                </p>
+              </div>
             </CardContent>
           </Card>
 
           {/* Sessions */}
           <Card className="border shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-muted-foreground">Sessions réalisées</span>
-                <BookOpen className="w-4 h-4 text-muted-foreground" />
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-blue-500" />
               </div>
-              <p className="text-3xl font-bold">{currentWeekStats.doneCount}</p>
-              <p className="text-xs text-muted-foreground mt-1">Cette semaine</p>
+              <div>
+                <p className="text-sm text-muted-foreground">Sessions réalisées</p>
+                <p className="text-2xl font-bold">{currentWeekStats.doneCount}</p>
+              </div>
             </CardContent>
           </Card>
         </div>
