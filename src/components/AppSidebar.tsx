@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
-import { Calendar, BarChart3, GraduationCap, Settings, LogOut, Menu, X, User, Video, Lock, Crown, Sparkles, CreditCard, ChevronDown, MoreVertical, HelpCircle, Bell, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Calendar, BarChart3, GraduationCap, Settings, LogOut, Menu, X, User, Video, Lock, Crown, Sparkles, CreditCard, ChevronDown, MoreVertical, HelpCircle, Bell, PanelLeftClose, PanelLeft, Timer } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { useState, useEffect } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -21,6 +21,10 @@ const NAV_ITEMS = [
   { path: '/settings', label: 'Paramètres', icon: Settings, requiresSubscription: true, requiresMajor: false },
 ];
 
+const TRAVAIL_ITEMS = [
+  { path: '/pomodoro', label: 'Pomodoro', icon: Timer, requiresSubscription: false, requiresMajor: false },
+];
+
 interface AppSidebarProps {
   children: React.ReactNode;
 }
@@ -28,6 +32,7 @@ interface AppSidebarProps {
 export const AppSidebar = ({ children }: AppSidebarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [navExpanded, setNavExpanded] = useState(true);
+  const [travailExpanded, setTravailExpanded] = useState(true);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [lockedFeatureName, setLockedFeatureName] = useState<string>('');
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -194,21 +199,38 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
         {sidebarCollapsed ? (
           <nav className="flex-1 space-y-1">
             {NAV_ITEMS.map((item) => renderNavItem(item))}
+            {TRAVAIL_ITEMS.map((item) => renderNavItem(item))}
           </nav>
         ) : (
-          <Collapsible open={navExpanded} onOpenChange={setNavExpanded} className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">Navigation</span>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10">
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", navExpanded ? "" : "-rotate-90")} />
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent className="space-y-1">
-              {NAV_ITEMS.map((item) => renderNavItem(item))}
-            </CollapsibleContent>
-          </Collapsible>
+          <div className="flex-1 space-y-4">
+            <Collapsible open={navExpanded} onOpenChange={setNavExpanded}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">Navigation</span>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10">
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", navExpanded ? "" : "-rotate-90")} />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent className="space-y-1">
+                {NAV_ITEMS.map((item) => renderNavItem(item))}
+              </CollapsibleContent>
+            </Collapsible>
+
+            <Collapsible open={travailExpanded} onOpenChange={setTravailExpanded}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">Travail</span>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10">
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", travailExpanded ? "" : "-rotate-90")} />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent className="space-y-1">
+                {TRAVAIL_ITEMS.map((item) => renderNavItem(item))}
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         )}
 
         {/* Profile section */}
@@ -411,7 +433,8 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
               <span className="font-medium text-foreground">
                 {location.pathname === '/profile' ? 'Profil' : 
                  location.pathname === '/subscription' ? 'Abonnement' : 
-                 NAV_ITEMS.find(item => isActive(item.path))?.label || 'Planning'}
+                 NAV_ITEMS.find(item => isActive(item.path))?.label || 
+                 TRAVAIL_ITEMS.find(item => isActive(item.path))?.label || 'Planning'}
               </span>
             </div>
             <div className="flex items-center gap-2">
