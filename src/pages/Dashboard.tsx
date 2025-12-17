@@ -1246,6 +1246,8 @@ const Dashboard = () => {
           setEditSessionDialogOpen(false);
           setShareSessionDialogOpen(true);
         }}
+        hasAcceptedInvite={selectedSession ? !!sessionInvites[selectedSession.id]?.invitees.some(i => i.accepted_by) : false}
+        inviteInfo={selectedSession ? sessionInvites[selectedSession.id] : undefined}
       />
       <EditEventDialog
         event={selectedEvent}

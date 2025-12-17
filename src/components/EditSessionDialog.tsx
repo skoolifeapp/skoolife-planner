@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Loader2, Trash2, Paperclip, Share2 } from 'lucide-react';
+import { CalendarIcon, Loader2, Trash2, Paperclip, Share2, Users, Video, MapPin, ExternalLink, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -61,6 +61,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+export interface InviteInfo {
+  invitees: Array<{ accepted_by: string | null; first_name: string | null; last_name: string | null; confirmed?: boolean }>;
+  meeting_format: string | null;
+  meeting_address: string | null;
+  meeting_link: string | null;
+}
+
 interface EditSessionDialogProps {
   session: RevisionSession | null;
   subjects: Subject[];
@@ -68,9 +75,11 @@ interface EditSessionDialogProps {
   onUpdate: () => void;
   onShare?: () => void;
   canShare?: boolean;
+  hasAcceptedInvite?: boolean;
+  inviteInfo?: InviteInfo;
 }
 
-const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare, canShare = false }: EditSessionDialogProps) => {
+const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare, canShare = false, hasAcceptedInvite = false, inviteInfo }: EditSessionDialogProps) => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -300,6 +309,67 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare,
                 </FormItem>
               )}
             />
+
+            {/* Invite info */}
+            {inviteInfo && (
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
+                {inviteInfo.invitees.filter(i => i.accepted_by && i.first_name).length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Users className="w-4 h-4 text-primary" />
+                      <span>Camarades invités</span>
+                    </div>
+                    {inviteInfo.invitees.filter(i => i.accepted_by && i.first_name).map((invitee, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm ml-6">
+                        {invitee.confirmed ? (
+                          <Check className="w-3.5 h-3.5 text-green-500" />
+                        ) : (
+                          <span className="text-amber-500 text-xs">⏳</span>
+                        )}
+                        <span className={invitee.confirmed ? 'text-foreground' : 'text-muted-foreground'}>
+                          {invitee.first_name} {invitee.last_name || ''}
+                        </span>
+                        <span className={`text-xs ${invitee.confirmed ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                          {invitee.confirmed ? 'Confirmé' : 'En attente'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {inviteInfo.invitees.length > inviteInfo.invitees.filter(i => i.accepted_by).length && (
+                  <div className="text-xs text-muted-foreground">
+                    {inviteInfo.invitees.length - inviteInfo.invitees.filter(i => i.accepted_by).length} invitation{inviteInfo.invitees.length - inviteInfo.invitees.filter(i => i.accepted_by).length > 1 ? 's' : ''} en attente de réponse
+                  </div>
+                )}
+                {inviteInfo.meeting_format && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {inviteInfo.meeting_format === 'visio' ? (
+                      <>
+                        <Video className="w-4 h-4 text-blue-500" />
+                        {inviteInfo.meeting_link ? (
+                          <a 
+                            href={inviteInfo.meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                          >
+                            Rejoindre la visio
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span>Visio (lien à venir)</span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="w-4 h-4 text-green-500" />
+                        <span>{inviteInfo.meeting_address || 'Présentiel'}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Course files section - shared at subject level */}
             {session && currentSubject && (
