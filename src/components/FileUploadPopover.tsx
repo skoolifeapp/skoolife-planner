@@ -1,13 +1,22 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, Trash2, ExternalLink, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Upload, Trash2, ExternalLink, Loader2, Link, Plus } from 'lucide-react';
 import { useSessionFiles, SessionFile } from '@/hooks/useSessionFiles';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface FileUploadPopoverProps {
   targetId: string;
   targetType: 'session' | 'event';
   onFileChange?: () => void;
+}
+
+interface SessionLink {
+  id: string;
+  url: string;
+  title: string | null;
+  created_at: string;
 }
 
 const ACCEPTED_TYPES = [
@@ -37,6 +46,15 @@ const getFileIcon = (fileType: string): string => {
   if (fileType.includes('excel') || fileType.includes('sheet')) return '📈';
   if (fileType.includes('image')) return '🖼️';
   return '📎';
+};
+
+const extractDomain = (url: string): string => {
+  try {
+    const domain = new URL(url).hostname.replace('www.', '');
+    return domain.length > 20 ? domain.slice(0, 20) + '...' : domain;
+  } catch {
+    return url.slice(0, 20) + '...';
+  }
 };
 
 // Memoized file item component
@@ -78,35 +96,80 @@ const FileItem = memo(({
 
 FileItem.displayName = 'FileItem';
 
+// Memoized link item component
+const LinkItem = memo(({ 
+  link, 
+  onDelete 
+}: { 
+  link: SessionLink; 
+  onDelete: (link: SessionLink) => void;
+}) => (
+  <div className="flex items-center gap-2 p-2 rounded-md bg-background border hover:bg-muted/50 transition-colors min-w-0">
+    <Link className="w-4 h-4 flex-shrink-0 text-blue-500" />
+    <a
+      href={link.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex-1 min-w-0 overflow-hidden text-xs text-blue-600 hover:underline truncate max-w-[180px]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {link.title || extractDomain(link.url)}
+    </a>
+    <button
+      type="button"
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(link); }}
+      className="p-1.5 hover:bg-destructive/10 rounded transition-colors text-destructive flex-shrink-0"
+      title="Supprimer"
+    >
+      <Trash2 className="w-3.5 h-3.5" />
+    </button>
+  </div>
+));
+
+LinkItem.displayName = 'LinkItem';
+
 export const FileUploadPopover = memo(({ targetId, targetType, onFileChange }: FileUploadPopoverProps) => {
   const [files, setFiles] = useState<SessionFile[]>([]);
+  const [links, setLinks] = useState<SessionLink[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [addingLink, setAddingLink] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadedRef = useRef(false);
   
   const { uploadFile, getFilesForSession, getFilesForEvent, getFileUrl, deleteFile } = useSessionFiles();
 
-  const loadFiles = useCallback(async () => {
-    const result = targetType === 'session' 
+  const loadData = useCallback(async () => {
+    // Load files
+    const fileResult = targetType === 'session' 
       ? await getFilesForSession(targetId)
       : await getFilesForEvent(targetId);
-    setFiles(result);
+    setFiles(fileResult);
+
+    // Load links
+    const columnName = targetType === 'session' ? 'session_id' : 'event_id';
+    const { data: linkData } = await supabase
+      .from('session_links')
+      .select('*')
+      .eq(columnName, targetId)
+      .order('created_at', { ascending: false });
+    
+    setLinks(linkData || []);
     setLoading(false);
   }, [targetId, targetType, getFilesForSession, getFilesForEvent]);
 
-  // Load files in background without blocking render
+  // Load data in background without blocking render
   useEffect(() => {
     if (!loadedRef.current) {
       loadedRef.current = true;
       setLoading(true);
-      // Use requestIdleCallback or setTimeout to defer loading
       const timeoutId = setTimeout(() => {
-        loadFiles();
+        loadData();
       }, 0);
       return () => clearTimeout(timeoutId);
     }
-  }, [loadFiles]);
+  }, [loadData]);
 
   // Reset when target changes
   useEffect(() => {
@@ -114,7 +177,7 @@ export const FileUploadPopover = memo(({ targetId, targetType, onFileChange }: F
     setLoading(true);
     const timeoutId = setTimeout(() => {
       loadedRef.current = true;
-      loadFiles();
+      loadData();
     }, 0);
     return () => clearTimeout(timeoutId);
   }, [targetId, targetType]);
@@ -137,17 +200,17 @@ export const FileUploadPopover = memo(({ targetId, targetType, onFileChange }: F
     }
 
     if (hasError) {
-      toast.error('Erreur lors de l\'upload d\'un ou plusieurs fichiers');
+      toast.error("Erreur lors de l'upload d'un ou plusieurs fichiers");
     }
 
-    await loadFiles();
+    await loadData();
     onFileChange?.();
     setUploading(false);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [uploadFile, targetId, targetType, loadFiles, onFileChange]);
+  }, [uploadFile, targetId, targetType, loadData, onFileChange]);
 
   const handleOpenFile = useCallback(async (file: SessionFile) => {
     const url = await getFileUrl(file.file_path);
@@ -162,61 +225,185 @@ export const FileUploadPopover = memo(({ targetId, targetType, onFileChange }: F
     }
   }, [deleteFile, onFileChange]);
 
+  const handleAddLink = useCallback(async () => {
+    if (!newLinkUrl.trim()) return;
+    
+    // Validate URL
+    let url = newLinkUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
+    try {
+      new URL(url);
+    } catch {
+      toast.error('URL invalide');
+      return;
+    }
+
+    setAddingLink(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Non connecté');
+      setAddingLink(false);
+      return;
+    }
+
+    const columnName = targetType === 'session' ? 'session_id' : 'event_id';
+    
+    const { data, error } = await supabase
+      .from('session_links')
+      .insert({
+        user_id: user.id,
+        url,
+        [columnName]: targetId
+      } as { user_id: string; url: string; session_id?: string; event_id?: string })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding link:', error);
+      toast.error("Erreur lors de l'ajout du lien");
+    } else if (data) {
+      setLinks(prev => [data, ...prev]);
+      setNewLinkUrl('');
+      onFileChange?.();
+    }
+    
+    setAddingLink(false);
+  }, [newLinkUrl, targetId, targetType, onFileChange]);
+
+  const handleDeleteLink = useCallback(async (link: SessionLink) => {
+    const { error } = await supabase
+      .from('session_links')
+      .delete()
+      .eq('id', link.id);
+
+    if (error) {
+      console.error('Error deleting link:', error);
+      toast.error('Erreur lors de la suppression du lien');
+    } else {
+      setLinks(prev => prev.filter(l => l.id !== link.id));
+      onFileChange?.();
+    }
+  }, [onFileChange]);
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
-          {loading ? '...' : `${files.length} fichier${files.length !== 1 ? 's' : ''}`}
-        </span>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_TYPES}
-          onChange={handleFileSelect}
-          multiple
-          className="hidden"
-        />
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            fileInputRef.current?.click();
-          }}
-          disabled={uploading}
-          className="h-8 text-xs"
-        >
-          {uploading ? (
-            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-          ) : (
-            <Upload className="w-3 h-3 mr-1" />
-          )}
-          {uploading ? 'Upload...' : 'Ajouter des fichiers'}
-        </Button>
+    <div className="space-y-4">
+      {/* Files section */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            {loading ? '...' : `${files.length} fichier${files.length !== 1 ? 's' : ''}`}
+          </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_TYPES}
+            onChange={handleFileSelect}
+            multiple
+            className="hidden"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+            disabled={uploading}
+            className="h-8 text-xs"
+          >
+            {uploading ? (
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            ) : (
+              <Upload className="w-3 h-3 mr-1" />
+            )}
+            {uploading ? 'Upload...' : 'Ajouter'}
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-2">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : files.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-1">
+            Aucun fichier
+          </p>
+        ) : (
+          <div className="space-y-1.5 max-h-32 overflow-y-auto">
+            {files.map(file => (
+              <FileItem
+                key={file.id}
+                file={file}
+                onOpen={handleOpenFile}
+                onDelete={handleDeleteFile}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-2">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      {/* Links section */}
+      <div className="space-y-2 border-t pt-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground flex items-center gap-1">
+            <Link className="w-3.5 h-3.5" />
+            {links.length} lien{links.length !== 1 ? 's' : ''} URL
+          </span>
         </div>
-      ) : files.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-2">
-          Aucun fichier attaché
-        </p>
-      ) : (
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {files.map(file => (
-            <FileItem
-              key={file.id}
-              file={file}
-              onOpen={handleOpenFile}
-              onDelete={handleDeleteFile}
-            />
-          ))}
+
+        {/* Add link input */}
+        <div className="flex items-center gap-2">
+          <Input
+            type="url"
+            placeholder="https://..."
+            value={newLinkUrl}
+            onChange={(e) => setNewLinkUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddLink();
+              }
+            }}
+            className="h-8 text-xs flex-1"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAddLink();
+            }}
+            disabled={addingLink || !newLinkUrl.trim()}
+            className="h-8 px-2"
+          >
+            {addingLink ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Plus className="w-3.5 h-3.5" />
+            )}
+          </Button>
         </div>
-      )}
+
+        {links.length > 0 && (
+          <div className="space-y-1.5 max-h-24 overflow-y-auto">
+            {links.map(link => (
+              <LinkItem
+                key={link.id}
+                link={link}
+                onDelete={handleDeleteLink}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 });
