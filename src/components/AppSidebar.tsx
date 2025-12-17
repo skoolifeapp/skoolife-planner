@@ -74,13 +74,13 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
             setUpgradeDialogOpen(true);
           }}
           className={cn(
-            "flex items-center gap-3 px-4 rounded-xl cursor-pointer opacity-60 hover:opacity-80 transition-opacity",
-            isMobile ? "py-4 text-muted-foreground" : "py-3 text-sidebar-foreground"
+            "flex items-center gap-2.5 px-3 rounded-lg cursor-pointer opacity-60 hover:opacity-80 transition-opacity text-sm",
+            isMobile ? "py-4 text-muted-foreground" : "py-2 text-sidebar-foreground"
           )}
         >
-          <item.icon className={cn("w-5 h-5", isMobile ? "" : "")} />
+          <item.icon className="w-4 h-4" />
           <span className={cn(isMobile && "text-lg")}>{item.label}</span>
-          <Lock className="w-4 h-4 ml-auto" />
+          <Lock className="w-3.5 h-3.5 ml-auto" />
         </div>
       );
     }
@@ -92,14 +92,14 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
         id={!isMobile ? (item.label === 'Matières' ? 'sidebar-matieres-link' : item.label === 'Paramètres' ? 'sidebar-parametres-link' : undefined) : undefined}
         onClick={isMobile ? () => setMobileMenuOpen(false) : undefined}
         className={cn(
-          "flex items-center gap-3 px-4 rounded-xl transition-colors",
-          isMobile ? "py-4" : "py-3",
+          "flex items-center gap-2.5 px-3 rounded-lg transition-colors text-sm",
+          isMobile ? "py-4" : "py-2",
           isActive(item.path)
             ? "bg-sidebar-accent text-sidebar-foreground font-medium"
             : "text-sidebar-foreground hover:bg-sidebar-accent/50"
         )}
       >
-        <item.icon className="w-5 h-5" />
+        <item.icon className="w-4 h-4" />
         <span className={cn(isMobile && "text-lg")}>{item.label}</span>
       </Link>
     );
