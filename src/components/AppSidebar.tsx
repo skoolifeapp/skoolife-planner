@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
-import { Home, TrendingUp, GraduationCap, Settings, LogOut, Menu, X, User, Video, Lock, Crown, Sparkles, CreditCard } from 'lucide-react';
+import { Home, TrendingUp, GraduationCap, Settings, LogOut, Menu, X, User, Video, Lock, Crown, Sparkles, CreditCard, ChevronDown } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -24,6 +25,7 @@ interface AppSidebarProps {
 
 export const AppSidebar = ({ children }: AppSidebarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navExpanded, setNavExpanded] = useState(true);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [lockedFeatureName, setLockedFeatureName] = useState<string>('');
   const location = useLocation();
@@ -165,9 +167,19 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
           )}
         </div>
 
-        <nav className="flex-1 space-y-1">
-          {NAV_ITEMS.map((item) => renderNavItem(item))}
-        </nav>
+        <Collapsible open={navExpanded} onOpenChange={setNavExpanded} className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">Navigation</span>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10">
+                <ChevronDown className={cn("h-4 w-4 transition-transform", navExpanded ? "" : "-rotate-90")} />
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="space-y-1">
+            {NAV_ITEMS.map((item) => renderNavItem(item))}
+          </CollapsibleContent>
+        </Collapsible>
 
         <div className="pt-6 border-t border-sidebar-border space-y-3">
           <div className="flex items-center gap-2 mb-3">
