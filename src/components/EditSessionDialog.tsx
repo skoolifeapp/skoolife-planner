@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Loader2, Trash2, Paperclip, Share2, Users, Video, MapPin, ExternalLink, Check } from 'lucide-react';
+import { CalendarIcon, Loader2, Trash2, Paperclip, Share2, Users, Video, MapPin, ExternalLink, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -82,6 +82,7 @@ interface EditSessionDialogProps {
 const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare, canShare = false, hasAcceptedInvite = false, inviteInfo }: EditSessionDialogProps) => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingVisio, setDeletingVisio] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -166,6 +167,29 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare,
       toast.error('Erreur lors de la suppression');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleDeleteVisio = async () => {
+    if (!session) return;
+
+    setDeletingVisio(true);
+    try {
+      // Delete all invites for this session (removes from invitees' planning and clears visio)
+      const { error } = await supabase
+        .from('session_invites')
+        .delete()
+        .eq('session_id', session.id);
+
+      if (error) throw error;
+
+      toast.success('Visio supprimée');
+      onUpdate();
+    } catch (err) {
+      console.error('Error deleting visio:', err);
+      toast.error('Erreur lors de la suppression de la visio');
+    } finally {
+      setDeletingVisio(false);
     }
   };
 
@@ -342,30 +366,46 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare,
                   </div>
                 )}
                 {inviteInfo.meeting_format && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {inviteInfo.meeting_format === 'visio' ? (
-                      <>
-                        <Video className="w-4 h-4 text-blue-500" />
-                        {inviteInfo.meeting_link ? (
-                          <a 
-                            href={inviteInfo.meeting_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                          >
-                            Rejoindre la visio
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          <span>Visio (lien à venir)</span>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <MapPin className="w-4 h-4 text-green-500" />
-                        <span>{inviteInfo.meeting_address || 'Présentiel'}</span>
-                      </>
-                    )}
+                  <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      {inviteInfo.meeting_format === 'visio' ? (
+                        <>
+                          <Video className="w-4 h-4 text-blue-500" />
+                          {inviteInfo.meeting_link ? (
+                            <a 
+                              href={inviteInfo.meeting_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 max-w-[200px] truncate"
+                            >
+                              Rejoindre la visio
+                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                            </a>
+                          ) : (
+                            <span>Visio (lien à venir)</span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4 text-green-500" />
+                          <span>{inviteInfo.meeting_address || 'Présentiel'}</span>
+                        </>
+                      )}
+                    </div>
+                    {/* Delete visio button */}
+                    <button
+                      type="button"
+                      onClick={handleDeleteVisio}
+                      disabled={deletingVisio}
+                      className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      title="Supprimer l'invitation et la visio"
+                    >
+                      {deletingVisio ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 )}
               </div>
