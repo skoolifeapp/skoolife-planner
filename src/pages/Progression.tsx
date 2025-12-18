@@ -6,7 +6,7 @@ import { useInviteFreeUser } from '@/hooks/useInviteFreeUser';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
-  Clock, CheckCircle2, TrendingUp, ChevronLeft, ChevronRight, BookOpen, Minus
+  Clock, CheckCircle2, TrendingUp, ChevronLeft, ChevronRight, BookOpen, Minus, Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SupportButton from '@/components/SupportButton';
@@ -18,6 +18,16 @@ interface Subject {
   id: string;
   name: string;
   color: string;
+  target_hours: number | null;
+}
+
+interface CumulativeSubjectStats {
+  subjectId: string;
+  subjectName: string;
+  color: string;
+  doneHours: number;
+  targetHours: number;
+  percentage: number;
 }
 
 interface RevisionSession {
@@ -62,6 +72,8 @@ const Progression = () => {
   const { user, signOut, subscriptionTier, subscriptionLoading } = useAuth();
   const { isInviteFreeUser, loading: inviteGateLoading } = useInviteFreeUser();
   const navigate = useNavigate();
+
+  const [cumulativeStats, setCumulativeStats] = useState<CumulativeSubjectStats[]>([]);
 
   // Redirect free users AND Student tier users (only Major has access)
   useEffect(() => {
@@ -127,6 +139,36 @@ const Progression = () => {
     };
   };
 
+  const calculateCumulativeStats = (
+    subjectsData: Subject[], 
+    doneSessions: { subject_id: string; start_time: string; end_time: string; status: string }[]
+  ) => {
+    const stats: CumulativeSubjectStats[] = subjectsData
+      .filter(s => s.target_hours && s.target_hours > 0)
+      .map(subject => {
+        const subjectSessions = doneSessions.filter(s => s.subject_id === subject.id);
+        let doneHours = 0;
+        subjectSessions.forEach(s => {
+          doneHours += calculateSessionDuration(s.start_time, s.end_time);
+        });
+        doneHours = Math.round(doneHours * 10) / 10;
+        const targetHours = subject.target_hours || 0;
+        const percentage = targetHours > 0 ? Math.min(100, Math.round((doneHours / targetHours) * 100)) : 0;
+        
+        return {
+          subjectId: subject.id,
+          subjectName: subject.name,
+          color: subject.color || '#FFC107',
+          doneHours,
+          targetHours,
+          percentage,
+        };
+      })
+      .sort((a, b) => b.percentage - a.percentage);
+
+    setCumulativeStats(stats);
+  };
+
   const fetchData = async () => {
     if (!user) return;
 
@@ -134,7 +176,7 @@ const Progression = () => {
       // Fetch subjects
       const { data: subjectsData } = await supabase
         .from('subjects')
-        .select('id, name, color')
+        .select('id, name, color, target_hours')
         .eq('user_id', user.id);
 
       setSubjects(subjectsData || []);
@@ -153,6 +195,16 @@ const Progression = () => {
 
       const sessions = sessionsData || [];
       setAllSessions(sessions);
+
+      // Fetch ALL done sessions for cumulative stats (no date filter)
+      const { data: allDoneSessions } = await supabase
+        .from('revision_sessions')
+        .select('subject_id, start_time, end_time, status')
+        .eq('user_id', user.id)
+        .eq('status', 'done');
+
+      // Calculate cumulative stats per subject
+      calculateCumulativeStats(subjectsData || [], allDoneSessions || []);
 
       // Current week stats
       const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -426,6 +478,54 @@ const Progression = () => {
           </Card>
         )}
       </div>
+
+      {/* Cumulative hours section */}
+      {cumulativeStats.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Heures cumulées par Matière</h2>
+          </div>
+
+          <Card className="border shadow-sm">
+            <CardContent className="p-5 space-y-4">
+              {cumulativeStats.map((stat) => (
+                <div key={stat.subjectId} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: stat.color }}
+                      />
+                      <span className="font-medium text-sm">{stat.subjectName}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {formatHours(stat.doneHours)} / {formatHours(stat.targetHours)}
+                    </span>
+                  </div>
+                  <div className="relative h-2 bg-secondary rounded-full overflow-hidden">
+                    <div 
+                      className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${stat.percentage}%`,
+                        backgroundColor: stat.color 
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <span 
+                      className="text-xs font-medium"
+                      style={{ color: stat.color }}
+                    >
+                      {stat.percentage}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
 
       {/* Support Button */}
