@@ -167,6 +167,7 @@ export const SessionStatusDialog = memo(function SessionStatusDialog({
                     targetId={session.id} 
                     targetType="session"
                     subjectName={session.subject.name}
+                    blockDate={new Date(session.date)}
                     onFileChange={onFileChange}
                   />
                 </Suspense>
