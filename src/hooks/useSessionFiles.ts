@@ -178,6 +178,67 @@ export function useSessionFiles() {
     }
   }, []);
 
+  const replaceFile = useCallback(async (
+    existingFile: SessionFile,
+    newFile: File
+  ): Promise<SessionFile | null> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Vous devez être connecté');
+        return null;
+      }
+
+      // Upload new file to storage
+      const fileExt = newFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const targetType = existingFile.session_id ? 'session' : 'event';
+      const targetId = existingFile.session_id || existingFile.event_id;
+      const filePath = `${user.id}/${targetType}/${targetId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('course_files')
+        .upload(filePath, newFile);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error('Erreur lors de l\'upload du fichier');
+        return null;
+      }
+
+      // Delete old file from storage (don't fail if it doesn't work)
+      await supabase.storage
+        .from('course_files')
+        .remove([existingFile.file_path]);
+
+      // Update database record with new file info
+      const { data, error } = await supabase
+        .from('session_files')
+        .update({
+          file_path: filePath,
+          file_size: newFile.size,
+          file_type: newFile.type
+        })
+        .eq('id', existingFile.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database update error:', error);
+        // Cleanup new uploaded file
+        await supabase.storage.from('course_files').remove([filePath]);
+        toast.error('Erreur lors de la mise à jour');
+        return null;
+      }
+
+      return data as SessionFile;
+    } catch (err) {
+      console.error('Error replacing file:', err);
+      toast.error('Erreur lors du remplacement');
+      return null;
+    }
+  }, []);
+
   return {
     uploading,
     uploadFile,
@@ -185,6 +246,7 @@ export function useSessionFiles() {
     getFilesForEvent,
     getFilesForSubject,
     getFileUrl,
-    deleteFile
+    deleteFile,
+    replaceFile
   };
 }

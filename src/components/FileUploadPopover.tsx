@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Upload, Trash2, ExternalLink, Loader2, Link, Plus } from 'lucide-react';
+import { Upload, Trash2, ExternalLink, Loader2, Link, Plus, RefreshCw } from 'lucide-react';
 import { useSessionFiles, SessionFile } from '@/hooks/useSessionFiles';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -62,11 +62,15 @@ const extractDomain = (url: string): string => {
 const FileItem = memo(({ 
   file, 
   onOpen, 
-  onDelete 
+  onDelete,
+  onReplace,
+  isReplacing
 }: { 
   file: SessionFile; 
   onOpen: (file: SessionFile) => void; 
   onDelete: (file: SessionFile) => void;
+  onReplace: (file: SessionFile) => void;
+  isReplacing: boolean;
 }) => (
   <div className="flex items-center gap-2 p-2 rounded-md bg-background border hover:bg-muted/50 transition-colors min-w-0">
     <span className="text-lg flex-shrink-0">{getFileIcon(file.file_type)}</span>
@@ -75,6 +79,19 @@ const FileItem = memo(({
       <p className="text-[10px] text-muted-foreground">{formatFileSize(file.file_size)}</p>
     </div>
     <div className="flex items-center gap-1 flex-shrink-0">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onReplace(file); }}
+        className="p-1.5 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-foreground"
+        title="Remplacer"
+        disabled={isReplacing}
+      >
+        {isReplacing ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <RefreshCw className="w-3.5 h-3.5" />
+        )}
+      </button>
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen(file); }}
@@ -138,13 +155,16 @@ export const FileUploadPopover = memo(({ targetId, targetType, subjectName, onFi
   const [links, setLinks] = useState<SessionLink[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [replacingFileId, setReplacingFileId] = useState<string | null>(null);
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [addingLink, setAddingLink] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const fileToReplaceRef = useRef<SessionFile | null>(null);
   const loadedRef = useRef(false);
   
-  const { uploadFile, getFilesForSession, getFilesForEvent, getFilesForSubject, getFileUrl, deleteFile } = useSessionFiles();
+  const { uploadFile, getFilesForSession, getFilesForEvent, getFilesForSubject, getFileUrl, deleteFile, replaceFile } = useSessionFiles();
 
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -251,6 +271,34 @@ export const FileUploadPopover = memo(({ targetId, targetType, subjectName, onFi
     }
   }, [deleteFile, onFileChange]);
 
+  const handleReplaceFile = useCallback((file: SessionFile) => {
+    fileToReplaceRef.current = file;
+    replaceInputRef.current?.click();
+  }, []);
+
+  const handleReplaceFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    const fileToReplace = fileToReplaceRef.current;
+    
+    if (!selectedFile || !fileToReplace) return;
+
+    setReplacingFileId(fileToReplace.id);
+
+    const result = await replaceFile(fileToReplace, selectedFile);
+    
+    if (result) {
+      setFiles(prev => prev.map(f => f.id === fileToReplace.id ? result : f));
+      onFileChange?.();
+    }
+
+    setReplacingFileId(null);
+    fileToReplaceRef.current = null;
+    
+    if (replaceInputRef.current) {
+      replaceInputRef.current.value = '';
+    }
+  }, [replaceFile, onFileChange]);
+
   const handleAddLink = useCallback(async () => {
     if (!newLinkUrl.trim()) return;
     
@@ -336,6 +384,13 @@ export const FileUploadPopover = memo(({ targetId, targetType, subjectName, onFi
             multiple
             className="hidden"
           />
+          <input
+            ref={replaceInputRef}
+            type="file"
+            accept={ACCEPTED_TYPES}
+            onChange={handleReplaceFileSelect}
+            className="hidden"
+          />
           <Button
             type="button"
             size="sm"
@@ -373,6 +428,8 @@ export const FileUploadPopover = memo(({ targetId, targetType, subjectName, onFi
                 file={file}
                 onOpen={handleOpenFile}
                 onDelete={handleDeleteFile}
+                onReplace={handleReplaceFile}
+                isReplacing={replacingFileId === file.id}
               />
             ))}
           </div>
