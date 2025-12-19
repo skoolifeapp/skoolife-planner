@@ -422,7 +422,6 @@ export type Database = {
           session_id: string | null
           subject_name: string | null
           user_id: string
-          valid_from: string
         }
         Insert: {
           created_at?: string
@@ -435,7 +434,6 @@ export type Database = {
           session_id?: string | null
           subject_name?: string | null
           user_id: string
-          valid_from?: string
         }
         Update: {
           created_at?: string
@@ -448,7 +446,6 @@ export type Database = {
           session_id?: string | null
           subject_name?: string | null
           user_id?: string
-          valid_from?: string
         }
         Relationships: [
           {

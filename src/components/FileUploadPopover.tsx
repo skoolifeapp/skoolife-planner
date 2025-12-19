@@ -10,7 +10,6 @@ interface FileUploadPopoverProps {
   targetId: string;
   targetType: 'session' | 'event';
   subjectName?: string; // For subject-level resource sharing
-  blockDate?: Date; // Date of the current block for file versioning
   onFileChange?: () => void;
 }
 
@@ -151,7 +150,7 @@ const LinkItem = memo(({
 
 LinkItem.displayName = 'LinkItem';
 
-export const FileUploadPopover = memo(({ targetId, targetType, subjectName, blockDate, onFileChange }: FileUploadPopoverProps) => {
+export const FileUploadPopover = memo(({ targetId, targetType, subjectName, onFileChange }: FileUploadPopoverProps) => {
   const [files, setFiles] = useState<SessionFile[]>([]);
   const [links, setLinks] = useState<SessionLink[]>([]);
   const [loading, setLoading] = useState(false);
@@ -175,10 +174,9 @@ export const FileUploadPopover = memo(({ targetId, targetType, subjectName, bloc
     }
 
     // If subject name is provided, load all files for that subject (shared across events)
-    // Pass blockDate to filter by version - only show files valid at block date
     let fileResult: SessionFile[] = [];
     if (subjectName) {
-      fileResult = await getFilesForSubject(subjectName, blockDate);
+      fileResult = await getFilesForSubject(subjectName);
     } else if (targetType === 'session') {
       fileResult = await getFilesForSession(targetId);
     } else {
@@ -204,7 +202,7 @@ export const FileUploadPopover = memo(({ targetId, targetType, subjectName, bloc
     
     setLinks((linkData as SessionLink[]) || []);
     setLoading(false);
-  }, [targetId, targetType, subjectName, blockDate, getFilesForSession, getFilesForEvent, getFilesForSubject]);
+  }, [targetId, targetType, subjectName, getFilesForSession, getFilesForEvent, getFilesForSubject]);
 
   // Load data in background without blocking render
   useEffect(() => {
@@ -289,8 +287,7 @@ export const FileUploadPopover = memo(({ targetId, targetType, subjectName, bloc
     const result = await replaceFile(fileToReplace, selectedFile);
     
     if (result) {
-      // Reload files since the new version has a new ID
-      await loadData();
+      setFiles(prev => prev.map(f => f.id === fileToReplace.id ? result : f));
       onFileChange?.();
     }
 
