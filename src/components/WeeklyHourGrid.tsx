@@ -1,6 +1,6 @@
 import { format, isSameDay, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar, Users, MapPin, Video, ExternalLink, Paperclip, Check } from 'lucide-react';
 import type { RevisionSession, CalendarEvent, Subject } from '@/types/planning';
@@ -54,12 +54,10 @@ interface WeeklyHourGridProps {
   onSessionMarkDone?: (sessionId: string) => void;
 }
 
-// Grid configuration - Full 24h display
-const START_HOUR = 0;
-const END_HOUR = 24;
-const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
+// Grid configuration - Dynamic display based on events
+const DEFAULT_START_HOUR = 8;
+const DEFAULT_END_HOUR = 20;
 const HOUR_HEIGHT = 60; // pixels per hour
-const DEFAULT_SCROLL_HOUR = 7; // Auto-scroll to this hour on load
 
 // Types for overlap calculation
 interface TimeBlock {
@@ -173,20 +171,46 @@ const WeeklyHourGrid = ({ weekDays, sessions, calendarEvents, exams = [], sessio
   const [resizePreview, setResizePreview] = useState<{ id: string; newStartTime?: string; newEndTime?: string; top?: number; height: number } | null>(null);
   const justResizedRef = useRef(false);
 
+  // Calculate dynamic time range based on events/sessions
+  const { START_HOUR, END_HOUR, HOURS } = useMemo(() => {
+    let minHour = DEFAULT_START_HOUR;
+    let maxHour = DEFAULT_END_HOUR;
+
+    // Check sessions
+    sessions.forEach(session => {
+      const [sh] = session.start_time.split(':').map(Number);
+      const [eh, em] = session.end_time.split(':').map(Number);
+      const endHour = em > 0 ? eh + 1 : eh;
+      minHour = Math.min(minHour, sh);
+      maxHour = Math.max(maxHour, endHour);
+    });
+
+    // Check calendar events
+    calendarEvents.forEach(event => {
+      const startParsed = parseSmartDateTime(event.start_datetime);
+      const endParsed = parseSmartDateTime(event.end_datetime);
+      const endHour = endParsed.minutes > 0 ? endParsed.hours + 1 : endParsed.hours;
+      minHour = Math.min(minHour, startParsed.hours);
+      maxHour = Math.max(maxHour, endHour);
+    });
+
+    // Add 1 hour padding
+    const finalStartHour = Math.max(0, minHour - 1);
+    const finalEndHour = Math.min(24, maxHour + 1);
+
+    return {
+      START_HOUR: finalStartHour,
+      END_HOUR: finalEndHour,
+      HOURS: Array.from({ length: finalEndHour - finalStartHour }, (_, i) => finalStartHour + i)
+    };
+  }, [sessions, calendarEvents]);
+
   // Update current time every minute
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000); // Update every minute
     return () => clearInterval(interval);
-  }, []);
-
-  // Auto-scroll to DEFAULT_SCROLL_HOUR on mount
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      const scrollPosition = (DEFAULT_SCROLL_HOUR - START_HOUR) * HOUR_HEIGHT;
-      scrollContainerRef.current.scrollTop = scrollPosition;
-    }
   }, []);
 
   // Calculate current time line position
