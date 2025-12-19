@@ -539,6 +539,7 @@ const EditEventDialog = memo(({ event, onClose, onUpdate }: EditEventDialogProps
                       targetId={event.id} 
                       targetType="event"
                       subjectName={event.subject_name || undefined}
+                      blockDate={new Date(event.start_datetime)}
                       onFileChange={onUpdate}
                     />
                   </Suspense>

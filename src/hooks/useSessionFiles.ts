@@ -13,6 +13,7 @@ export interface SessionFile {
   file_type: string;
   created_at: string;
   subject_name?: string | null;
+  valid_from?: string;
 }
 
 export function useSessionFiles() {
@@ -114,24 +115,39 @@ export function useSessionFiles() {
     return data as SessionFile[];
   }, []);
 
-  // Get all files shared at subject level (across all events/sessions of the same subject)
-  const getFilesForSubject = useCallback(async (subjectName: string): Promise<SessionFile[]> => {
+  // Get all files shared at subject level, filtered by date for versioning
+  // blockDate: the date of the current block to filter versions
+  const getFilesForSubject = useCallback(async (subjectName: string, blockDate?: Date): Promise<SessionFile[]> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('session_files')
       .select('*')
       .eq('user_id', user.id)
-      .eq('subject_name', subjectName)
-      .order('created_at', { ascending: false });
+      .eq('subject_name', subjectName);
+
+    // If blockDate provided, only get files valid at that date
+    if (blockDate) {
+      query = query.lte('valid_from', blockDate.toISOString());
+    }
+
+    const { data, error } = await query.order('valid_from', { ascending: false });
 
     if (error) {
       console.error('Error fetching subject files:', error);
       return [];
     }
 
-    return data as SessionFile[];
+    // Group by file_name and keep only the most recent version for each
+    const latestByName = new Map<string, SessionFile>();
+    for (const file of (data as SessionFile[])) {
+      if (!latestByName.has(file.file_name)) {
+        latestByName.set(file.file_name, file);
+      }
+    }
+
+    return Array.from(latestByName.values());
   }, []);
 
   const getFileUrl = useCallback(async (filePath: string): Promise<string | null> => {
@@ -178,6 +194,8 @@ export function useSessionFiles() {
     }
   }, []);
 
+  // Replace file: creates a NEW version (keeps old for history)
+  // The new version will have valid_from = now(), so it won't appear in past blocks
   const replaceFile = useCallback(async (
     existingFile: SessionFile,
     newFile: File
@@ -191,10 +209,10 @@ export function useSessionFiles() {
 
       // Upload new file to storage
       const fileExt = newFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const storageFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const targetType = existingFile.session_id ? 'session' : 'event';
       const targetId = existingFile.session_id || existingFile.event_id;
-      const filePath = `${user.id}/${targetType}/${targetId}/${fileName}`;
+      const filePath = `${user.id}/${targetType}/${targetId}/${storageFileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('course_files')
@@ -206,31 +224,32 @@ export function useSessionFiles() {
         return null;
       }
 
-      // Delete old file from storage (don't fail if it doesn't work)
-      await supabase.storage
-        .from('course_files')
-        .remove([existingFile.file_path]);
-
-      // Update database record with new file info
+      // Create a NEW record (don't update existing) - this preserves history
+      // Use the SAME file_name so versioning works correctly
       const { data, error } = await supabase
         .from('session_files')
-        .update({
+        .insert({
+          user_id: user.id,
+          session_id: existingFile.session_id,
+          event_id: existingFile.event_id,
+          file_name: existingFile.file_name, // Keep same name for version grouping
           file_path: filePath,
           file_size: newFile.size,
-          file_type: newFile.type
+          file_type: newFile.type,
+          subject_name: existingFile.subject_name,
+          valid_from: new Date().toISOString() // New version starts now
         })
-        .eq('id', existingFile.id)
         .select()
         .single();
 
       if (error) {
-        console.error('Database update error:', error);
-        // Cleanup new uploaded file
+        console.error('Database insert error:', error);
         await supabase.storage.from('course_files').remove([filePath]);
         toast.error('Erreur lors de la mise à jour');
         return null;
       }
 
+      toast.success('Fichier mis à jour pour ce bloc et les suivants');
       return data as SessionFile;
     } catch (err) {
       console.error('Error replacing file:', err);

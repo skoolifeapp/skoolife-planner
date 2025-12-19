@@ -427,6 +427,7 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare,
                       targetId={session.id} 
                       targetType="session"
                       subjectName={currentSubject.name}
+                      blockDate={new Date(session.date)}
                       onFileChange={onUpdate}
                     />
                   </Suspense>
