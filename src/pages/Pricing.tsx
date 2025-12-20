@@ -18,12 +18,11 @@ import {
   Video, 
   BarChart3, 
   Sparkles,
-  Shield,
-  Clock,
   MessageCircle
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SUBSCRIPTION_TIERS } from '@/config/stripe';
+import Navbar from '@/components/Navbar';
 
 const PLANS = {
   student: {
@@ -87,36 +86,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - Fixed navigation bar (same as landing) */}
-      <header className="fixed left-0 right-0 z-50 top-0 flex justify-center px-4 py-4">
-        <nav className="flex items-center gap-2 px-3 py-2 bg-white/95 dark:bg-card/95 backdrop-blur-md rounded-full border border-border/50 shadow-lg">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity px-2">
-            <img src={logo} alt="Skoolife" className="w-8 h-8 rounded-xl" />
-            <span className="text-lg font-bold text-foreground font-heading">Skoolife</span>
-          </Link>
-          
-          {/* Navigation Links - Hidden on mobile */}
-          <div className="hidden md:flex items-center gap-1 ml-4">
-            <Link to="/pricing" className="px-3 py-1.5 text-sm text-foreground font-medium transition-colors rounded-full bg-muted/50">
-              Tarifs
-            </Link>
-            <a href="/#fonctionnalites" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/50">
-              Fonctionnalités
-            </a>
-            <a href="/#a-propos" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/50">
-              À propos
-            </a>
-          </div>
-          
-          {/* CTA Button */}
-          <Link to="/auth" className="ml-2">
-            <Button variant="default" size="sm" className="rounded-full text-xs md:text-sm px-4">
-              Se connecter
-            </Button>
-          </Link>
-        </nav>
-      </header>
+      <Navbar />
 
       {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
