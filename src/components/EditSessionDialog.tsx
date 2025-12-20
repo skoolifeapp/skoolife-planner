@@ -371,7 +371,6 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare,
                     <div className="flex items-center gap-2">
                       {inviteInfo.meeting_format === 'visio' ? (
                         <>
-                          <Video className="w-4 h-4 text-blue-500" />
                           {inviteInfo.meeting_link ? (
                             <JoinCallButton
                               roomUrl={inviteInfo.meeting_link}
@@ -381,7 +380,10 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare,
                               className="text-blue-600 dark:text-blue-400 hover:underline p-0 h-auto"
                             />
                           ) : (
-                            <span>Visio (lien à venir)</span>
+                            <>
+                              <Video className="w-4 h-4 text-blue-500" />
+                              <span>Visio (lien à venir)</span>
+                            </>
                           )}
                         </>
                       ) : (
