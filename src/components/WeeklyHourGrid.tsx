@@ -54,9 +54,9 @@ interface WeeklyHourGridProps {
   onSessionMarkDone?: (sessionId: string) => void;
 }
 
-// Grid configuration - Full day display
-const DEFAULT_START_HOUR = 7;
-const DEFAULT_END_HOUR = 22;
+// Grid configuration - Dynamic display based on events
+const DEFAULT_START_HOUR = 8;
+const DEFAULT_END_HOUR = 20;
 const HOUR_HEIGHT = 60; // pixels per hour
 
 // Types for overlap calculation
