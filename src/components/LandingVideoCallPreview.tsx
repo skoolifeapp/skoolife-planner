@@ -3,12 +3,18 @@ import {
   Mic, 
   MonitorUp, 
   Phone, 
-  Users,
   MessageSquare,
   PanelLeftClose,
-  Bell
+  Bell,
+  Calendar,
+  BarChart3,
+  GraduationCap,
+  Settings,
+  Timer,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/logo.png';
 
 const LandingVideoCallPreview = () => {
   // Mock participants for the demo
@@ -17,19 +23,86 @@ const LandingVideoCallPreview = () => {
     { id: '2', name: 'Djamel', initial: 'D', color: 'from-amber-500 to-orange-600', isLocal: false },
   ];
 
+  const navItems = [
+    { label: 'Calendrier', icon: Calendar, active: false },
+    { label: 'Progression', icon: BarChart3, active: false },
+    { label: 'Matières', icon: GraduationCap, active: false },
+    { label: 'Paramètres', icon: Settings, active: false },
+  ];
+
+  const travailItems = [
+    { label: 'Pomodoro', icon: Timer, active: true },
+  ];
+
   return (
     <div className="rounded-xl overflow-hidden border border-border shadow-lg bg-sidebar">
       {/* Simulated app chrome */}
       <div className="flex h-full">
-        {/* Fake sidebar strip */}
-        <div className="w-12 bg-sidebar hidden sm:flex flex-col items-center py-3 gap-3 border-r border-border">
-          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
-            <div className="w-4 h-4 rounded bg-primary" />
+        {/* Real sidebar design */}
+        <div className="w-36 bg-sidebar hidden sm:flex flex-col p-3 border-r border-sidebar-border">
+          {/* Logo */}
+          <div className="flex items-center gap-2 mb-6">
+            <img src={logo} alt="Skoolife" className="h-6 w-auto rounded-lg" />
+            <span className="font-bold text-xs text-sidebar-foreground">Skoolife</span>
           </div>
-          <div className="flex-1 flex flex-col gap-2 mt-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="w-6 h-6 rounded bg-muted/50" />
-            ))}
+
+          {/* Navigation section */}
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[8px] font-medium text-sidebar-foreground/60 uppercase tracking-wider">Navigation</span>
+              <ChevronDown className="h-2.5 w-2.5 text-sidebar-foreground/60" />
+            </div>
+            <nav className="space-y-0.5">
+              {navItems.map((item) => (
+                <div
+                  key={item.label}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] ${
+                    item.active 
+                      ? 'bg-sidebar-accent text-sidebar-foreground font-medium' 
+                      : 'text-sidebar-foreground/80'
+                  }`}
+                >
+                  <item.icon className="w-3 h-3" />
+                  <span>{item.label}</span>
+                </div>
+              ))}
+            </nav>
+
+            {/* Travail section */}
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[8px] font-medium text-sidebar-foreground/60 uppercase tracking-wider">Travail</span>
+                <ChevronDown className="h-2.5 w-2.5 text-sidebar-foreground/60" />
+              </div>
+              <nav className="space-y-0.5">
+                {travailItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] ${
+                      item.active 
+                        ? 'bg-sidebar-accent text-sidebar-foreground font-medium' 
+                        : 'text-sidebar-foreground/80'
+                    }`}
+                  >
+                    <item.icon className="w-3 h-3" />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Profile section */}
+          <div className="pt-2 border-t border-sidebar-border">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full bg-sidebar-foreground/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-[8px] font-medium text-sidebar-foreground">R</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[8px] font-medium text-sidebar-foreground truncate">Ridouane H.</p>
+                <p className="text-[6px] text-sidebar-foreground/60 truncate">ridouane@email.com</p>
+              </div>
+            </div>
           </div>
         </div>
 
