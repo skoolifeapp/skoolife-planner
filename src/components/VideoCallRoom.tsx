@@ -208,11 +208,6 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
               }}
               className="w-full h-full object-contain"
             />
-            {/* Screen share label */}
-            <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-primary rounded-full text-xs text-primary-foreground font-semibold flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
-              Partage d'écran - {screenSharingParticipant.name}
-            </div>
           </div>
         )}
       </div>
