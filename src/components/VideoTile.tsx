@@ -26,6 +26,10 @@ const VideoTile = ({ participant, isLarge = false }: VideoTileProps) => {
     if (audioRef.current && participant.audioTrack && !participant.isLocal) {
       const stream = new MediaStream([participant.audioTrack]);
       audioRef.current.srcObject = stream;
+      // Force play to handle browser autoplay policies
+      audioRef.current.play().catch((err) => {
+        console.warn('Audio autoplay blocked:', err);
+      });
     }
   }, [participant.audioTrack, participant.isLocal]);
 
