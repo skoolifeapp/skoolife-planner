@@ -4,6 +4,7 @@ import { ArrowRight, Timer, Play, Pause, RotateCcw, Coffee, Brain, BookOpen, Clo
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import logo from '@/assets/logo.png';
+import studentAvatar from '@/assets/student-avatar.png';
 
 // Static Pomodoro Card Component - Reproduit l'interface exacte de l'app
 const StaticPomodoroCard = () => (
@@ -36,8 +37,8 @@ const StaticPomodoroCard = () => (
 
       {/* User Avatar */}
       <div className="mt-auto pt-4 border-t border-primary-foreground/20 w-full flex justify-center">
-        <div className="w-10 h-10 rounded-full bg-primary-foreground/30 flex items-center justify-center text-sm font-medium">
-          S
+        <div className="w-10 h-10 rounded-full overflow-hidden">
+          <img src={studentAvatar} alt="Étudiant" className="w-full h-full object-cover" />
         </div>
       </div>
     </div>
