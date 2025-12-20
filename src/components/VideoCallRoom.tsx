@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
+import { useSidebar } from '@/components/ui/sidebar';
 
 interface VideoCallRoomProps {
   roomUrl: string;
@@ -45,7 +46,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
 
   const { user } = useAuth();
   const [userName, setUserName] = useState('Utilisateur');
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const { open: sidebarVisible, toggleSidebar } = useSidebar();
 
   // Fetch user name
   useEffect(() => {
@@ -89,7 +90,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => setSidebarVisible(!sidebarVisible)}
+                onClick={toggleSidebar}
               >
                 {sidebarVisible ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
               </Button>
@@ -127,7 +128,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => setSidebarVisible(!sidebarVisible)}
+                onClick={toggleSidebar}
               >
                 {sidebarVisible ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
               </Button>
@@ -274,7 +275,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
               variant="ghost"
               size="icon"
               className="h-8 w-8 hidden lg:flex"
-              onClick={() => setSidebarVisible(!sidebarVisible)}
+              onClick={toggleSidebar}
               title={sidebarVisible ? 'Masquer la sidebar' : 'Afficher la sidebar'}
             >
               {sidebarVisible ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
