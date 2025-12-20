@@ -85,8 +85,6 @@ const VideoCallChat = ({ isOpen, onClose, messages, onSendMessage, currentUserNa
         name: file.name,
         type: file.type,
       });
-
-      toast.success('Fichier partagé');
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Erreur lors du partage du fichier');
