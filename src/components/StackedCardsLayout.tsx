@@ -77,12 +77,9 @@ const StackedCardsLayout = () => {
   };
 
   return (
-    <div className="relative w-full mx-auto">
-      {/* Cards container with mask for bottom fade */}
-      <div className="relative h-[420px] md:h-[480px] overflow-hidden" style={{ 
-        maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
-        WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)'
-      }}>
+    <div className="relative w-full max-w-5xl mx-auto">
+      {/* Cards container */}
+      <div className="relative h-[280px] md:h-[320px] overflow-hidden">
         {cards.map((card, index) => {
           const style = getCardStyle(index);
           const isActive = index === activeIndex;
@@ -91,37 +88,20 @@ const StackedCardsLayout = () => {
             <div
               key={card.id}
               onClick={() => handleCardClick(index)}
-              className={`absolute inset-x-0 top-0 rounded-t-2xl md:rounded-t-3xl bg-white dark:bg-card border border-border/30 border-b-0 overflow-hidden
+              className={`absolute inset-x-0 top-0 rounded-t-xl md:rounded-t-2xl bg-white dark:bg-card border border-border/20 border-b-0 overflow-hidden shadow-2xl
                 transition-all duration-500 ease-out
                 ${!isActive ? 'cursor-pointer' : ''}`}
               style={{
                 zIndex: style.zIndex,
                 transform: style.transform,
                 opacity: style.opacity,
-                boxShadow: '0 -10px 60px -15px rgba(0, 0, 0, 0.15), 0 -4px 25px -5px rgba(0, 0, 0, 0.08)',
-                height: '500px',
+                height: '600px',
               }}
             >
               {card.content}
             </div>
           );
         })}
-      </div>
-
-      {/* Indicators */}
-      <div className="flex justify-center gap-2 -mt-16 relative z-40">
-        {cards.map((card, index) => (
-          <button
-            key={card.id}
-            onClick={() => setActiveIndex(index)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === activeIndex 
-                ? 'bg-primary w-8' 
-                : 'bg-border hover:bg-primary/50 w-2'
-            }`}
-            aria-label={`Voir ${card.title}`}
-          />
-        ))}
       </div>
     </div>
   );
