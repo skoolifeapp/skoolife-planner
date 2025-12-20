@@ -37,11 +37,11 @@ const Index = () => {
         <div className="relative max-w-4xl mx-auto px-4 pt-12 md:pt-20 pb-8 md:pb-16 text-center">
           {/* Main heading */}
           <div className="space-y-4 md:space-y-6">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight font-heading">
-              Révise plus intelligemment,
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight font-heading">
+              Tes révisions,
               <br />
               <span className="gradient-text-animated font-heading">
-                pas plus longtemps.
+                enfin organisées
               </span>
             </h1>
             <p className="max-w-2xl text-base md:text-lg lg:text-xl text-muted-foreground mx-auto">
