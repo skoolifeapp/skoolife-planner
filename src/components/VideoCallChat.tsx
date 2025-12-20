@@ -34,17 +34,27 @@ const VideoCallChat = ({ isOpen, onClose, messages, onSendMessage, currentUserNa
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
+  // Auto-scroll to bottom when new messages arrive or chat opens
+  const scrollToBottom = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      // Access the actual scrollable viewport inside ScrollArea
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
     }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
   const handleSend = () => {
     if (inputValue.trim()) {
       onSendMessage(inputValue.trim(), 'text');
       setInputValue('');
+      // Scroll to bottom after sending
+      setTimeout(scrollToBottom, 50);
     }
   };
 
@@ -85,6 +95,8 @@ const VideoCallChat = ({ isOpen, onClose, messages, onSendMessage, currentUserNa
         name: file.name,
         type: file.type,
       });
+      // Scroll to bottom after upload
+      setTimeout(scrollToBottom, 50);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Erreur lors du partage du fichier');
