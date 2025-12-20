@@ -1,9 +1,257 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Timer, Play, Pause, RotateCcw, Coffee, Brain, BookOpen, Clock, Target, Calendar, BarChart3, GraduationCap, Settings, Bell, Sun } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import pomodoroScreenshot from '@/assets/pomodoro-screenshot.png';
+
+// Static Pomodoro Card Component - Reproduit l'interface exacte de l'app
+const StaticPomodoroCard = () => (
+  <div className="h-[520px] md:h-[620px] flex bg-[#FFFDF8] dark:bg-card rounded-xl md:rounded-2xl border border-border/20 overflow-hidden shadow-2xl">
+    {/* Yellow Sidebar - Compact */}
+    <div className="hidden md:flex w-16 flex-col bg-primary text-primary-foreground items-center py-4">
+      {/* Logo */}
+      <div className="w-10 h-10 rounded-xl bg-primary-foreground/90 flex items-center justify-center mb-8">
+        <span className="text-primary font-bold text-xl">S</span>
+      </div>
+
+      {/* Navigation Icons */}
+      <div className="flex-1 flex flex-col items-center gap-4">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
+          <Calendar className="w-5 h-5" />
+        </div>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
+          <BarChart3 className="w-5 h-5" />
+        </div>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
+          <GraduationCap className="w-5 h-5" />
+        </div>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
+          <Settings className="w-5 h-5" />
+        </div>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary-foreground/20">
+          <Timer className="w-5 h-5" />
+        </div>
+      </div>
+
+      {/* User Avatar */}
+      <div className="mt-auto pt-4 border-t border-primary-foreground/20 w-full flex justify-center">
+        <div className="w-10 h-10 rounded-full bg-primary-foreground/30 flex items-center justify-center text-sm font-medium">
+          S
+        </div>
+      </div>
+    </div>
+
+    {/* Main Content */}
+    <div className="flex-1 flex flex-col">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/20">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Timer className="w-4 h-4" />
+          <span className="text-sm">/</span>
+          <span className="text-sm font-medium text-foreground">Pomodoro</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="relative p-2 rounded-full hover:bg-muted/50">
+            <Bell className="w-4 h-4 text-muted-foreground" />
+            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">3</span>
+          </button>
+          <button className="p-2 rounded-full hover:bg-muted/50">
+            <Sun className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+
+      {/* Page Header */}
+      <div className="flex items-center gap-3 px-6 py-4">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Timer className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Pomodoro</h2>
+          <p className="text-sm text-muted-foreground">Concentre-toi avec la méthode 25/5</p>
+        </div>
+      </div>
+
+      {/* Session Type Buttons */}
+      <div className="flex gap-2 justify-center px-6 mb-4">
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <Brain className="w-4 h-4" />
+          Focus
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 text-muted-foreground text-sm font-medium bg-white dark:bg-card">
+          <Coffee className="w-4 h-4" />
+          Pause courte
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 text-muted-foreground text-sm font-medium bg-white dark:bg-card">
+          <Coffee className="w-4 h-4" />
+          Pause longue
+        </button>
+      </div>
+
+      {/* Content Grid */}
+      <div className="flex-1 flex px-6 pb-4 gap-4 overflow-hidden">
+        {/* Left Column - Timer */}
+        <div className="flex-1 flex flex-col gap-4">
+          {/* Timer Card */}
+          <div className="flex-1 p-6 rounded-xl border border-border/30 bg-white dark:bg-card shadow-sm flex flex-col items-center justify-center">
+            {/* Selected Session */}
+            <div className="mb-4 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 bg-blue-100 text-blue-600">
+              <Target className="w-4 h-4" />
+              MSI
+            </div>
+
+            {/* Timer Circle */}
+            <div className="relative w-40 h-40 md:w-48 md:h-48 mb-6">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="50%"
+                  cy="50%"
+                  r="45%"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  fill="none"
+                  className="text-muted"
+                />
+                <circle
+                  cx="50%"
+                  cy="50%"
+                  r="45%"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray="283"
+                  strokeDashoffset="70"
+                  strokeLinecap="round"
+                  className="text-primary"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-4xl md:text-5xl font-bold tabular-nums">18:42</span>
+                <span className="text-sm font-medium mt-2 text-primary">Focus</span>
+              </div>
+            </div>
+
+            {/* Timer Controls */}
+            <div className="flex gap-4">
+              <button className="w-12 h-12 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground bg-white dark:bg-card">
+                <RotateCcw className="w-5 h-5" />
+              </button>
+              <button className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                <Pause className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl border border-border/30 bg-white dark:bg-card shadow-sm flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Pomodoros</p>
+                <p className="text-2xl font-bold text-foreground">3</p>
+              </div>
+            </div>
+            <div className="p-4 rounded-xl border border-border/30 bg-white dark:bg-card shadow-sm flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Temps focus</p>
+                <p className="text-2xl font-bold text-foreground">75 min</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Sessions */}
+        <div className="hidden md:flex w-72 flex-col gap-4">
+          {/* Sessions List */}
+          <div className="flex-1 p-4 rounded-xl border border-border/30 bg-white dark:bg-card shadow-sm space-y-3 overflow-hidden">
+            {/* Session 1 - MSI (selected) */}
+            <div className="p-3 rounded-xl border-2 border-primary bg-primary/5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">MSI</p>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="bg-muted px-1.5 py-0.5 rounded text-[10px]">Aujourd'hui</span>
+                  <Clock className="w-3 h-3" />
+                  <span>14:00 - 15:30</span>
+                </div>
+              </div>
+              <button className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1">
+                <Play className="w-3 h-3" />
+                Focus
+              </button>
+            </div>
+
+            {/* Session 2 - FINANCE */}
+            <div className="p-3 rounded-xl border border-border/30 bg-white dark:bg-card flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">FINANCE</p>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="bg-muted px-1.5 py-0.5 rounded text-[10px]">Aujourd'hui</span>
+                  <Clock className="w-3 h-3" />
+                  <span>16:00 - 17:30</span>
+                </div>
+              </div>
+              <button className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1">
+                <Play className="w-3 h-3" />
+                Focus
+              </button>
+            </div>
+
+            {/* Session 3 - MCG */}
+            <div className="p-3 rounded-xl border border-border/30 bg-white dark:bg-card flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-green-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">MCG</p>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="bg-muted px-1.5 py-0.5 rounded text-[10px]">Demain</span>
+                  <Clock className="w-3 h-3" />
+                  <span>09:00 - 10:30</span>
+                </div>
+              </div>
+              <button className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1">
+                <Play className="w-3 h-3" />
+                Focus
+              </button>
+            </div>
+          </div>
+
+          {/* Method Card */}
+          <div className="p-4 rounded-xl border border-border/30 bg-muted/30 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl">🍅</div>
+              <div>
+                <h3 className="font-semibold text-sm mb-1">La méthode Pomodoro</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Travaille 25 minutes avec concentration, puis prends 5 minutes de pause.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Help Button */}
+    <div className="absolute bottom-4 right-4">
+      <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg">
+        <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-xs">?</span>
+        Besoin d'aide ?
+      </button>
+    </div>
+  </div>
+);
 
 const FeaturePomodoro = () => {
   return (
@@ -48,14 +296,10 @@ const FeaturePomodoro = () => {
           </div>
         </div>
 
-        {/* Pomodoro Screenshot */}
+        {/* Static Pomodoro Preview */}
         <div className="relative max-w-6xl mx-auto px-4 mt-16 pb-16">
           <div>
-            <img 
-              src={pomodoroScreenshot} 
-              alt="Capture d'écran du timer Pomodoro" 
-              className="w-full h-auto rounded-xl md:rounded-2xl border border-border/20 shadow-xl"
-            />
+            <StaticPomodoroCard />
           </div>
         </div>
       </main>
