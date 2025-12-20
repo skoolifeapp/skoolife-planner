@@ -61,20 +61,16 @@ const VideoTile = ({ participant, isLarge = false }: VideoTileProps) => {
 
       {/* Overlay with name and status */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-white text-sm font-semibold truncate drop-shadow-md">
-              {participant.name} {participant.isLocal && '(Toi)'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-full ${participant.audio ? 'bg-white/20' : 'bg-destructive/80'}`}>
-              {participant.audio ? (
-                <Mic className="w-3.5 h-3.5 text-white" />
-              ) : (
-                <MicOff className="w-3.5 h-3.5 text-white" />
-              )}
-            </div>
+        <div className="flex items-center gap-2">
+          <span className="text-white text-sm font-semibold truncate drop-shadow-md">
+            {participant.name} {participant.isLocal && '(Toi)'}
+          </span>
+          <div className={`p-1 rounded-full ${participant.audio ? 'bg-white/20' : 'bg-destructive/80'}`}>
+            {participant.audio ? (
+              <Mic className="w-3 h-3 text-white" />
+            ) : (
+              <MicOff className="w-3 h-3 text-white" />
+            )}
           </div>
         </div>
       </div>
