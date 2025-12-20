@@ -57,13 +57,13 @@ const Pricing = () => {
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  // Redirect to auth if not logged in
-  if (!authLoading && !user) {
-    navigate('/auth');
-    return null;
-  }
-
   const handleSelectPlan = async (planKey: 'student' | 'major') => {
+    // Redirect to auth if not logged in
+    if (!user) {
+      navigate('/auth?mode=signup');
+      return;
+    }
+
     const plan = PLANS[planKey];
     setLoadingPlan(planKey);
 
@@ -84,14 +84,6 @@ const Pricing = () => {
       setLoadingPlan(null);
     }
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
