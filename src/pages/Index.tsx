@@ -19,10 +19,6 @@ import {
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import HeroMiniDashboard3D from '@/components/HeroMiniDashboard3D';
-import mockupCalendar from '@/assets/mockup-calendar.png';
-import mockupProgression from '@/assets/mockup-progression.png';
-import mockupSubjects from '@/assets/mockup-subjects.png';
-import mockupSettings from '@/assets/mockup-settings.png';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -37,47 +33,28 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header / Navigation Bar */}
-      <header className="fixed left-0 right-0 z-50 top-0 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <nav className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          {/* Logo */}
+      {/* Header */}
+      <header className="fixed left-0 right-0 z-50 px-4 py-3 md:p-6 bg-background/80 backdrop-blur-md top-0">
+        <nav className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src={logo} alt="Skoolife" className="w-8 h-8 md:w-10 md:h-10 rounded-xl" />
-            <span className="text-lg md:text-xl font-bold text-foreground font-heading tracking-wide uppercase">Skoolife</span>
+            <img src={logo} alt="Skoolife" className="w-8 h-8 md:w-10 md:h-10 rounded-xl shadow-glow" />
+            <span className="text-lg md:text-xl font-bold text-foreground font-heading">Skoolife</span>
           </Link>
-          
-          {/* Navigation Links - Desktop */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#fonctionnalites" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Fonctionnalités
-            </a>
-            <Link to="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Tarifs
+          <div className="flex items-center gap-2">
+            <Link to="/auth">
+              <Button variant="default" size="sm" className="text-xs md:text-sm px-3 md:px-4">
+                Espace étudiants
+              </Button>
             </Link>
-            <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              FAQ
-            </a>
-            <a 
-              href="https://chat.whatsapp.com/KZaZ5cmGBoM60V5Qmqned5" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Communauté
-            </a>
-          </div>
-
-          {/* CTA Button */}
-          <Link to="/auth">
-            <Button variant="default" size="sm" className="text-sm px-4 md:px-6">
-              Se connecter
+            <Button variant="outline" size="sm" disabled className="opacity-60 cursor-not-allowed hidden md:inline-flex">
+              Espace écoles
             </Button>
-          </Link>
+          </div>
         </nav>
       </header>
 
       {/* Hero */}
-      <main className="relative pt-20 md:pt-24">
+      <main className="relative pt-16 md:pt-20">
         {/* Background decorations - smaller on mobile */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-5 md:left-10 w-48 md:w-72 h-48 md:h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
@@ -205,86 +182,6 @@ const Index = () => {
                 title="Ajustement intelligent"
                 description="Session ratée ? Skoolife réajuste automatiquement ton planning."
               />
-            </div>
-          </div>
-        </section>
-
-        {/* App Showcase Section */}
-        <section className="py-12 md:py-24 bg-card/30 overflow-hidden">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-8 md:mb-16">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 font-heading">
-                Découvre l'interface
-              </h2>
-              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-                Une application intuitive et moderne pour gérer tes révisions efficacement.
-              </p>
-            </div>
-
-            {/* Desktop Mockup Grid */}
-            <div className="hidden md:grid grid-cols-2 gap-8 lg:gap-12">
-              <div className="group relative">
-                <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-2xl group-hover:bg-primary/20 transition-colors duration-500" />
-                <img 
-                  src={mockupCalendar} 
-                  alt="Calendrier Skoolife" 
-                  className="relative w-full h-auto rounded-xl shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
-                />
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-4 py-2 shadow-lg">
-                  <span className="text-sm font-medium text-foreground">📅 Calendrier</span>
-                </div>
-              </div>
-              <div className="group relative mt-12">
-                <div className="absolute inset-0 bg-accent/10 rounded-3xl blur-2xl group-hover:bg-accent/20 transition-colors duration-500" />
-                <img 
-                  src={mockupProgression} 
-                  alt="Progression Skoolife" 
-                  className="relative w-full h-auto rounded-xl shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
-                />
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-4 py-2 shadow-lg">
-                  <span className="text-sm font-medium text-foreground">📊 Progression</span>
-                </div>
-              </div>
-              <div className="group relative">
-                <div className="absolute inset-0 bg-accent/10 rounded-3xl blur-2xl group-hover:bg-accent/20 transition-colors duration-500" />
-                <img 
-                  src={mockupSubjects} 
-                  alt="Matières Skoolife" 
-                  className="relative w-full h-auto rounded-xl shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
-                />
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-4 py-2 shadow-lg">
-                  <span className="text-sm font-medium text-foreground">📚 Matières</span>
-                </div>
-              </div>
-              <div className="group relative mt-12">
-                <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-2xl group-hover:bg-primary/20 transition-colors duration-500" />
-                <img 
-                  src={mockupSettings} 
-                  alt="Paramètres Skoolife" 
-                  className="relative w-full h-auto rounded-xl shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
-                />
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-4 py-2 shadow-lg">
-                  <span className="text-sm font-medium text-foreground">⚙️ Paramètres</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Mockup Carousel */}
-            <div className="md:hidden space-y-6">
-              <div className="relative">
-                <img 
-                  src={mockupCalendar} 
-                  alt="Calendrier Skoolife" 
-                  className="w-full h-auto rounded-xl shadow-xl"
-                />
-              </div>
-              <div className="relative">
-                <img 
-                  src={mockupProgression} 
-                  alt="Progression Skoolife" 
-                  className="w-full h-auto rounded-xl shadow-xl"
-                />
-              </div>
             </div>
           </div>
         </section>
