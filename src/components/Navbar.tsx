@@ -54,40 +54,46 @@ const Navbar = () => {
               Fonctionnalités
             </button>
             
-            {/* Dropdown menu */}
+            {/* Dropdown menu with bridge */}
             {showFeatures && (
-              <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-card rounded-xl border border-border shadow-xl p-2 z-50">
-                {features.map((feature) => {
-                  const content = (
-                    <>
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <feature.icon className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{feature.name}</p>
-                        <p className="text-xs text-muted-foreground">{feature.description}</p>
-                      </div>
-                    </>
-                  );
+              <>
+                {/* Invisible bridge to prevent gap */}
+                <div className="absolute top-full left-0 w-64 h-2" />
+                <div className="absolute top-full left-0 pt-2 w-64 z-50">
+                  <div className="bg-white dark:bg-card rounded-xl border border-border shadow-xl p-2">
+                    {features.map((feature) => {
+                      const content = (
+                        <>
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <feature.icon className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{feature.name}</p>
+                            <p className="text-xs text-muted-foreground">{feature.description}</p>
+                          </div>
+                        </>
+                      );
 
-                  return feature.path ? (
-                    <Link
-                      key={feature.name}
-                      to={feature.path}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      {content}
-                    </Link>
-                  ) : (
-                    <div
-                      key={feature.name}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      {content}
-                    </div>
-                  );
-                })}
-              </div>
+                      return feature.path ? (
+                        <Link
+                          key={feature.name}
+                          to={feature.path}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          {content}
+                        </Link>
+                      ) : (
+                        <div
+                          key={feature.name}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors cursor-default opacity-60"
+                        >
+                          {content}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
             )}
           </div>
           
