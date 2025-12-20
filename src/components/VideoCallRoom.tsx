@@ -53,7 +53,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
   const { sidebarCollapsed, toggleSidebarCollapsed } = useLayoutSidebar();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [hasUnread, setHasUnread] = useState(false);
 
   // Fetch user name
   useEffect(() => {
@@ -108,7 +108,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
           };
           setChatMessages(prev => [...prev, newMessage]);
           if (!isChatOpen) {
-            setUnreadCount(prev => prev + 1);
+            setHasUnread(true);
           }
         }
       });
@@ -148,19 +148,18 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
     setChatMessages(prev => [...prev, newMessage]);
   }, [userName, sendAppMessage, user?.id]);
 
-  // Toggle chat and reset unread count when opening
+  // Toggle chat and reset unread indicator when opening
   const toggleChat = () => {
     if (!isChatOpen) {
-      // Opening the chat - reset unread count
-      setUnreadCount(0);
+      // Opening the chat - mark as read
+      setHasUnread(false);
     }
     setIsChatOpen(prev => !prev);
   };
   
-  // Also reset unread count when closing via onClose
+  // Close chat handler
   const handleCloseChat = () => {
     setIsChatOpen(false);
-    // No need to reset count when closing, only when opening/reading
   };
 
   const handleLeave = async () => {
@@ -488,10 +487,8 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
               title="Ouvrir le chat"
             >
               <MessageSquare className="w-5 h-5" />
-              {unreadCount > 0 && !isChatOpen && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
+              {hasUnread && !isChatOpen && (
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-destructive rounded-full border-2 border-background" />
               )}
             </Button>
 
