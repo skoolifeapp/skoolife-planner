@@ -148,12 +148,19 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
     setChatMessages(prev => [...prev, newMessage]);
   }, [userName, sendAppMessage, user?.id]);
 
-  // Toggle chat and reset unread count
+  // Toggle chat and reset unread count when opening
   const toggleChat = () => {
-    setIsChatOpen(prev => !prev);
     if (!isChatOpen) {
+      // Opening the chat - reset unread count
       setUnreadCount(0);
     }
+    setIsChatOpen(prev => !prev);
+  };
+  
+  // Also reset unread count when closing via onClose
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
+    // No need to reset count when closing, only when opening/reading
   };
 
   const handleLeave = async () => {
@@ -418,7 +425,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
             {/* Chat Panel */}
             <VideoCallChat
               isOpen={isChatOpen}
-              onClose={() => setIsChatOpen(false)}
+              onClose={handleCloseChat}
               messages={chatMessages}
               onSendMessage={handleSendMessage}
               currentUserName={userName || 'Utilisateur'}
