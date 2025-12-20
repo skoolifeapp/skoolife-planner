@@ -218,7 +218,7 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
           {cameraParticipants.map((participant) => (
             <div 
               key={participant.id} 
-              className="w-36 h-24 rounded-xl overflow-hidden shadow-lg border-2 border-card bg-card"
+              className="relative w-36 h-24 rounded-xl overflow-hidden shadow-lg border-2 border-card bg-card"
             >
               {/* Use camera track directly */}
               {participant.cameraTrack ? (
@@ -239,9 +239,23 @@ const VideoCallRoom = ({ roomUrl, onLeave, sessionTitle }: VideoCallRoomProps) =
                   <Users className="w-6 h-6 text-muted-foreground" />
                 </div>
               )}
+              {/* Audio element for remote participants */}
+              {!participant.isLocal && participant.audioTrack && (
+                <audio 
+                  autoPlay 
+                  playsInline
+                  ref={(el) => {
+                    if (el && participant.audioTrack) {
+                      const stream = new MediaStream([participant.audioTrack]);
+                      el.srcObject = stream;
+                      el.play().catch((err) => console.warn('Audio autoplay blocked:', err));
+                    }
+                  }}
+                />
+              )}
               {/* Name badge */}
               <div className="absolute bottom-1 left-1 right-1 text-center">
-                <span className="text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded-full">
+                <span className="text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded-full truncate block">
                   {participant.name} {participant.isLocal && '(Toi)'}
                 </span>
               </div>
