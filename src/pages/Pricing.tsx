@@ -67,6 +67,9 @@ const Pricing = () => {
     const plan = PLANS[planKey];
     setLoadingPlan(planKey);
 
+    // Open the window immediately on user click to avoid popup blocker
+    const newWindow = window.open('about:blank', '_blank');
+
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId: plan.priceId },
@@ -74,11 +77,15 @@ const Pricing = () => {
 
       if (error) throw error;
 
-      if (data?.url) {
-        window.open(data.url, '_blank');
+      if (data?.url && newWindow) {
+        newWindow.location.href = data.url;
+      } else if (data?.url) {
+        // Fallback if popup was blocked
+        window.location.href = data.url;
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
+      if (newWindow) newWindow.close();
       toast.error('Erreur lors de la création du paiement');
     } finally {
       setLoadingPlan(null);
