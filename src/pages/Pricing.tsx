@@ -127,9 +127,10 @@ const Pricing = () => {
                 <CardTitle className="text-2xl font-heading">Skoolife {PLANS.student.name}</CardTitle>
               </div>
               <CardDescription className="text-base">{PLANS.student.description}</CardDescription>
-              <div className="mt-4">
-                <span className="text-4xl font-bold text-foreground">{PLANS.student.price}€</span>
-                <span className="text-muted-foreground ml-2">/ mois</span>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-2xl text-muted-foreground line-through">{PLANS.student.price}€</span>
+                <span className="text-4xl font-bold text-foreground">2,39€</span>
+                <span className="text-muted-foreground">/ mois</span>
               </div>
               <div className="mt-3">
                 <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
@@ -184,9 +185,10 @@ const Pricing = () => {
                 <CardTitle className="text-2xl font-heading">Skoolife {PLANS.major.name}</CardTitle>
               </div>
               <CardDescription className="text-base">{PLANS.major.description}</CardDescription>
-              <div className="mt-4">
-                <span className="text-4xl font-bold text-foreground">{PLANS.major.price}€</span>
-                <span className="text-muted-foreground ml-2">/ mois</span>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-2xl text-muted-foreground line-through">{PLANS.major.price}€</span>
+                <span className="text-4xl font-bold text-foreground">3,99€</span>
+                <span className="text-muted-foreground">/ mois</span>
               </div>
               <div className="mt-3">
                 <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
