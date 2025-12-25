@@ -16,7 +16,12 @@ const FeatureSidebar = () => {
   const currentPath = location.pathname;
 
   const handleNavClick = (index: number) => {
+    const currentScroll = window.scrollY;
     navigate(featureRoutes[index]);
+    // Restore scroll position after navigation
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: currentScroll, behavior: 'instant' });
+    });
   };
 
   const getActiveState = (route: string) => currentPath === route;
