@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Calendar, Clock, CheckCircle2, ChevronRight, ChevronLeft, Plus, Trash2, Upload, RefreshCw, Bell, Sun, Settings, BarChart3, GraduationCap, Timer } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, CheckCircle2, ChevronRight, ChevronLeft, Plus, Trash2, Upload, RefreshCw, Bell, Sun, Settings } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import logo from '@/assets/logo.png';
+import FeatureSidebar from '@/components/FeatureSidebar';
 
 // Static Calendar Card Component - Fake test account with mock data
 const StaticCalendarCard = () => {
@@ -25,39 +25,8 @@ const StaticCalendarCard = () => {
 
   return (
     <div className="h-[520px] md:h-[620px] flex bg-[#FFFDF8] dark:bg-card rounded-xl md:rounded-2xl border border-border/20 overflow-hidden shadow-2xl">
-      {/* Yellow Sidebar - Compact */}
-      <div className="hidden md:flex w-16 flex-col bg-primary text-primary-foreground items-center py-4">
-        {/* Logo */}
-        <div className="w-10 h-10 rounded-xl overflow-hidden mb-8">
-          <img src={logo} alt="Skoolife" className="w-full h-full object-cover" />
-        </div>
-
-        {/* Navigation Icons */}
-        <div className="flex-1 flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary-foreground/20">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
-            <BarChart3 className="w-5 h-5" />
-          </div>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
-            <GraduationCap className="w-5 h-5" />
-          </div>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
-            <Settings className="w-5 h-5" />
-          </div>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary-foreground/10">
-            <Timer className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* User Avatar */}
-        <div className="mt-auto pt-4 border-t border-primary-foreground/20 w-full flex justify-center">
-          <div className="w-10 h-10 rounded-full bg-primary-foreground/30 flex items-center justify-center text-sm font-medium">
-            S
-          </div>
-        </div>
-      </div>
+      {/* Yellow Sidebar - Navigation between feature pages */}
+      <FeatureSidebar />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
