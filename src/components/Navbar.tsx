@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Calendar, BarChart3, BookOpen, Settings, Timer } from 'lucide-react';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 import { useAuth } from '@/hooks/useAuth';
 const features = [
   { name: 'Calendrier', icon: Calendar, description: 'Planifie tes révisions', path: '/features/calendar' },
@@ -29,7 +29,7 @@ const Navbar = () => {
       <nav className="flex items-center gap-2 px-3 py-2 bg-white/95 dark:bg-card/95 backdrop-blur-md rounded-full border border-border/50 shadow-lg">
         {/* Logo */}
         <Link to={logoLink} className="flex items-center gap-2 hover:opacity-80 transition-opacity px-2">
-          <img src={logo} alt="Skoolife" className="w-8 h-8 rounded-xl" />
+          <img src={LOGO_URL} alt="Skoolife" className="w-8 h-8 rounded-xl" />
           <span className="text-lg font-bold text-foreground font-heading">Skoolife</span>
         </Link>
         

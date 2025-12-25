@@ -8,7 +8,7 @@ import { Calendar, Clock, User, BookOpen, CheckCircle, XCircle, Loader2, MapPin,
 import JoinCallButton from '@/components/JoinCallButton';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 
 interface InviteData {
   id: string;
@@ -266,7 +266,7 @@ export default function Invite() {
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center pb-2">
-          <img src={logo} alt="Skoolife" className="h-10 mx-auto mb-4" />
+          <img src={LOGO_URL} alt="Skoolife" className="h-10 mx-auto mb-4" />
           <CardTitle className="text-2xl">Invitation à réviser</CardTitle>
         </CardHeader>
         

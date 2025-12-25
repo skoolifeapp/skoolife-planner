@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 import StackedCardsLayout from '@/components/StackedCardsLayout';
 import LandingFeatures from '@/components/LandingFeatures';
 import Navbar from '@/components/Navbar';

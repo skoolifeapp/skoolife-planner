@@ -14,7 +14,7 @@ import {
   Timer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 
 const LandingVideoCallPreview = () => {
   // Mock participants for the demo
@@ -39,7 +39,7 @@ const LandingVideoCallPreview = () => {
         <div className="w-14 hidden sm:flex flex-col bg-primary text-primary-foreground items-center py-3">
           {/* Logo Skoolife */}
           <div className="w-9 h-9 rounded-xl overflow-hidden mb-6">
-            <img src={logo} alt="Skoolife" className="w-full h-full object-cover" />
+            <img src={LOGO_URL} alt="Skoolife" className="w-full h-full object-cover" />
           </div>
           
           {/* Navigation icons */}

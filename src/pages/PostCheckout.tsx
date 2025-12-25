@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles } from "lucide-react";
-import logo from "@/assets/logo.png";
+const LOGO_URL = '/logo.png';
 
 export default function PostCheckout() {
   const navigate = useNavigate();
@@ -64,7 +64,7 @@ export default function PostCheckout() {
     <div className="min-h-screen bg-background">
       <header className="p-6">
         <Link to="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl" />
+          <img src={LOGO_URL} alt="Skoolife" className="w-10 h-10 rounded-xl" />
           <span className="text-xl font-bold text-foreground">Skoolife</span>
         </Link>
       </header>
