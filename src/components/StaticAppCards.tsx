@@ -29,19 +29,31 @@ import {
   ExternalLink,
   Check
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import { useLandingPreview } from './StackedCardsLayout';
 
 // Sidebar partagée pour toutes les cartes - Design compact avec icônes uniquement
 interface SidebarProps {
   activePage: 'calendrier' | 'progression' | 'matieres' | 'settings' | 'collaboration';
+  useRouterNavigation?: boolean;
 }
 
-const Sidebar = ({ activePage }: SidebarProps) => {
+const featureRoutes = [
+  '/features/calendar',
+  '/features/progression',
+  '/features/subjects',
+  '/features/settings',
+];
+
+const Sidebar = ({ activePage, useRouterNavigation = false }: SidebarProps) => {
   const landingPreview = useLandingPreview();
+  const navigate = useNavigate();
 
   const handleNavClick = (index: number) => {
-    if (landingPreview) {
+    if (useRouterNavigation) {
+      navigate(featureRoutes[index]);
+    } else if (landingPreview) {
       landingPreview.setActiveCard(index);
     }
   };
