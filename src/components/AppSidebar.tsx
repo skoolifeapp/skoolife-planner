@@ -9,7 +9,7 @@ import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
 import SupportDrawer from '@/components/SupportDrawer';
 import { Calendar, BarChart3, GraduationCap, Settings, LogOut, Menu, X, User, Video, Lock, Crown, Sparkles, CreditCard, ChevronDown, MoreVertical, HelpCircle, PanelLeftClose, PanelLeft, Timer } from 'lucide-react';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 import { useState, useEffect } from 'react';
 import { useLayoutSidebar } from '@/contexts/LayoutSidebarContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -195,7 +195,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
       )}>
         <div className={cn("mb-10", sidebarCollapsed && "flex justify-center")}>
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="Skoolife" className="h-9 w-auto rounded-xl" />
+            <img src={LOGO_URL} alt="Skoolife" className="h-9 w-auto rounded-xl" />
             {!sidebarCollapsed && <span className="font-bold text-xl text-sidebar-foreground">Skoolife</span>}
           </Link>
         </div>
@@ -393,7 +393,7 @@ export const AppSidebar = ({ children }: AppSidebarProps) => {
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="Skoolife" className="h-8 w-auto rounded-lg" />
+          <img src={LOGO_URL} alt="Skoolife" className="h-8 w-auto rounded-lg" />
           <span className="font-bold text-lg text-foreground">Skoolife</span>
         </Link>
         <div className="flex items-center gap-2">

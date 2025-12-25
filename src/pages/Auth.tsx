@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -111,7 +111,7 @@ const Auth = () => {
       {/* Header */}
       <header className="p-6">
         <Link to="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <img src={logo} alt="Skoolife" className="w-10 h-10 rounded-xl" />
+          <img src={LOGO_URL} alt="Skoolife" className="w-10 h-10 rounded-xl" />
           <span className="text-xl font-bold text-foreground">Skoolife</span>
         </Link>
       </header>

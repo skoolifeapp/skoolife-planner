@@ -1,6 +1,7 @@
 import { Calendar, BarChart3, GraduationCap, Settings, Timer } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import logo from '@/assets/logo.png';
+
+const LOGO_URL = '/logo.png';
 
 const featureRoutes = [
   '/features/calendar',
@@ -30,7 +31,7 @@ const FeatureSidebar = () => {
     <div className="hidden md:flex w-16 flex-col bg-primary text-primary-foreground items-center py-4">
       {/* Logo */}
       <div className="w-10 h-10 rounded-xl overflow-hidden mb-8">
-        <img src={logo} alt="Skoolife" className="w-full h-full object-cover" />
+        <img src={LOGO_URL} alt="Skoolife" className="w-full h-full object-cover" />
       </div>
 
       {/* Navigation Icons */}

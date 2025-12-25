@@ -21,7 +21,7 @@ import {
   MessageCircle,
   Percent
 } from 'lucide-react';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 import { SUBSCRIPTION_TIERS } from '@/config/stripe';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';

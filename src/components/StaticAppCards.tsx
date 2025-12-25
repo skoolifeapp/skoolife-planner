@@ -30,7 +30,7 @@ import {
   Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 import { useLandingPreview } from './StackedCardsLayout';
 
 // Sidebar partagée pour toutes les cartes - Design compact avec icônes uniquement
@@ -62,7 +62,7 @@ const Sidebar = ({ activePage, useRouterNavigation = false }: SidebarProps) => {
     <div className="hidden md:flex w-16 flex-col bg-primary text-primary-foreground items-center py-4">
       {/* Logo */}
       <div className="w-10 h-10 rounded-xl overflow-hidden mb-8">
-        <img src={logo} alt="Skoolife" className="w-full h-full object-cover" />
+        <img src={LOGO_URL} alt="Skoolife" className="w-full h-full object-cover" />
       </div>
 
       {/* Navigation Icons */}

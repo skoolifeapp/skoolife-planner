@@ -2,7 +2,7 @@ import { Check, Calendar, Brain, Clock, Target, Timer, Play, Pause, RotateCcw, C
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import logo from '@/assets/logo.png';
+const LOGO_URL = '/logo.png';
 import LandingVideoCallPreview from '@/components/LandingVideoCallPreview';
 
 const LandingFeatures = () => {
