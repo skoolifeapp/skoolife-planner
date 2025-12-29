@@ -189,19 +189,7 @@ export const SessionStatusDialog = memo(function SessionStatusDialog({
               </Button>
             )}
 
-            {onShare && session.status === 'planned' && (
-              <Button
-                variant="outline"
-                className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10"
-                onClick={() => {
-                  onShare();
-                  onOpenChange(false);
-                }}
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Réviser avec un camarade
-              </Button>
-            )}
+            {/* Share button hidden - feature disabled */}
 
             <Button
               variant="ghost"

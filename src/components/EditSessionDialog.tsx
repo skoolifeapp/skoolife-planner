@@ -435,16 +435,7 @@ const EditSessionDialog = memo(({ session, subjects, onClose, onUpdate, onShare,
                     <Trash2 className="w-4 h-4" />
                   )}
                 </Button>
-                {canShare && onShare && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={onShare}
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                )}
+                {/* Share button hidden - feature disabled */}
               </div>
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
