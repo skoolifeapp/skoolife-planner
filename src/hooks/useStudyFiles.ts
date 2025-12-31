@@ -75,7 +75,7 @@ export function useStudyFiles() {
         return null;
       }
 
-      toast.success('Fichier importé avec succès');
+      // No success toast - silent upload
       return data as StudyFile;
     } catch (err) {
       console.error('Error uploading file:', err);
@@ -91,7 +91,6 @@ export function useStudyFiles() {
     folderName?: string
   ): Promise<StudyFile[]> => {
     setUploading(true);
-    const uploaded: StudyFile[] = [];
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -100,7 +99,8 @@ export function useStudyFiles() {
         return [];
       }
 
-      for (const file of files) {
+      // Upload all files in parallel for speed
+      const uploadPromises = files.map(async (file) => {
         const fileExt = getFileExtension(file.name);
         const fileId = crypto.randomUUID();
         const storagePath = `${user.id}/${fileId}-${file.name}`;
@@ -111,7 +111,7 @@ export function useStudyFiles() {
 
         if (uploadError) {
           console.error('Upload error for', file.name, uploadError);
-          continue;
+          return null;
         }
 
         const { data, error } = await supabase
@@ -129,20 +129,21 @@ export function useStudyFiles() {
 
         if (error) {
           await supabase.storage.from('study-files').remove([storagePath]);
-          continue;
+          return null;
         }
 
-        uploaded.push(data as StudyFile);
-      }
+        return data as StudyFile;
+      });
 
-      if (uploaded.length > 0) {
-        toast.success(`${uploaded.length} fichier${uploaded.length > 1 ? 's' : ''} importé${uploaded.length > 1 ? 's' : ''}`);
-      }
+      const results = await Promise.all(uploadPromises);
+      const uploaded = results.filter((f): f is StudyFile => f !== null);
+
+      // No success toast - silent upload
       return uploaded;
     } catch (err) {
       console.error('Error uploading files:', err);
       toast.error('Erreur lors de l\'upload');
-      return uploaded;
+      return [];
     } finally {
       setUploading(false);
     }
@@ -237,7 +238,7 @@ export function useStudyFiles() {
       return false;
     }
 
-    toast.success('Fichier renommé');
+    // No success toast
     return true;
   }, []);
 
@@ -253,7 +254,7 @@ export function useStudyFiles() {
       return false;
     }
 
-    toast.success(folderName ? `Déplacé vers ${folderName}` : 'Retiré du dossier');
+    // No success toast
     return true;
   }, []);
 
@@ -280,7 +281,7 @@ export function useStudyFiles() {
         return false;
       }
 
-      toast.success('Fichier supprimé');
+      // No success toast
       return true;
     } catch (err) {
       console.error('Error deleting file:', err);
