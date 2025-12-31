@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
+import { RoleBasedRedirect } from './RoleBasedRedirect';
 import {
   DashboardSkeleton,
   ProgressionSkeleton,
@@ -23,13 +24,15 @@ export const AppLayout = () => {
   const location = useLocation();
   
   return (
-    <AppSidebar>
-      <Suspense fallback={getSkeletonForRoute(location.pathname)}>
-        <div key={location.pathname} className="animate-fade-in">
-          <Outlet />
-        </div>
-      </Suspense>
-    </AppSidebar>
+    <RoleBasedRedirect>
+      <AppSidebar>
+        <Suspense fallback={getSkeletonForRoute(location.pathname)}>
+          <div key={location.pathname} className="animate-fade-in">
+            <Outlet />
+          </div>
+        </Suspense>
+      </AppSidebar>
+    </RoleBasedRedirect>
   );
 };
 
