@@ -17,9 +17,16 @@ export interface StudyFile {
 // No file type restrictions - accept all files
 // No file size limit
 
+export interface UploadProgress {
+  current: number;
+  total: number;
+  currentFileName: string;
+}
+
 export function useStudyFiles() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
   const getFileExtension = (filename: string): string => {
     return filename.split('.').pop()?.toLowerCase() || '';
@@ -91,6 +98,7 @@ export function useStudyFiles() {
     folderName?: string
   ): Promise<StudyFile[]> => {
     setUploading(true);
+    setUploadProgress({ current: 0, total: files.length, currentFileName: files[0]?.name || '' });
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -99,8 +107,13 @@ export function useStudyFiles() {
         return [];
       }
 
-      // Upload all files in parallel for speed
-      const uploadPromises = files.map(async (file) => {
+      const uploaded: StudyFile[] = [];
+      
+      // Upload files sequentially to track progress accurately
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadProgress({ current: i, total: files.length, currentFileName: file.name });
+        
         const fileExt = getFileExtension(file.name);
         const fileId = crypto.randomUUID();
         const storagePath = `${user.id}/${fileId}-${file.name}`;
@@ -111,7 +124,7 @@ export function useStudyFiles() {
 
         if (uploadError) {
           console.error('Upload error for', file.name, uploadError);
-          return null;
+          continue;
         }
 
         const { data, error } = await supabase
@@ -129,16 +142,12 @@ export function useStudyFiles() {
 
         if (error) {
           await supabase.storage.from('study-files').remove([storagePath]);
-          return null;
+          continue;
         }
 
-        return data as StudyFile;
-      });
+        uploaded.push(data as StudyFile);
+      }
 
-      const results = await Promise.all(uploadPromises);
-      const uploaded = results.filter((f): f is StudyFile => f !== null);
-
-      // No success toast - silent upload
       return uploaded;
     } catch (err) {
       console.error('Error uploading files:', err);
@@ -146,6 +155,7 @@ export function useStudyFiles() {
       return [];
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }, []);
 
@@ -303,6 +313,7 @@ export function useStudyFiles() {
   return {
     uploading,
     loading,
+    uploadProgress,
     uploadFile,
     uploadMultipleFiles,
     getFiles,

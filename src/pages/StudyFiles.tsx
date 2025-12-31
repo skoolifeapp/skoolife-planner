@@ -5,6 +5,7 @@ import { useStudyFiles, StudyFile } from '@/hooks/useStudyFiles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -336,7 +337,7 @@ export default function StudyFiles() {
   const {
     uploading,
     loading,
-    uploadFile,
+    uploadProgress,
     uploadMultipleFiles,
     getAllFiles,
     getFolders,
@@ -626,6 +627,27 @@ export default function StudyFiles() {
             <p className="text-lg font-medium">Dépose tes fichiers ici</p>
             <p className="text-sm text-muted-foreground mt-1">Tous les types de fichiers sont acceptés</p>
           </div>
+        </div>
+      )}
+
+      {/* Upload progress bar */}
+      {uploading && uploadProgress && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-background border rounded-xl shadow-lg p-4 w-80 animate-fade-in">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Upload className="w-4 h-4 text-primary animate-pulse" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{uploadProgress.currentFileName}</p>
+              <p className="text-xs text-muted-foreground">
+                {uploadProgress.current + 1} / {uploadProgress.total} fichier{uploadProgress.total > 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          <Progress 
+            value={((uploadProgress.current + 1) / uploadProgress.total) * 100} 
+            className="h-2"
+          />
         </div>
       )}
 
