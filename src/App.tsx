@@ -44,6 +44,11 @@ const CreateInstitution = lazy(() => import("./pages/institution/CreateInstituti
 const JoinInstitution = lazy(() => import("./pages/institution/JoinInstitution"));
 const InstitutionDashboard = lazy(() => import("./pages/institution/InstitutionDashboard"));
 const TeacherDashboard = lazy(() => import("./pages/institution/TeacherDashboard"));
+const ManageCohorts = lazy(() => import("./pages/institution/ManageCohorts"));
+const ManageStudents = lazy(() => import("./pages/institution/ManageStudents"));
+const ManageTeachers = lazy(() => import("./pages/institution/ManageTeachers"));
+const InstitutionSettings = lazy(() => import("./pages/institution/InstitutionSettings"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -92,7 +97,11 @@ const App = () => (
                       <Route path="/institution/create" element={<CreateInstitution />} />
                       <Route path="/join" element={<JoinInstitution />} />
                       <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
-                      <Route path="/institution/students" element={<TeacherDashboard />} />
+                      <Route path="/institution/students" element={<ManageStudents />} />
+                      <Route path="/institution/cohorts" element={<ManageCohorts />} />
+                      <Route path="/institution/teachers" element={<ManageTeachers />} />
+                      <Route path="/institution/settings" element={<InstitutionSettings />} />
+                      <Route path="/contact" element={<Contact />} />
 
                       {/* App routes with persistent sidebar */}
                       <Route element={<AppLayout />}>
