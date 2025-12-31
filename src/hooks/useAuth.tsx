@@ -82,8 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       const data = cached.data;
       const subscribed = data?.subscribed || false;
-      setIsSubscribed(subscribed);
-      if (subscribed && data?.product_id) {
+      const isLifetime = data?.is_lifetime || false;
+      setIsSubscribed(subscribed || isLifetime);
+      if (isLifetime && data?.lifetime_tier === 'major') {
+        setSubscriptionTier('major');
+      } else if (subscribed && data?.product_id) {
         setSubscriptionTier(data.product_id === STRIPE_PRODUCTS.major ? 'major' : 'student');
       } else {
         setSubscriptionTier(subscribed ? 'student' : null);
@@ -96,6 +99,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSubscriptionLoading(true);
 
     try {
+      // First check for lifetime tier in profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('lifetime_tier')
+        .eq('id', currentSession.user.id)
+        .maybeSingle();
+
+      if (profileData?.lifetime_tier) {
+        const lifetimeData = {
+          subscribed: true,
+          is_lifetime: true,
+          lifetime_tier: profileData.lifetime_tier,
+          product_id: null,
+          subscription_end: null,
+        };
+        subscriptionCache.set(cacheKey, { data: lifetimeData, timestamp: Date.now() });
+        setIsSubscribed(true);
+        setSubscriptionTier(profileData.lifetime_tier as SubscriptionTier);
+        setSubscriptionLoading(false);
+        subscriptionCheckInProgress.current = false;
+        return lifetimeData;
+      }
+
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
           Authorization: `Bearer ${currentSession.access_token}`

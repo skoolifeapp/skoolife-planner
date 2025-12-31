@@ -41,12 +41,14 @@ const TIER_INFO = {
 
 const Subscription = () => {
   const navigate = useNavigate();
-  const { subscriptionTier, session, subscriptionLoading, checkSubscription, refreshSubscription } = useAuth();
+  const { subscriptionTier, session, subscriptionLoading, checkSubscription, refreshSubscription, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [subscriptionData, setSubscriptionData] = useState<{
     subscription_end?: string | null;
     subscription_status?: string | null;
     cancel_at_period_end?: boolean;
+    is_lifetime?: boolean;
+    lifetime_tier?: string | null;
   } | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [reactivateLoading, setReactivateLoading] = useState(false);
@@ -63,6 +65,25 @@ const Subscription = () => {
     }
 
     try {
+      // First check for lifetime tier
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('lifetime_tier')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profileData?.lifetime_tier) {
+        setSubscriptionData({
+          is_lifetime: true,
+          lifetime_tier: profileData.lifetime_tier,
+          subscription_end: null,
+          subscription_status: 'lifetime',
+          cancel_at_period_end: false,
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("check-subscription", {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -189,6 +210,7 @@ const Subscription = () => {
 
   const tierInfo = TIER_INFO[subscriptionTier as keyof typeof TIER_INFO] || TIER_INFO.student;
   const TierIcon = tierInfo.icon;
+  const isLifetime = subscriptionData?.is_lifetime;
   const nextBillingDate = subscriptionData?.subscription_end
     ? format(new Date(subscriptionData.subscription_end), "d MMMM yyyy", { locale: fr })
     : null;
@@ -212,10 +234,16 @@ const Subscription = () => {
                 </div>
                 <div>
                   <CardTitle className="text-xl">{tierInfo.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">Abonnement mensuel</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isLifetime ? "Accès à vie" : "Abonnement mensuel"}
+                  </p>
                 </div>
               </div>
-              {isCanceled ? (
+              {isLifetime ? (
+                <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600">
+                  À vie ✨
+                </Badge>
+              ) : isCanceled ? (
                 <Badge variant="destructive">Annulé</Badge>
               ) : (
                 <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Actif</Badge>
@@ -223,17 +251,28 @@ const Subscription = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Price */}
-            <div className="flex items-center gap-3 p-4 bg-secondary/50 rounded-xl">
-              <CreditCard className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Montant mensuel</p>
-                <p className="text-lg font-semibold">{tierInfo.price} / mois</p>
+            {/* Lifetime message */}
+            {isLifetime && (
+              <div className="p-4 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-200 dark:border-amber-800 rounded-xl">
+                <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
+                  🎉 Tu bénéficies d'un accès Major à vie ! Aucun paiement requis, profite de toutes les fonctionnalités sans limite.
+                </p>
               </div>
-            </div>
+            )}
 
-            {/* Next billing date */}
-            {nextBillingDate && (
+            {/* Price - only show if not lifetime */}
+            {!isLifetime && (
+              <div className="flex items-center gap-3 p-4 bg-secondary/50 rounded-xl">
+                <CreditCard className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Montant mensuel</p>
+                  <p className="text-lg font-semibold">{tierInfo.price} / mois</p>
+                </div>
+              </div>
+            )}
+
+            {/* Next billing date - only show if not lifetime */}
+            {!isLifetime && nextBillingDate && (
               <div className="flex items-center gap-3 p-4 bg-secondary/50 rounded-xl">
                 <Calendar className="w-5 h-5 text-muted-foreground" />
                 <div>
@@ -245,7 +284,7 @@ const Subscription = () => {
               </div>
             )}
 
-            {isCanceled && (
+            {!isLifetime && isCanceled && (
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
                 <p className="text-sm text-destructive">
                   Ton abonnement a été annulé. Tu conserves l'accès jusqu'à la fin de ta période payée.
@@ -255,8 +294,8 @@ const Subscription = () => {
           </CardContent>
         </Card>
 
-        {/* Switch plan card */}
-        {!isCanceled && (
+        {/* Switch plan card - hide for lifetime users */}
+        {!isCanceled && !isLifetime && (
           <Card className="border-0 shadow-md">
             <CardHeader>
               <CardTitle className="text-lg">Changer de plan</CardTitle>
@@ -317,54 +356,56 @@ const Subscription = () => {
           </Card>
         )}
 
-        {/* Actions */}
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg">Autres actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Manage payment method - only show if not canceled */}
-            {!isCanceled && (
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={handleOpenPortal}
-                disabled={portalLoading}
-              >
-                {portalLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <CreditCard className="w-4 h-4 mr-2" />
-                )}
-                Gérer mon moyen de paiement
-              </Button>
-            )}
+        {/* Actions - hide for lifetime users */}
+        {!isLifetime && (
+          <Card className="border-0 shadow-md">
+            <CardHeader>
+              <CardTitle className="text-lg">Autres actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Manage payment method - only show if not canceled */}
+              {!isCanceled && (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleOpenPortal}
+                  disabled={portalLoading}
+                >
+                  {portalLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CreditCard className="w-4 h-4 mr-2" />
+                  )}
+                  Gérer mon moyen de paiement
+                </Button>
+              )}
 
-            {/* Cancel button - only show if not canceled */}
-            {!isCanceled && (
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-muted-foreground hover:text-destructive"
-                onClick={() => navigate("/cancel")}
-              >
-                <XCircle className="w-4 h-4 mr-2" />
-                Résilier mon abonnement
-              </Button>
-            )}
+              {/* Cancel button - only show if not canceled */}
+              {!isCanceled && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-muted-foreground hover:text-destructive"
+                  onClick={() => navigate("/cancel")}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Résilier mon abonnement
+                </Button>
+              )}
 
-            {/* Reactivate button if canceled */}
-            {isCanceled && (
-              <Button className="w-full" onClick={handleReactivate} disabled={reactivateLoading}>
-                {reactivateLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Check className="w-4 h-4 mr-2" />
-                )}
-                Réactiver mon abonnement
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+              {/* Reactivate button if canceled */}
+              {isCanceled && (
+                <Button className="w-full" onClick={handleReactivate} disabled={reactivateLoading}>
+                  {reactivateLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4 mr-2" />
+                  )}
+                  Réactiver mon abonnement
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Confirmation Dialog */}

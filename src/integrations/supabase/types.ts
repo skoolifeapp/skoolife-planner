@@ -282,6 +282,7 @@ export type Database = {
           last_name: string | null
           level: string | null
           liaison_code: string | null
+          lifetime_tier: string | null
           main_exam_period: string | null
           marketing_emails_optin: boolean | null
           marketing_optin_at: string | null
@@ -306,6 +307,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           liaison_code?: string | null
+          lifetime_tier?: string | null
           main_exam_period?: string | null
           marketing_emails_optin?: boolean | null
           marketing_optin_at?: string | null
@@ -330,6 +332,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           liaison_code?: string | null
+          lifetime_tier?: string | null
           main_exam_period?: string | null
           marketing_emails_optin?: boolean | null
           marketing_optin_at?: string | null
