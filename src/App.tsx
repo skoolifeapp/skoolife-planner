@@ -42,14 +42,6 @@ const About = lazy(() => import("./pages/About"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 
-// School B2B pages
-const SchoolLayout = lazy(() => import("./components/school/SchoolLayout"));
-const SchoolDashboard = lazy(() => import("./pages/school/SchoolDashboard"));
-const SchoolWeather = lazy(() => import("./pages/school/SchoolWeather"));
-const SchoolClasses = lazy(() => import("./pages/school/SchoolClasses"));
-const SchoolStudents = lazy(() => import("./pages/school/SchoolStudents"));
-const SchoolBroadcast = lazy(() => import("./pages/school/SchoolBroadcast"));
-
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -111,16 +103,6 @@ const App = () => (
                       <Route path="/admin/users" element={<AdminUsers />} />
                       <Route path="/admin/stats" element={<AdminStats />} />
                       <Route path="/admin/analytics" element={<AdminAnalytics />} />
-
-                      {/* School B2B routes */}
-                      <Route path="/school" element={<SchoolLayout />}>
-                        <Route index element={<SchoolDashboard />} />
-                        <Route path="weather" element={<SchoolWeather />} />
-                        <Route path="classes" element={<SchoolClasses />} />
-                        <Route path="students" element={<SchoolStudents />} />
-                        <Route path="broadcast" element={<SchoolBroadcast />} />
-                      </Route>
-
                       <Route path="/invite/:token" element={<Invite />} />
                       <Route path="/invite-accept/:token" element={<InviteAccept />} />
                       <Route path="/cancel" element={<CancelSubscription />} />
