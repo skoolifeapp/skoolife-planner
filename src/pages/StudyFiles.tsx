@@ -486,7 +486,7 @@ export default function StudyFiles() {
 
   const handleDeleteConfirm = async () => {
     if (selectedFile) {
-      const success = await deleteFile(selectedFile.id, selectedFile.storage_path);
+      const success = await deleteFile(selectedFile);
       if (success) {
         await loadData();
       }
@@ -604,10 +604,10 @@ export default function StudyFiles() {
             <div className="flex items-center justify-between text-sm">
               <span className="truncate max-w-[200px]">{uploadProgress.currentFileName}</span>
               <span className="text-muted-foreground">
-                {uploadProgress.currentFile} / {uploadProgress.totalFiles}
+                {uploadProgress.current} / {uploadProgress.total}
               </span>
             </div>
-            <Progress value={(uploadProgress.currentFile / uploadProgress.totalFiles) * 100} className="h-2" />
+            <Progress value={(uploadProgress.current / uploadProgress.total) * 100} className="h-2" />
           </div>
         </div>
       )}

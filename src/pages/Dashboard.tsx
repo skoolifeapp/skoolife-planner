@@ -915,23 +915,22 @@ const Dashboard = () => {
         <CardContent className="p-2 md:p-4">
           {calendarView === 'week' ? (
             <WeeklyHourGrid
-              weekStart={weekStart}
+              weekDays={Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))}
               sessions={sessions}
-              events={calendarEvents}
-              subjects={subjects}
+              calendarEvents={calendarEvents}
               sessionInvites={sessionInvites}
               subjectFileCounts={subjectFileCounts}
               onSessionClick={handleSessionClick}
               onEventClick={handleEventClick}
-              onShareClick={handleSessionShareClick}
               onGridClick={handleGridClick}
             />
           ) : (
             <MonthlyCalendarView
               currentMonth={currentMonth}
               sessions={sessions}
-              events={calendarEvents}
+              calendarEvents={calendarEvents}
               subjects={subjects}
+              onMonthChange={setCurrentMonth}
               onSessionClick={handleSessionClick}
               onEventClick={handleEventClick}
               onDayClick={(date) => {
@@ -957,7 +956,7 @@ const Dashboard = () => {
           if (!open) setGridClickData(null);
         }}
         onEventAdded={fetchData}
-        initialDate={gridClickData?.date}
+        initialDate={gridClickData?.date ? new Date(gridClickData.date) : undefined}
         initialStartTime={gridClickData?.startTime}
         initialEndTime={gridClickData?.endTime}
       />
@@ -979,18 +978,39 @@ const Dashboard = () => {
       />
       
       <ShareSessionDialog
-        open={shareSessionDialogOpen}
-        onOpenChange={setShareSessionDialogOpen}
         session={selectedSession}
-        onShareComplete={fetchData}
+        subject={subjects.find(s => s.id === selectedSession?.subject_id)}
+        onClose={() => {
+          setShareSessionDialogOpen(false);
+        }}
+        onInviteSuccess={fetchData}
       />
       
-      <InvitedSessionDialog
-        open={invitedSessionDialogOpen}
-        onOpenChange={setInvitedSessionDialogOpen}
-        session={selectedInvitedSession}
-        onUpdate={fetchData}
-      />
+      {shareSessionDialogOpen && (
+        <InvitedSessionDialog
+          open={invitedSessionDialogOpen}
+          onOpenChange={setInvitedSessionDialogOpen}
+          session={selectedInvitedSession}
+          onConfirm={async (sessionId) => {
+            // Confirm participation
+            await supabase
+              .from('session_invites')
+              .update({ confirmed: true })
+              .eq('session_id', sessionId)
+              .eq('accepted_by', user?.id);
+            fetchData();
+          }}
+          onDecline={async (sessionId) => {
+            // Decline/cancel participation
+            await supabase
+              .from('session_invites')
+              .delete()
+              .eq('session_id', sessionId)
+              .eq('accepted_by', user?.id);
+            fetchData();
+          }}
+        />
+      )}
     </div>
   );
 };
