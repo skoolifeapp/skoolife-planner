@@ -61,15 +61,9 @@ const LandingFeatures = () => {
               Reste concentré avec la technique Pomodoro intégrée. Des cycles de travail 
               et de pause pour une concentration maximale.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                <Brain className="w-3 h-3" />
-                Focus 25min
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-                <Coffee className="w-3 h-3" />
-                Pause 5min
-              </span>
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Check className="w-4 h-4 text-primary flex-shrink-0" />
+              <span>Reste concentré plus longtemps</span>
             </div>
           </div>
 
@@ -87,12 +81,9 @@ const LandingFeatures = () => {
               Visualise tes progrès en temps réel. Suis le temps passé 
               sur chaque matière et atteins tes objectifs.
             </p>
-            <div className="flex gap-3">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="text-foreground font-medium">4h</span>
-                <span className="text-muted-foreground">cette semaine</span>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Check className="w-4 h-4 text-primary flex-shrink-0" />
+              <span>Atteins tes objectifs de révision</span>
             </div>
           </div>
 
@@ -110,19 +101,9 @@ const LandingFeatures = () => {
               Organise toutes tes matières avec leurs dates d'examen. 
               Skoolife adapte ton planning en conséquence.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-xs">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-red-700 dark:text-red-300">FINANCE</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-xs">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                <span className="text-blue-700 dark:text-blue-300">MSI</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-xs">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-green-700 dark:text-green-300">MCG</span>
-              </span>
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Check className="w-4 h-4 text-primary flex-shrink-0" />
+              <span>Ne rate plus aucun examen</span>
             </div>
           </div>
         </div>
