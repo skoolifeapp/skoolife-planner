@@ -76,6 +76,7 @@ export function TaskCard({ task, index, onEdit, onDelete, onToggleStatus }: Task
             "hover:shadow-md border-border/50",
             snapshot.isDragging && "shadow-lg rotate-2 scale-105 cursor-grabbing",
             task.status === 'done' && "opacity-60",
+            isAnimating && "z-50 relative shadow-xl scale-105",
             isAnimating === 'right' && "translate-x-full opacity-0",
             isAnimating === 'left' && "-translate-x-full opacity-0"
           )}
