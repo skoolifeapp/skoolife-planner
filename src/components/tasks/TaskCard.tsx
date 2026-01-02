@@ -2,7 +2,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Trash2, Edit2 } from 'lucide-react';
+import { Clock, Trash2, Edit2, AlignLeft } from 'lucide-react';
 import { format, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -98,13 +98,6 @@ export function TaskCard({ task, index, onEdit, onDelete }: TaskCardProps) {
               </div>
             </div>
 
-            {/* Description */}
-            {task.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {task.description}
-              </p>
-            )}
-
             {/* Footer with metadata */}
             <div className="flex items-center flex-wrap gap-1.5">
               {/* Subject badge */}
@@ -126,15 +119,22 @@ export function TaskCard({ task, index, onEdit, onDelete }: TaskCardProps) {
                 {priorityLabels[task.priority]}
               </Badge>
 
-              {/* Due date */}
+              {/* Description indicator (Trello style) */}
+              {task.description && (
+                <div className="flex items-center text-muted-foreground" title={task.description}>
+                  <AlignLeft className="h-3.5 w-3.5" />
+                </div>
+              )}
+
+              {/* Due date (Trello style) */}
               {task.due_date && (
                 <div className={cn(
-                  "flex items-center gap-1 text-xs",
-                  isOverdue && "text-destructive font-medium",
-                  isDueToday && "text-amber-600 dark:text-amber-400 font-medium",
-                  !isOverdue && !isDueToday && "text-muted-foreground"
+                  "flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
+                  isOverdue && "bg-destructive/20 text-destructive font-medium",
+                  isDueToday && "bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium",
+                  !isOverdue && !isDueToday && "bg-muted text-muted-foreground"
                 )}>
-                  <Calendar className="h-3 w-3" />
+                  <Clock className="h-3 w-3" />
                   <span>
                     {isToday(new Date(task.due_date))
                       ? "Aujourd'hui"
