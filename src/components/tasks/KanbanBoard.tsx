@@ -224,7 +224,6 @@ export function KanbanBoard() {
         );
 
         if (!response.ok) throw new Error('Failed to update task');
-        toast.success('Tâche modifiée');
       } else {
         // Create new task
         const maxPosition = tasks
@@ -250,7 +249,6 @@ export function KanbanBoard() {
         );
 
         if (!response.ok) throw new Error('Failed to create task');
-        toast.success('Tâche créée');
       }
 
       fetchData();
@@ -276,7 +274,6 @@ export function KanbanBoard() {
       if (!response.ok) throw new Error('Failed to delete task');
 
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
-      toast.success('Tâche supprimée');
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Erreur lors de la suppression');
