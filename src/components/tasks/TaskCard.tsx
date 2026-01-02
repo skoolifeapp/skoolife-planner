@@ -163,8 +163,7 @@ export function TaskCard({ task, index, onEdit, onDelete, onToggleStatus }: Task
               {task.due_date && (
                 <div className={cn(
                   "flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
-                  isOverdue && "bg-destructive/20 text-destructive font-medium",
-                  isDueToday && "bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium",
+                  (isOverdue || isDueToday) && "bg-destructive/20 text-destructive font-medium",
                   !isOverdue && !isDueToday && "bg-muted text-muted-foreground"
                 )}>
                   <Clock className="h-3 w-3" />
