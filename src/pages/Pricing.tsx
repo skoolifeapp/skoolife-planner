@@ -46,6 +46,8 @@ const PLANS = {
       { text: 'Statistiques détaillées de progression', icon: BarChart3 },
       { text: 'Gestionnaire de fiches "Mes fiches"', icon: FolderOpen },
       { text: 'To-Do list avec tableau Kanban', icon: ListTodo },
+      { text: 'Analyse de tes performances par matière', icon: Target },
+      { text: 'Support prioritaire par chat', icon: MessageCircle },
     ],
     popular: true,
   },

@@ -24,14 +24,14 @@ export const SUBSCRIPTION_TIERS = {
     price: '2,99',
     priceId: STRIPE_PRICES.student,
     productId: STRIPE_PRODUCTS.student,
-    description: 'Tout pour organiser tes révisions',
+    description: 'L\'essentiel pour organiser tes révisions',
   },
   major: {
     name: 'Major',
     price: '4,99',
     priceId: STRIPE_PRICES.major,
     productId: STRIPE_PRODUCTS.major,
-    description: 'Révise avec tes camarades',
+    description: 'Toutes les fonctionnalités pour exceller',
   },
 } as const;
 
