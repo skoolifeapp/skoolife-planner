@@ -121,7 +121,7 @@ export function useStudyFiles() {
     }
     
     setUploading(true);
-    setUploadProgress({ current: 0, total: allowedFiles.length, currentFileName: allowedFiles[0]?.name || '' });
+    setUploadProgress({ current: 0, total: allowedFiles.length, currentFileName: 'Préparation...' });
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -130,13 +130,10 @@ export function useStudyFiles() {
         return [];
       }
 
-      const uploaded: StudyFile[] = [];
+      // Upload all files in parallel for maximum speed
+      let completed = 0;
       
-      // Upload files sequentially to track progress accurately
-      for (let i = 0; i < allowedFiles.length; i++) {
-        const file = allowedFiles[i];
-        setUploadProgress({ current: i, total: allowedFiles.length, currentFileName: file.name });
-        
+      const uploadPromises = allowedFiles.map(async (file) => {
         const fileExt = getFileExtension(file.name);
         const fileId = crypto.randomUUID();
         const storagePath = `${user.id}/${fileId}-${file.name}`;
@@ -147,7 +144,9 @@ export function useStudyFiles() {
 
         if (uploadError) {
           console.error('Upload error for', file.name, uploadError);
-          continue;
+          completed++;
+          setUploadProgress({ current: completed, total: allowedFiles.length, currentFileName: file.name });
+          return null;
         }
 
         const { data, error } = await supabase
@@ -165,13 +164,18 @@ export function useStudyFiles() {
 
         if (error) {
           await supabase.storage.from('study-files').remove([storagePath]);
-          continue;
+          completed++;
+          setUploadProgress({ current: completed, total: allowedFiles.length, currentFileName: file.name });
+          return null;
         }
 
-        uploaded.push(data as StudyFile);
-      }
+        completed++;
+        setUploadProgress({ current: completed, total: allowedFiles.length, currentFileName: file.name });
+        return data as StudyFile;
+      });
 
-      return uploaded;
+      const results = await Promise.all(uploadPromises);
+      return results.filter((r): r is StudyFile => r !== null);
     } catch (err) {
       console.error('Error uploading files:', err);
       toast.error('Erreur lors de l\'upload');

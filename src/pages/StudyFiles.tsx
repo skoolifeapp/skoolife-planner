@@ -636,9 +636,9 @@ export default function StudyFiles() {
         </div>
       )}
 
-      {/* Upload progress bar */}
+      {/* Upload progress bar - centered relative to main content */}
       {uploading && uploadProgress && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-background border rounded-xl shadow-lg p-4 w-80 animate-fade-in">
+        <div className="fixed bottom-4 right-4 md:right-8 z-50 bg-background border rounded-xl shadow-lg p-4 w-80 animate-fade-in">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Upload className="w-4 h-4 text-primary animate-pulse" />
