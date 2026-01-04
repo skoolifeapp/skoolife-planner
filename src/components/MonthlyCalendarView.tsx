@@ -55,6 +55,12 @@ const MonthlyCalendarView = ({
     return map;
   }, [subjects]);
 
+  // Get exams from subjects with exam_date
+  const getExamsForDay = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return subjects.filter(s => s.exam_date === dateStr && s.status === 'active');
+  };
+
   const getSessionsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return sessions.filter(s => s.date === dateStr);
@@ -110,7 +116,7 @@ const MonthlyCalendarView = ({
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       {/* Monthly stats bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border text-sm">
+      <div className="flex items-center px-4 py-3 bg-muted/30 border-b border-border text-sm">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Heures planifiées:</span>
@@ -122,20 +128,6 @@ const MonthlyCalendarView = ({
             {monthlyStats.doneSessions > 0 && (
               <span className="text-green-600 text-xs">({monthlyStats.doneSessions} ✓)</span>
             )}
-          </div>
-        </div>
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-            <span className="text-muted-foreground">Session</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-            <span className="text-muted-foreground">Cours</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-            <span className="text-muted-foreground">Exam</span>
           </div>
         </div>
       </div>
@@ -159,9 +151,10 @@ const MonthlyCalendarView = ({
             {week.map((dayDate) => {
               const daySessions = getSessionsForDay(dayDate);
               const dayEvents = getEventsForDay(dayDate);
+              const dayExams = getExamsForDay(dayDate);
               const isCurrentMonth = isSameMonth(dayDate, currentMonth);
               const isToday = isSameDay(dayDate, today);
-              const totalItems = daySessions.length + dayEvents.length;
+              const totalItems = daySessions.length + dayEvents.length + dayExams.length;
               const maxDisplay = 3;
 
               return (
@@ -196,8 +189,19 @@ const MonthlyCalendarView = ({
 
                   {/* Events and sessions */}
                   <div className="space-y-0.5 overflow-hidden">
-                    {/* Calendar events first (exams, cours, etc.) */}
-                    {dayEvents.slice(0, maxDisplay).map((event) => (
+                    {/* Subject exams first (from subjects with exam_date) */}
+                    {dayExams.slice(0, maxDisplay).map((subject) => (
+                      <div
+                        key={`exam-${subject.id}`}
+                        className="px-1.5 py-0.5 text-[10px] font-bold rounded truncate bg-red-500 text-white"
+                        title={`📚 Examen: ${subject.name}`}
+                      >
+                        📚 {subject.name}
+                      </div>
+                    ))}
+
+                    {/* Calendar events (cours, etc.) */}
+                    {dayEvents.slice(0, Math.max(0, maxDisplay - dayExams.length)).map((event) => (
                       <div
                         key={event.id}
                         className={cn(
@@ -216,7 +220,7 @@ const MonthlyCalendarView = ({
                     ))}
 
                     {/* Revision sessions */}
-                    {daySessions.slice(0, maxDisplay - Math.min(dayEvents.length, maxDisplay)).map((session) => (
+                    {daySessions.slice(0, Math.max(0, maxDisplay - dayExams.length - Math.min(dayEvents.length, maxDisplay - dayExams.length))).map((session) => (
                       <div
                         key={session.id}
                         className={cn(
