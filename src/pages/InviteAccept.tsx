@@ -231,7 +231,7 @@ export default function InviteAccept() {
 
               <Button
                 type="submit"
-                variant="hero"
+                variant="default"
                 size="lg"
                 className="w-full"
                 disabled={submitting || !firstName.trim()}

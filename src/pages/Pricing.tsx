@@ -248,7 +248,7 @@ const Pricing = () => {
                   ))}
                 </ul>
                 <Button
-                  variant="hero"
+                  variant="default"
                   size="lg"
                   className="w-full h-14 text-lg"
                   onClick={() => handleSelectPlan('major')}

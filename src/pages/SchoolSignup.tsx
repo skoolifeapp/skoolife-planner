@@ -309,8 +309,8 @@ const SchoolSignup = () => {
 
                 <Button 
                   type="submit" 
-                  variant="hero" 
-                  size="lg" 
+                  variant="default" 
+                  size="lg"
                   className="w-full"
                   disabled={loading}
                 >
