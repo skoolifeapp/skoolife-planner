@@ -8,10 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -21,17 +18,15 @@ import {
 } from '@/components/ui/select';
 import { 
   Key, 
-  Mail, 
   FileUp, 
   ArrowRight, 
-  X, 
   CheckCircle2,
   AlertCircle,
-  Loader2
+  Loader2,
+  UserPlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 interface AddStudentsDialogProps {
   open: boolean;
@@ -42,7 +37,7 @@ interface AddStudentsDialogProps {
   onSuccess?: () => void;
 }
 
-type Method = 'select' | 'code' | 'email' | 'csv';
+type Method = 'select' | 'csv';
 
 export const AddStudentsDialog = ({
   open,
@@ -56,8 +51,6 @@ export const AddStudentsDialog = ({
   const [method, setMethod] = useState<Method>('select');
   const [loading, setLoading] = useState(false);
   
-  // Email invitation state
-  const [emails, setEmails] = useState('');
   const [selectedCohort, setSelectedCohort] = useState<string>('');
   const [selectedClass, setSelectedClass] = useState<string>('');
   
@@ -69,7 +62,6 @@ export const AddStudentsDialog = ({
 
   const resetState = () => {
     setMethod('select');
-    setEmails('');
     setSelectedCohort('');
     setSelectedClass('');
     setCsvEmails([]);
@@ -100,7 +92,6 @@ export const AddStudentsDialog = ({
     }
 
     if (extension === 'xlsx' || extension === 'xls') {
-      // Handle Excel files
       const { read, utils } = await import('xlsx');
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -110,7 +101,6 @@ export const AddStudentsDialog = ({
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows: string[][] = utils.sheet_to_json(firstSheet, { header: 1 });
           
-          // Extract emails from all cells
           const allText = rows.flat().join('\n');
           const emails = parseEmails(allText);
           
@@ -126,7 +116,6 @@ export const AddStudentsDialog = ({
       };
       reader.readAsArrayBuffer(file);
     } else {
-      // Handle CSV/TXT files
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
@@ -142,9 +131,9 @@ export const AddStudentsDialog = ({
     }
   };
 
-  const handleSendInvitations = async (emailList: string[]) => {
+  const handleAddStudents = async (emailList: string[]) => {
     if (emailList.length === 0) {
-      toast.error('Aucun email valide à inviter');
+      toast.error('Aucun email valide à ajouter');
       return;
     }
 
@@ -155,40 +144,72 @@ export const AddStudentsDialog = ({
 
     setLoading(true);
     try {
-      // For now, we'll create pending school_members entries
-      // In a real app, you'd send actual invitation emails
-      const invitations = emailList.map(email => ({
-        school_id: schoolId,
-        cohort_id: selectedCohort,
-        class_id: selectedClass || null,
-        role: 'student' as const,
-        // We'll store the email in a temporary way - the user_id will be set when they join
-        user_id: '00000000-0000-0000-0000-000000000000', // Placeholder
-        invited_at: new Date().toISOString(),
-        is_active: false,
-      }));
+      // Check which emails already have profiles
+      const { data: existingProfiles } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('email', emailList);
 
-      // Note: In a production app, you'd have an edge function that:
-      // 1. Creates pending invitations in a separate table
-      // 2. Sends invitation emails with unique tokens
-      // 3. Links accounts when students sign up
-      
-      toast.success(`${emailList.length} invitation(s) préparée(s)`, {
-        description: 'Les élèves recevront un email avec un lien d\'inscription'
-      });
+      const existingEmails = new Set(existingProfiles?.map(p => p.email) || []);
+      const profilesMap = new Map(existingProfiles?.map(p => [p.email, p.id]) || []);
+
+      // For existing users, create school_members entries
+      const membersToCreate = [];
+      for (const email of emailList) {
+        if (existingEmails.has(email)) {
+          const userId = profilesMap.get(email);
+          if (userId) {
+            membersToCreate.push({
+              school_id: schoolId,
+              cohort_id: selectedCohort,
+              class_id: selectedClass || null,
+              role: 'student',
+              user_id: userId,
+              is_active: true,
+              joined_at: new Date().toISOString(),
+            });
+          }
+        }
+      }
+
+      if (membersToCreate.length > 0) {
+        const { error } = await supabase
+          .from('school_members')
+          .upsert(membersToCreate, { 
+            onConflict: 'school_id,user_id',
+            ignoreDuplicates: true 
+          });
+
+        if (error) throw error;
+      }
+
+      const addedCount = membersToCreate.length;
+      const notFoundCount = emailList.length - addedCount;
+
+      if (addedCount > 0 && notFoundCount > 0) {
+        toast.success(`${addedCount} élève(s) ajouté(s)`, {
+          description: `${notFoundCount} email(s) n'ont pas de compte Skoolife`
+        });
+      } else if (addedCount > 0) {
+        toast.success(`${addedCount} élève(s) ajouté(s) avec succès`);
+      } else {
+        toast.warning('Aucun élève ajouté', {
+          description: 'Aucun des emails n\'a de compte Skoolife existant'
+        });
+      }
       
       handleClose();
       onSuccess?.();
     } catch (error) {
-      console.error('Error sending invitations:', error);
-      toast.error('Erreur lors de l\'envoi des invitations');
+      console.error('Error adding students:', error);
+      toast.error('Erreur lors de l\'ajout des élèves');
     } finally {
       setLoading(false);
     }
   };
 
   const renderMethodSelect = () => (
-    <div className="grid gap-4">
+    <div className="grid gap-3">
       <button
         onClick={() => {
           handleClose();
@@ -196,156 +217,54 @@ export const AddStudentsDialog = ({
         }}
         className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
       >
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <Key className="w-6 h-6 text-primary" />
+        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Key className="w-5 h-5 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="font-medium">Code d'accès</p>
-          <p className="text-sm text-muted-foreground">
-            Générez un code que les élèves utilisent pour s'inscrire
+          <p className="font-medium text-sm">Code d'accès</p>
+          <p className="text-xs text-muted-foreground">
+            Générez un code + envoyez des invitations par email
           </p>
         </div>
-        <ArrowRight className="w-5 h-5 text-muted-foreground" />
-      </button>
-
-      <button
-        onClick={() => setMethod('email')}
-        className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
-      >
-        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-          <Mail className="w-6 h-6 text-blue-600" />
-        </div>
-        <div className="flex-1">
-          <p className="font-medium">Invitation par email</p>
-          <p className="text-sm text-muted-foreground">
-            Envoyez des invitations personnalisées par email
-          </p>
-        </div>
-        <ArrowRight className="w-5 h-5 text-muted-foreground" />
+        <ArrowRight className="w-4 h-4 text-muted-foreground" />
       </button>
 
       <button
         onClick={() => setMethod('csv')}
         className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
       >
-        <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-          <FileUp className="w-6 h-6 text-green-600" />
+        <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+          <FileUp className="w-5 h-5 text-green-600" />
         </div>
         <div className="flex-1">
-          <p className="font-medium">Import fichier</p>
-          <p className="text-sm text-muted-foreground">
-            Importez depuis CSV, TXT ou Excel
+          <p className="font-medium text-sm">Import fichier</p>
+          <p className="text-xs text-muted-foreground">
+            Ajoutez des élèves existants via CSV, TXT ou Excel
           </p>
         </div>
-        <ArrowRight className="w-5 h-5 text-muted-foreground" />
+        <ArrowRight className="w-4 h-4 text-muted-foreground" />
       </button>
     </div>
   );
-
-  const renderEmailForm = () => {
-    const emailList = parseEmails(emails);
-    
-    return (
-      <div className="space-y-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setMethod('select')}
-          className="mb-2"
-        >
-          ← Retour
-        </Button>
-        
-        <div className="space-y-2">
-          <Label>Emails des élèves</Label>
-          <Textarea
-            placeholder="Entrez les emails (un par ligne ou séparés par des virgules)&#10;exemple@email.com&#10;autre@email.com"
-            value={emails}
-            onChange={(e) => setEmails(e.target.value)}
-            rows={5}
-          />
-          {emailList.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              {emailList.length} email(s) valide(s) détecté(s)
-            </p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Cohorte *</Label>
-            <Select value={selectedCohort} onValueChange={(v) => {
-              setSelectedCohort(v);
-              setSelectedClass('');
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner" />
-              </SelectTrigger>
-              <SelectContent>
-                {cohorts.map((cohort) => (
-                  <SelectItem key={cohort.id} value={cohort.id}>
-                    {cohort.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Classe (optionnel)</Label>
-            <Select 
-              value={selectedClass} 
-              onValueChange={setSelectedClass}
-              disabled={!selectedCohort}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredClasses.map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <Button 
-          className="w-full" 
-          onClick={() => handleSendInvitations(emailList)}
-          disabled={emailList.length === 0 || !selectedCohort || loading}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Envoi en cours...
-            </>
-          ) : (
-            <>
-              <Mail className="w-4 h-4 mr-2" />
-              Envoyer {emailList.length} invitation(s)
-            </>
-          )}
-        </Button>
-      </div>
-    );
-  };
 
   const renderCsvForm = () => (
     <div className="space-y-4">
       <Button 
         variant="ghost" 
         size="sm" 
-        onClick={() => setMethod('select')}
-        className="mb-2"
+        onClick={() => {
+          setMethod('select');
+          setCsvEmails([]);
+          setCsvError('');
+        }}
+        className="mb-2 -ml-2"
       >
         ← Retour
       </Button>
 
       <div className="space-y-2">
-        <Label>Fichier CSV, TXT ou Excel</Label>
-        <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
+        <Label className="text-sm">Fichier CSV, TXT ou Excel</Label>
+        <div className="border-2 border-dashed border-border rounded-xl p-4 text-center">
           <input
             type="file"
             accept=".csv,.txt,.xlsx,.xls"
@@ -354,14 +273,14 @@ export const AddStudentsDialog = ({
             id="csv-upload"
           />
           <label htmlFor="csv-upload" className="cursor-pointer">
-            <FileUp className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-            <p className="font-medium">Cliquez pour sélectionner un fichier</p>
-            <p className="text-sm text-muted-foreground">CSV, TXT ou Excel (.xlsx, .xls)</p>
+            <FileUp className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+            <p className="font-medium text-sm">Sélectionner un fichier</p>
+            <p className="text-xs text-muted-foreground">CSV, TXT ou Excel</p>
           </label>
         </div>
         {csvError && (
-          <div className="flex items-center gap-2 text-destructive text-sm">
-            <AlertCircle className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-destructive text-xs">
+            <AlertCircle className="w-3 h-3" />
             {csvError}
           </div>
         )}
@@ -370,30 +289,30 @@ export const AddStudentsDialog = ({
       {csvEmails.length > 0 && (
         <>
           <div className="space-y-2">
-            <Label>Emails détectés ({csvEmails.length})</Label>
-            <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-3 space-y-1">
-              {csvEmails.slice(0, 10).map((email, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-3 h-3 text-green-600" />
-                  {email}
+            <Label className="text-sm">Emails détectés ({csvEmails.length})</Label>
+            <div className="max-h-24 overflow-y-auto border border-border rounded-lg p-2 space-y-1">
+              {csvEmails.slice(0, 5).map((email, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
+                  <span className="truncate">{email}</span>
                 </div>
               ))}
-              {csvEmails.length > 10 && (
-                <p className="text-sm text-muted-foreground">
-                  ... et {csvEmails.length - 10} autres
+              {csvEmails.length > 5 && (
+                <p className="text-xs text-muted-foreground pl-5">
+                  ... et {csvEmails.length - 5} autres
                 </p>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Cohorte *</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-sm">Cohorte *</Label>
               <Select value={selectedCohort} onValueChange={(v) => {
                 setSelectedCohort(v);
                 setSelectedClass('');
               }}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent>
@@ -405,15 +324,15 @@ export const AddStudentsDialog = ({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Classe (optionnel)</Label>
+            <div className="space-y-1">
+              <Label className="text-sm">Classe</Label>
               <Select 
                 value={selectedClass} 
                 onValueChange={setSelectedClass}
                 disabled={!selectedCohort}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner" />
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Optionnel" />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredClasses.map((cls) => (
@@ -428,21 +347,25 @@ export const AddStudentsDialog = ({
 
           <Button 
             className="w-full" 
-            onClick={() => handleSendInvitations(csvEmails)}
+            onClick={() => handleAddStudents(csvEmails)}
             disabled={!selectedCohort || loading}
           >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Envoi en cours...
+                Ajout en cours...
               </>
             ) : (
               <>
-                <Mail className="w-4 h-4 mr-2" />
-                Envoyer {csvEmails.length} invitation(s)
+                <UserPlus className="w-4 h-4 mr-2" />
+                Ajouter {csvEmails.length} élève(s)
               </>
             )}
           </Button>
+
+          <p className="text-xs text-muted-foreground text-center">
+            Seuls les élèves avec un compte Skoolife existant seront ajoutés
+          </p>
         </>
       )}
     </div>
@@ -450,22 +373,19 @@ export const AddStudentsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-sm max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg">
             {method === 'select' && 'Ajouter des élèves'}
-            {method === 'email' && 'Invitation par email'}
             {method === 'csv' && 'Import fichier'}
           </DialogTitle>
-          <DialogDescription>
-            {method === 'select' && 'Choisissez comment vous souhaitez ajouter des élèves'}
-            {method === 'email' && 'Envoyez des invitations par email à vos élèves'}
-            {method === 'csv' && 'Importez une liste d\'emails depuis un fichier CSV, TXT ou Excel'}
+          <DialogDescription className="text-sm">
+            {method === 'select' && 'Choisissez une méthode d\'ajout'}
+            {method === 'csv' && 'Importez une liste d\'emails'}
           </DialogDescription>
         </DialogHeader>
 
         {method === 'select' && renderMethodSelect()}
-        {method === 'email' && renderEmailForm()}
         {method === 'csv' && renderCsvForm()}
       </DialogContent>
     </Dialog>
