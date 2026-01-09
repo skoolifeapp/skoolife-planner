@@ -14,7 +14,10 @@ import {
   ChevronDown,
   MoreVertical,
   User,
-  HelpCircle
+  HelpCircle,
+  PanelLeftClose,
+  PanelLeft,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -56,6 +59,11 @@ const SchoolSidebar = ({ children }: SchoolSidebarProps) => {
       return location.pathname === '/school';
     }
     return location.pathname.startsWith(path);
+  };
+
+  const getCurrentPageLabel = () => {
+    const item = NAV_ITEMS.find(item => isActive(item.path));
+    return item?.label || 'Vue d\'ensemble';
   };
 
   const renderNavItem = (item: typeof NAV_ITEMS[0], isMobile: boolean = false) => {
@@ -221,17 +229,16 @@ const SchoolSidebar = ({ children }: SchoolSidebarProps) => {
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 bg-sidebar px-4 py-3 flex items-center justify-between">
+      <header className="lg:hidden sticky top-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <Link to="/school" className="flex items-center gap-2">
           <img src={LOGO_URL} alt="Skoolife" className="h-8 w-auto rounded-lg" />
-          <span className="font-bold text-lg text-sidebar-foreground">Skoolife</span>
+          <span className="font-bold text-lg text-foreground">Skoolife</span>
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button
             variant="ghost"
             size="icon"
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -259,14 +266,43 @@ const SchoolSidebar = ({ children }: SchoolSidebarProps) => {
         </div>
       )}
 
-      {/* Main content with yellow border frame */}
-      <main className={cn(
-        "min-h-screen transition-all duration-300",
-        sidebarCollapsed ? "lg:ml-16" : "lg:ml-56"
+      {/* Desktop: Yellow frame container with header + content inside */}
+      <div className={cn(
+        "hidden lg:flex flex-col fixed top-0 bottom-0 right-0 bg-sidebar transition-all duration-300 pt-2 pr-2 pb-2",
+        sidebarCollapsed ? "left-16" : "left-56"
       )}>
-        <div className="min-h-screen border-t-4 border-r-4 border-b-4 border-sidebar lg:rounded-tr-3xl lg:rounded-br-3xl bg-background">
-          {children}
+        <div className="flex-1 flex flex-col bg-background rounded-xl overflow-hidden">
+          {/* Top Bar inside the container */}
+          <div className="flex h-14 items-center justify-between px-6 border-b border-border flex-shrink-0">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="w-8 h-8 rounded-lg"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              >
+                {sidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              </Button>
+              <span>/</span>
+              <span className="font-medium text-foreground">{getCurrentPageLabel()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg text-muted-foreground">
+                <Bell className="w-4 h-4" />
+              </Button>
+              <ThemeToggle />
+            </div>
+          </div>
+          {/* Main content */}
+          <main className="flex-1 overflow-auto">
+            {children}
+          </main>
         </div>
+      </div>
+
+      {/* Mobile main content */}
+      <main className="lg:hidden min-h-screen">
+        {children}
       </main>
     </div>
   );
