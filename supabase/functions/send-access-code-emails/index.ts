@@ -63,7 +63,22 @@ serve(async (req) => {
 
     // Send emails to all students (sequentially to avoid rate limits)
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    const from = Deno.env.get("RESEND_FROM") ?? "Skoolife <no-reply@skoolife.co>";
+
+    const rawFrom = Deno.env.get("RESEND_FROM") ?? "no-reply@skoolife.fr";
+    const cleanedFrom = rawFrom
+      .trim()
+      // remove accidental surrounding quotes
+      .replace(/^"(.*)"$/, "$1")
+      .replace(/^'(.*)'$/, "$1");
+
+    const isValidFrom = (value: string) =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ||
+      /^.+\s<[^\s@]+@[^\s@]+\.[^\s@]+>$/.test(value);
+
+    const from = isValidFrom(cleanedFrom) ? cleanedFrom : "no-reply@skoolife.fr";
+    console.log("RESEND_FROM (raw):", rawFrom);
+    console.log("RESEND_FROM (used):", from);
+
 
     const results: Array<{ email: string; success: boolean; error?: any }> = [];
 
