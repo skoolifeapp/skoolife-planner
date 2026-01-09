@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,11 @@ const SCHOOL_TYPES = [
   { value: 'autre', label: 'Autre' },
 ];
 
+const demoSchoolSchema = z.object({
+  schoolName: z.string().trim().min(2, 'Nom trop court').max(120, 'Nom trop long'),
+  schoolType: z.string().trim().max(60).optional(),
+});
+
 const SchoolSignup = () => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
@@ -41,48 +47,74 @@ const SchoolSignup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.schoolName) {
-      toast.error('Veuillez entrer le nom de votre établissement');
+
+    const parsed = demoSchoolSchema.safeParse({
+      schoolName: formData.schoolName,
+      schoolType: formData.schoolType || undefined,
+    });
+
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? 'Formulaire invalide');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Generate demo credentials
-      const { email, password } = generateDemoCredentials();
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
 
-      // Step 1: Create demo user account
-      const { error: signUpError } = await signUp(email, password);
-      
-      if (signUpError) {
-        console.error('Signup error:', signUpError);
-        toast.error('Erreur lors de la création du compte démo');
-        setLoading(false);
-        return;
-      }
+      let user = initialSession?.user ?? null;
+      let emailForSchool = user?.email ?? '';
 
-      // Wait for auth session to be fully established
-      let attempts = 0;
-      let newUser = null;
-      
-      while (attempts < 15 && !newUser) {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          newUser = session.user;
+      // If the visitor is not logged in, create + sign-in a demo account.
+      if (!user) {
+        const creds = generateDemoCredentials();
+
+        const { error: signUpError } = await signUp(creds.email, creds.password);
+        if (signUpError) {
+          console.error('Signup error:', signUpError);
+          toast.error('Impossible de créer un compte démo. Réessayez.');
+          return;
         }
-        attempts++;
-      }
-      
-      if (!newUser) {
-        toast.error('Erreur lors de la création du compte. Veuillez réessayer.');
-        setLoading(false);
-        return;
+
+        // Ensure a session exists (auto-confirm is enabled, but we still guard)
+        const { data: { session: afterSignupSession } } = await supabase.auth.getSession();
+        if (!afterSignupSession?.user) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: creds.email,
+            password: creds.password,
+          });
+
+          if (signInError) {
+            console.error('Sign-in error:', signInError);
+            toast.error('Impossible de démarrer la démo.');
+            return;
+          }
+        }
+
+        // Wait for auth session to be fully established
+        let attempts = 0;
+        while (attempts < 10 && !user) {
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) user = session.user;
+          attempts++;
+        }
+
+        if (!user) {
+          toast.error('Impossible de démarrer la démo. Veuillez réessayer.');
+          return;
+        }
+
+        emailForSchool = user.email ?? creds.email;
       }
 
-      // Step 2: Create the school with trial subscription
+      if (!emailForSchool) {
+        // Should not happen, but schools.contact_email is required.
+        emailForSchool = generateDemoCredentials().email;
+      }
+
+      // Step 2: Create the school with demo subscription
       const { data: school, error: schoolError } = await supabase
         .from('schools')
         .insert({
