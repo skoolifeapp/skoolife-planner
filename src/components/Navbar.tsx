@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Calendar, BarChart3, BookOpen, Settings, Timer } from 'lucide-react';
+import { Calendar, BarChart3, BookOpen, Settings, Timer, Building2 } from 'lucide-react';
 const LOGO_URL = '/logo.png';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
+
 const features = [
   { name: 'Calendrier', icon: Calendar, description: 'Planifie tes révisions', path: '/features/calendar' },
   { name: 'Progression', icon: BarChart3, description: 'Suis tes progrès', path: '/features/progression' },
@@ -20,6 +22,28 @@ const Navbar = () => {
   const isHome = location.pathname === '/';
   const isPricing = location.pathname === '/pricing';
   const [showFeatures, setShowFeatures] = useState(false);
+  const [isSchoolAdmin, setIsSchoolAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkSchoolAdmin = async () => {
+      if (!user) {
+        setIsSchoolAdmin(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('school_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('role', 'admin_school')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      setIsSchoolAdmin(!!data);
+    };
+
+    checkSchoolAdmin();
+  }, [user]);
 
   const isAbout = location.pathname === '/about';
   
@@ -117,6 +141,16 @@ const Navbar = () => {
             À propos
           </Link>
         </div>
+        
+        {/* Espace établissement - School admins only */}
+        {isSchoolAdmin && !isMobile && (
+          <Link to="/school">
+            <Button variant="outline" size="sm" className="rounded-full text-xs md:text-sm px-4 gap-2">
+              <Building2 className="w-4 h-4" />
+              Espace établissement
+            </Button>
+          </Link>
+        )}
         
         {/* CTA Button */}
         <Link to={authLink} className="ml-2">
