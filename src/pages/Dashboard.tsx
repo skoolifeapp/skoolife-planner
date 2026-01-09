@@ -1224,7 +1224,7 @@ const Dashboard = () => {
             <div className="space-y-3">
               <Button 
                 id="generate-planning-btn"
-                variant="hero" 
+                variant="default" 
                 size="lg" 
                 className={cn("w-full", !hasActiveSubscription && "opacity-50")}
                 onClick={() => hasActiveSubscription ? generatePlanning() : setUpgradeDialogOpen(true)}
