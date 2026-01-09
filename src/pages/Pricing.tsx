@@ -21,10 +21,28 @@ import {
   FolderOpen,
   ListTodo
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 const LOGO_URL = '/logo.png';
 import { SUBSCRIPTION_TIERS } from '@/config/stripe';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ParallaxBackground from '@/components/ParallaxBackground';
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
 
 const PLANS = {
   student: {
@@ -97,136 +115,154 @@ const Pricing = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-5 md:left-10 w-48 md:w-72 h-48 md:h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute top-40 right-5 md:right-20 w-64 md:w-96 h-64 md:h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-soft delay-1000" />
-        <div className="absolute bottom-20 left-1/3 w-40 md:w-64 h-40 md:h-64 bg-primary/10 rounded-full blur-3xl" />
-      </div>
+      {/* Background decorations with parallax */}
+      <ParallaxBackground />
 
       {/* Main content */}
       <main className="relative max-w-5xl mx-auto px-4 pt-24 md:pt-32 pb-16">
         {/* Hero */}
-        <div className="text-center mb-16">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-6 font-heading">
+        <motion.div 
+          className="text-center mb-16"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.h1 
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-6 font-heading"
+            variants={fadeInUp}
+            transition={{ duration: 0.6 }}
+          >
             Choisis ta formule
-          </h1>
-          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p 
+            className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto"
+            variants={fadeInUp}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             Commence ton essai gratuit de 7 jours. Annule à tout moment, sans engagement.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Plans */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
+        <motion.div 
+          className="grid md:grid-cols-2 gap-8 mb-16"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Student Plan */}
-          <Card className={`relative border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-            PLANS.student.popular ? 'border-primary shadow-glow' : 'border-border'
-          }`}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between mb-2">
-                <CardTitle className="text-2xl font-heading">Skoolife {PLANS.student.name}</CardTitle>
-              </div>
-              <CardDescription className="text-base">{PLANS.student.description}</CardDescription>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-2xl text-muted-foreground line-through">{PLANS.student.price}€</span>
-                <span className="text-4xl font-bold text-foreground">2,39€</span>
-                <span className="text-muted-foreground">/ mois</span>
-              </div>
-              <div className="mt-3">
-                <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  -20% les 2 premiers mois
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <ul className="space-y-4">
-                {PLANS.student.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary">
-                      <feature.icon className="w-4 h-4" />
-                    </div>
-                    <span>{feature.text}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full h-14 text-lg"
-                onClick={() => handleSelectPlan('student')}
-                disabled={loadingPlan !== null}
-              >
-                {loadingPlan === 'student' ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Commencer l'essai gratuit
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+          <motion.div variants={fadeInUp} transition={{ duration: 0.5 }}>
+            <Card className={`relative border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full ${
+              PLANS.student.popular ? 'border-primary shadow-glow' : 'border-border'
+            }`}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-2xl font-heading">Skoolife {PLANS.student.name}</CardTitle>
+                </div>
+                <CardDescription className="text-base">{PLANS.student.description}</CardDescription>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="text-2xl text-muted-foreground line-through">{PLANS.student.price}€</span>
+                  <span className="text-4xl font-bold text-foreground">2,39€</span>
+                  <span className="text-muted-foreground">/ mois</span>
+                </div>
+                <div className="mt-3">
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    -20% les 2 premiers mois
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ul className="space-y-4">
+                  {PLANS.student.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary">
+                        <feature.icon className="w-4 h-4" />
+                      </div>
+                      <span>{feature.text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full h-14 text-lg"
+                  onClick={() => handleSelectPlan('student')}
+                  disabled={loadingPlan !== null}
+                >
+                  {loadingPlan === 'student' ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Commencer l'essai gratuit
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Major Plan */}
-          <Card className={`relative border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-            PLANS.major.popular ? 'border-primary shadow-glow' : 'border-border'
-          }`}>
-            {PLANS.major.popular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground px-4 py-1 text-sm font-semibold shadow-lg">
-                  Le plus populaire
-                </Badge>
-              </div>
-            )}
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between mb-2">
-                <CardTitle className="text-2xl font-heading">Skoolife {PLANS.major.name}</CardTitle>
-              </div>
-              <CardDescription className="text-base">{PLANS.major.description}</CardDescription>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-2xl text-muted-foreground line-through">{PLANS.major.price}€</span>
-                <span className="text-4xl font-bold text-foreground">3,99€</span>
-                <span className="text-muted-foreground">/ mois</span>
-              </div>
-              <div className="mt-3">
-                <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  -20% les 2 premiers mois
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <ul className="space-y-4">
-                {PLANS.major.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      'highlight' in feature && feature.highlight ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
-                    }`}>
-                      <feature.icon className="w-4 h-4" />
-                    </div>
-                    <span className={'highlight' in feature && feature.highlight ? 'font-semibold text-primary' : ''}>{feature.text}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                variant="hero"
-                size="lg"
-                className="w-full h-14 text-lg"
-                onClick={() => handleSelectPlan('major')}
-                disabled={loadingPlan !== null}
-              >
-                {loadingPlan === 'major' ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Commencer l'essai gratuit
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+          <motion.div variants={fadeInUp} transition={{ duration: 0.5, delay: 0.1 }}>
+            <Card className={`relative border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full ${
+              PLANS.major.popular ? 'border-primary shadow-glow' : 'border-border'
+            }`}>
+              {PLANS.major.popular && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-primary text-primary-foreground px-4 py-1 text-sm font-semibold shadow-lg">
+                    Le plus populaire
+                  </Badge>
+                </div>
+              )}
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-2xl font-heading">Skoolife {PLANS.major.name}</CardTitle>
+                </div>
+                <CardDescription className="text-base">{PLANS.major.description}</CardDescription>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="text-2xl text-muted-foreground line-through">{PLANS.major.price}€</span>
+                  <span className="text-4xl font-bold text-foreground">3,99€</span>
+                  <span className="text-muted-foreground">/ mois</span>
+                </div>
+                <div className="mt-3">
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    -20% les 2 premiers mois
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ul className="space-y-4">
+                  {PLANS.major.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        'highlight' in feature && feature.highlight ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
+                      }`}>
+                        <feature.icon className="w-4 h-4" />
+                      </div>
+                      <span className={'highlight' in feature && feature.highlight ? 'font-semibold text-primary' : ''}>{feature.text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full h-14 text-lg"
+                  onClick={() => handleSelectPlan('major')}
+                  disabled={loadingPlan !== null}
+                >
+                  {loadingPlan === 'major' ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Commencer l'essai gratuit
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
 
       </main>
 

@@ -1,9 +1,21 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Timer, Play, Pause, RotateCcw, Coffee, Brain, BookOpen, Clock, Target, Bell, Sun } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeatureSidebar from '@/components/FeatureSidebar';
+import ParallaxBackground from '@/components/ParallaxBackground';
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1 }
+};
 
 // Static Pomodoro Card Component - Reproduit l'interface exacte de l'app
 const StaticPomodoroCard = () => (
@@ -224,15 +236,18 @@ const FeaturePomodoro = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-5 md:left-10 w-48 md:w-72 h-48 md:h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute top-40 right-5 md:right-20 w-64 md:w-96 h-64 md:h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-soft delay-1000" />
-      </div>
+      {/* Background decorations with parallax */}
+      <ParallaxBackground />
 
       {/* Hero Section */}
       <main className="relative pt-24 md:pt-32">
-        <div className="max-w-5xl mx-auto px-4 text-center">
+        <motion.div 
+          className="max-w-5xl mx-auto px-4 text-center"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          transition={{ duration: 0.6 }}
+        >
           {/* Main heading */}
           <div className="space-y-4 md:space-y-6 mb-8">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight font-heading">
@@ -245,29 +260,42 @@ const FeaturePomodoro = () => {
           </div>
 
           {/* Description */}
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+          <motion.p 
+            className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-8"
+            variants={fadeInUp}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             Concentre-toi avec la méthode Pomodoro 25/5. Des sessions de travail 
             intensives suivies de pauses régulières pour maximiser ta productivité 
             et maintenir ta concentration sur la durée.
-          </p>
+          </motion.p>
 
           {/* CTA Button */}
-          <div>
+          <motion.div
+            variants={fadeInUp}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             <Link to="/auth?mode=signup">
-              <Button variant="outline" size="lg" className="rounded-full px-6">
+              <Button variant="outline" size="lg" className="rounded-full px-6 group">
                 Commencer à réviser efficacement
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Static Pomodoro Preview */}
-        <div className="relative max-w-6xl mx-auto px-4 mt-16 pb-16">
+        <motion.div 
+          className="relative max-w-6xl mx-auto px-4 mt-16 pb-16"
+          variants={scaleIn}
+          initial="hidden"
+          animate="visible"
+          transition={{ duration: 0.7, delay: 0.3 }}
+        >
           <div>
             <StaticPomodoroCard />
           </div>
-        </div>
+        </motion.div>
       </main>
 
       <Footer />
