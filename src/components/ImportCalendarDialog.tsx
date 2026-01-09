@@ -318,7 +318,7 @@ const ImportCalendarDialog = ({ open, onOpenChange, onImportComplete }: ImportCa
               Annuler
             </Button>
             <Button 
-              variant="hero" 
+              variant="default" 
               className="flex-1"
               onClick={handleImport}
               disabled={!file || importing}

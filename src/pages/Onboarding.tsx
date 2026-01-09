@@ -385,8 +385,8 @@ const Onboarding = () => {
             </div>
 
             <Button 
-              variant="hero" 
-              size="lg" 
+              variant="default" 
+              size="lg"
               className="w-full" 
               onClick={handleFinish}
               disabled={loading}

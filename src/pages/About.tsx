@@ -162,7 +162,7 @@ const About = () => {
             transition={{ duration: 0.6 }}
           >
             <Link to="/auth?mode=signup">
-              <Button variant="hero" size="lg" className="md:text-base px-8 group">
+              <Button variant="default" size="lg" className="md:text-base px-8 group">
                 Rejoindre Skoolife
                 <ArrowRight className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1" />
               </Button>
