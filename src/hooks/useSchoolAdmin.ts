@@ -239,12 +239,14 @@ export const useSchoolAdmin = () => {
     const totalSessions = sessionsData?.length || 0;
     const completedSessions = sessionsData?.filter(s => s.status === 'done').length || 0;
 
-    // Calculate total hours
+    // Calculate total hours - only count completed sessions
     let totalHours = 0;
     sessionsData?.forEach(session => {
-      const start = new Date(`1970-01-01T${session.start_time}`);
-      const end = new Date(`1970-01-01T${session.end_time}`);
-      totalHours += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      if (session.status === 'done') {
+        const start = new Date(`1970-01-01T${session.start_time}`);
+        const end = new Date(`1970-01-01T${session.end_time}`);
+        totalHours += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      }
     });
 
     // Count active students (those who have at least one session)
