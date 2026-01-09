@@ -86,14 +86,21 @@ const SchoolSignup = () => {
         return;
       }
 
-      // Wait for user to be created
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Get the new user
-      const { data: { user: newUser } } = await supabase.auth.getUser();
+      // Wait for auth session to be fully established
+      let attempts = 0;
+      let newUser = null;
+      
+      while (attempts < 10 && !newUser) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          newUser = session.user;
+        }
+        attempts++;
+      }
       
       if (!newUser) {
-        toast.error('Erreur lors de la création du compte');
+        toast.error('Erreur lors de la création du compte. Veuillez réessayer.');
         setLoading(false);
         return;
       }
@@ -108,7 +115,6 @@ const SchoolSignup = () => {
           school_type: formData.schoolType || null,
           subscription_tier: 'trial',
           subscription_start_date: new Date().toISOString().split('T')[0],
-          // 14-day trial
           subscription_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           is_active: true,
         })
