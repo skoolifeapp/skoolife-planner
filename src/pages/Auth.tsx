@@ -109,8 +109,43 @@ const Auth = () => {
           }
         }
       } else {
-        // If user has a school code, pre-set the flag so redirect logic goes to onboarding
+        // If user has a school code, validate it BEFORE signup
         if (hasSchoolCode && schoolCode.trim()) {
+          // First, check if email is in expected students list for this code
+          const { data: accessCode } = await supabase
+            .from('access_codes')
+            .select('school_id')
+            .eq('code', schoolCode.trim().toUpperCase())
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (!accessCode) {
+            toast.error('Code école invalide ou expiré');
+            setLoading(false);
+            return;
+          }
+
+          // Check if email is in expected students for this school
+          const { data: expectedStudent } = await supabase
+            .from('school_expected_students')
+            .select('id, is_registered')
+            .eq('school_id', accessCode.school_id)
+            .ilike('email', email.trim())
+            .maybeSingle();
+
+          if (!expectedStudent) {
+            toast.error("Ton adresse email n'est pas autorisée à utiliser ce code. Inscris-toi avec l'email sur lequel tu as reçu le code d'accès.");
+            setLoading(false);
+            return;
+          }
+
+          if (expectedStudent.is_registered) {
+            toast.error("Cet email a déjà été utilisé pour s'inscrire avec ce code.");
+            setLoading(false);
+            return;
+          }
+
+          // Email is valid, proceed with signup
           localStorage.setItem('pending_school_code', schoolCode.trim());
           localStorage.setItem('school_access_granted', 'true');
         }
