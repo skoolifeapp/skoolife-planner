@@ -25,18 +25,6 @@ const SchoolDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { loading, isSchoolAdmin, school, members, stats, accessCodes, cohorts } = useSchoolAdmin();
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (!loading && !isSchoolAdmin && user) {
-      navigate('/app');
-    }
-  }, [loading, isSchoolAdmin, user, navigate]);
-
   if (authLoading || loading) {
     return (
       <SchoolSidebar>
@@ -52,9 +40,6 @@ const SchoolDashboard = () => {
     );
   }
 
-  if (!isSchoolAdmin) {
-    return null;
-  }
 
   const studentMembers = members.filter(m => m.role === 'student');
   const activeCodesCount = accessCodes.filter(c => c.is_active).length;
