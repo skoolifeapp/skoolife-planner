@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { ErrorDialog } from '@/components/ErrorDialog';
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, School } from 'lucide-react';
 const LOGO_URL = '/logo.png';
 
@@ -24,8 +25,13 @@ const Auth = () => {
   const [checkingRedirect, setCheckingRedirect] = useState(false);
   const [hasSchoolCode, setHasSchoolCode] = useState(false);
   const [schoolCode, setSchoolCode] = useState('');
+  const [errorDialog, setErrorDialog] = useState<{ open: boolean; title: string; message: string }>({ open: false, title: '', message: '' });
   const { signIn, signUp, user, checkIsAdmin, refreshSubscription } = useAuth();
   const navigate = useNavigate();
+
+  const showError = (message: string, title: string = 'Erreur') => {
+    setErrorDialog({ open: true, title, message });
+  };
 
   useEffect(() => {
     const handleRedirect = async () => {
@@ -87,12 +93,12 @@ const Auth = () => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error('Remplis tous les champs');
+      showError('Remplis tous les champs', 'Champs manquants');
       return;
     }
 
     if (password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      showError('Le mot de passe doit contenir au moins 6 caractères', 'Mot de passe invalide');
       return;
     }
 
@@ -103,9 +109,9 @@ const Auth = () => {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
-            toast.error('Email ou mot de passe incorrect');
+            showError('Email ou mot de passe incorrect', 'Connexion échouée');
           } else {
-            toast.error(error.message);
+            showError(error.message);
           }
         }
       } else {
@@ -120,7 +126,7 @@ const Auth = () => {
             .maybeSingle();
 
           if (!accessCode) {
-            toast.error('Code école invalide ou expiré');
+            showError('Code école invalide ou expiré', 'Code invalide');
             setLoading(false);
             return;
           }
@@ -134,13 +140,13 @@ const Auth = () => {
             .maybeSingle();
 
           if (!expectedStudent) {
-            toast.error("Ton adresse email n'est pas autorisée à utiliser ce code. Inscris-toi avec l'email sur lequel tu as reçu le code d'accès.");
+            showError("Ton adresse email n'est pas autorisée à utiliser ce code. Inscris-toi avec l'email sur lequel tu as reçu le code d'accès.", "Email non autorisé");
             setLoading(false);
             return;
           }
 
           if (expectedStudent.is_registered) {
-            toast.error("Cet email a déjà été utilisé pour s'inscrire avec ce code.");
+            showError("Cet email a déjà été utilisé pour s'inscrire avec ce code.", "Email déjà utilisé");
             setLoading(false);
             return;
           }
@@ -157,9 +163,9 @@ const Auth = () => {
           localStorage.removeItem('school_access_granted');
           
           if (error.message.includes('already registered')) {
-            toast.error('Cet email est déjà utilisé');
+            showError('Cet email est déjà utilisé', 'Email existant');
           } else {
-            toast.error(error.message);
+            showError(error.message);
           }
         } else {
           // On signup success, validate school code and update profile
@@ -191,7 +197,7 @@ const Auth = () => {
                     await refreshSubscription();
                   } else {
                     localStorage.removeItem('school_access_granted');
-                    toast.error(result?.error || 'Code école invalide');
+                    showError(result?.error || 'Code école invalide', 'Erreur');
                   }
                 }
               }
@@ -210,7 +216,7 @@ const Auth = () => {
         }
       }
     } catch (err) {
-      toast.error('Une erreur est survenue');
+      showError('Une erreur est survenue');
     } finally {
       setLoading(false);
     }
@@ -276,7 +282,7 @@ const Auth = () => {
                     },
                   });
                   if (error) {
-                    toast.error('Erreur de connexion Google');
+                    showError('Erreur de connexion Google');
                     setLoading(false);
                   }
                 }}
@@ -445,6 +451,13 @@ const Auth = () => {
           </p>
         </div>
       </main>
+
+      <ErrorDialog 
+        open={errorDialog.open} 
+        onClose={() => setErrorDialog({ open: false, title: '', message: '' })}
+        title={errorDialog.title}
+        message={errorDialog.message}
+      />
     </div>
   );
 };
