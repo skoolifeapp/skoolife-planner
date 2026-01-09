@@ -158,9 +158,14 @@ const SchoolAccessCodes = () => {
 
         if (emailError) {
           console.error('Email error:', emailError);
-          toast.error('Erreur lors de l\'envoi des emails');
-        } else if (data?.sentCount > 0) {
-          toast.success(`${data.sentCount} email${data.sentCount > 1 ? 's' : ''} envoyé${data.sentCount > 1 ? 's' : ''} !`);
+          toast.error(emailError.message || 'Erreur lors de l\'envoi des emails');
+        } else {
+          if (data?.sentCount > 0) {
+            toast.success(`${data.sentCount} email${data.sentCount > 1 ? 's' : ''} envoyé${data.sentCount > 1 ? 's' : ''} !`);
+          }
+          if (data?.failedCount > 0) {
+            toast.error(data?.errors?.[0]?.error || `${data.failedCount} envoi${data.failedCount > 1 ? 's' : ''} a échoué`);
+          }
         }
       } catch (err) {
         console.error('Failed to send emails:', err);
@@ -204,11 +209,17 @@ const SchoolAccessCodes = () => {
 
       if (error) {
         console.error('Email error:', error);
-        toast.error('Erreur lors de l\'envoi des emails');
-      } else if (data?.sentCount > 0) {
-        toast.success(`${data.sentCount} email${data.sentCount > 1 ? 's' : ''} envoyé${data.sentCount > 1 ? 's' : ''} !`);
+        toast.error(error.message || 'Erreur lors de l\'envoi des emails');
       } else {
-        toast.info('Aucun élève trouvé pour ce code');
+        if (data?.sentCount > 0) {
+          toast.success(`${data.sentCount} email${data.sentCount > 1 ? 's' : ''} envoyé${data.sentCount > 1 ? 's' : ''} !`);
+        }
+        if (data?.failedCount > 0) {
+          toast.error(data?.errors?.[0]?.error || `${data.failedCount} envoi${data.failedCount > 1 ? 's' : ''} a échoué`);
+        }
+        if (!data?.sentCount && !data?.failedCount) {
+          toast.info('Aucun élève trouvé pour ce code');
+        }
       }
     } catch (err) {
       console.error('Failed to send emails:', err);
