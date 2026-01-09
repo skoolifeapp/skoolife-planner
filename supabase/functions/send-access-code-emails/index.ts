@@ -61,13 +61,18 @@ serve(async (req) => {
 
     console.log(`Found ${students.length} students to email`);
 
-    // Send emails to all students
-    const emailPromises = students.map(async (student) => {
+    // Send emails to all students (sequentially to avoid rate limits)
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const from = Deno.env.get("RESEND_FROM") ?? "Skoolife <no-reply@skoolife.co>";
+
+    const results: Array<{ email: string; success: boolean; error?: any }> = [];
+
+    for (const student of students) {
       const firstName = student.first_name || "Étudiant";
-      
+
       try {
         const result = await resend.emails.send({
-          from: "Skoolife <onboarding@resend.dev>",
+          from,
           to: [student.email],
           subject: `Votre code d'accès Skoolife - ${schoolName}`,
           html: `
@@ -123,26 +128,41 @@ serve(async (req) => {
             </html>
           `,
         });
-        console.log(`Email sent to ${student.email}:`, result);
-        return { email: student.email, success: true };
+
+        if (result?.error) {
+          console.error(`Resend error for ${student.email}:`, result.error);
+          results.push({ email: student.email, success: false, error: result.error });
+        } else {
+          console.log(`Email queued for ${student.email}:`, result?.data);
+          results.push({ email: student.email, success: true });
+        }
       } catch (emailError) {
         console.error(`Failed to send email to ${student.email}:`, emailError);
-        return { email: student.email, success: false, error: emailError };
+        results.push({ email: student.email, success: false, error: emailError });
       }
-    });
 
-    const results = await Promise.all(emailPromises);
-    const successCount = results.filter(r => r.success).length;
-    const failedCount = results.filter(r => !r.success).length;
+      // Resend free-tier rate limit is low (avoid bursts)
+      await sleep(550);
+    }
 
-    console.log(`Emails sent: ${successCount} success, ${failedCount} failed`);
+    const successCount = results.filter((r) => r.success).length;
+    const failedCount = results.filter((r) => !r.success).length;
+
+    console.log(`Emails processed: ${successCount} success, ${failedCount} failed`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: failedCount === 0,
         sentCount: successCount,
         failedCount,
-        total: students.length 
+        total: students.length,
+        errors: results
+          .filter((r) => !r.success)
+          .slice(0, 5)
+          .map((r) => ({
+            email: r.email,
+            error: r?.error?.message ?? String(r.error ?? 'Unknown error'),
+          })),
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
