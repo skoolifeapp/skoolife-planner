@@ -34,7 +34,6 @@ import WeeklyHourGrid, { type GridClickData } from '@/components/WeeklyHourGrid'
 import MonthlyCalendarView from '@/components/MonthlyCalendarView';
 import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { EventTutorialOverlay } from '@/components/EventTutorialOverlay';
-import { VideoTutorialOverlay } from '@/components/VideoTutorialOverlay';
 
 import { InvitedSessionDialog } from '@/components/InvitedSessionDialog';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
@@ -61,7 +60,6 @@ const Dashboard = () => {
   const [deletingEvents, setDeletingEvents] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showEventTutorial, setShowEventTutorial] = useState(false);
-  const [showVideoTutorial, setShowVideoTutorial] = useState(false);
   
   const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false);
   const [shareSessionDialogOpen, setShareSessionDialogOpen] = useState(false);
@@ -161,7 +159,7 @@ const Dashboard = () => {
       // Fetch profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('first_name, weekly_revision_hours, is_onboarding_complete, signed_up_via_invite, has_seen_video_tutorial')
+        .select('first_name, weekly_revision_hours, is_onboarding_complete, signed_up_via_invite')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -174,13 +172,9 @@ const Dashboard = () => {
       setSignedUpViaInvite(profileData?.signed_up_via_invite || false);
 
       // Check if tutorial should be shown (first visit after onboarding)
-      // For school students (signed_up_via_invite), show video tutorial instead
+      // Skip tutorial for users who signed up via invite link
       const tutorialSeen = localStorage.getItem(`tutorial_seen_${user.id}`);
-      if (profileData?.signed_up_via_invite && !profileData?.has_seen_video_tutorial) {
-        // School students get video tutorial
-        setShowVideoTutorial(true);
-      } else if (!tutorialSeen && !profileData?.signed_up_via_invite) {
-        // Regular users get step-by-step tutorial
+      if (!tutorialSeen && !profileData?.signed_up_via_invite) {
         setShowTutorial(true);
       }
 
@@ -1384,19 +1378,6 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Video tutorial overlay for school students */}
-      {showVideoTutorial && user && (
-        <VideoTutorialOverlay
-          onClose={async () => {
-            setShowVideoTutorial(false);
-            // Mark as seen in database
-            await supabase
-              .from('profiles')
-              .update({ has_seen_video_tutorial: true })
-              .eq('id', user.id);
-          }}
-        />
-      )}
 
       {/* Upgrade Dialog */}
       <UpgradeDialog

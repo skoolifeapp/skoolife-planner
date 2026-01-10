@@ -487,7 +487,6 @@ export type Database = {
           email: string | null
           first_name: string | null
           has_seen_support_hint: boolean | null
-          has_seen_video_tutorial: boolean | null
           id: string
           is_onboarding_complete: boolean | null
           last_name: string | null
@@ -513,7 +512,6 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           has_seen_support_hint?: boolean | null
-          has_seen_video_tutorial?: boolean | null
           id: string
           is_onboarding_complete?: boolean | null
           last_name?: string | null
@@ -539,7 +537,6 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           has_seen_support_hint?: boolean | null
-          has_seen_video_tutorial?: boolean | null
           id?: string
           is_onboarding_complete?: boolean | null
           last_name?: string | null
